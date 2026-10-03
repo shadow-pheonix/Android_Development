@@ -81,7 +81,6 @@ jobs:
           cp -a "$GITHUB_WORKSPACE/nova/MediaLib" MediaLib
           mkdir -p native
           cp -a "$GITHUB_WORKSPACE/nova/native/avos" native/avos
-          cp AVP/Makefile Makefile
 
       - name: Build signed universal debug APK
         run: |
