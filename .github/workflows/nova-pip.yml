@@ -384,8 +384,8 @@ jobs:
           logback = Path("nova/Video/res/raw/logback_full.xml")
           text = logback.read_text(encoding="utf-8")
           text = text.replace(
-              "<pattern>%msg%n</pattern>\\n        </encoder>\\n        <filter class=\"ch.qos.logback.classic.filter.LevelFilter\">\\n            <!-- exclude trace from logcat-->\\n            <level>DEBUG</level>\\n        </filter>\\n        <rollingPolicy",
-              "<pattern>%date{ISO8601} [%thread] %-5level %logger{64} - %msg%n</pattern>\\n        </encoder>\\n        <filter class=\"ch.qos.logback.classic.filter.ThresholdFilter\">\\n            <level>DEBUG</level>\\n        </filter>\\n        <rollingPolicy",
+              "<pattern>%msg%n</pattern>\n        </encoder>\n        <filter class=\"ch.qos.logback.classic.filter.LevelFilter\">\n            <!-- exclude trace from logcat-->\n            <level>DEBUG</level>\n        </filter>\n        <rollingPolicy",
+              "<pattern>%date{ISO8601} [%thread] %-5level %logger{64} - %msg%n</pattern>\n        </encoder>\n        <filter class=\"ch.qos.logback.classic.filter.ThresholdFilter\">\n            <level>DEBUG</level>\n        </filter>\n        <rollingPolicy",
               1)
           for logger_name in [
               "com.archos.mediacenter.video.player.Player",
@@ -400,11 +400,11 @@ jobs:
           if '<logger name="com.archos.medialib" level="DEBUG"/>' not in text:
               text = text.replace(
                   '    <!-- Debug permissions -->',
-                  '    <logger name="com.archos.medialib" level="DEBUG"/>\\n\\n    <!-- Debug permissions -->',
+                  '    <logger name="com.archos.medialib" level="DEBUG"/>\n\n    <!-- Debug permissions -->',
                   1)
           text = text.replace(
-              '    <root level="INFO">\\n        <appender-ref ref="logcat"/>\\n    </root>',
-              '    <root level="INFO">\\n        <appender-ref ref="logcat"/>\\n        <appender-ref ref="LOG_FILE"/>\\n    </root>',
+              '    <root level="INFO">\n        <appender-ref ref="logcat"/>\n    </root>',
+              '    <root level="INFO">\n        <appender-ref ref="logcat"/>\n        <appender-ref ref="LOG_FILE"/>\n    </root>',
               1)
           if '<appender-ref ref="LOG_FILE"/>' not in text:
               raise SystemExit("Failed to attach LOG_FILE appender")
@@ -438,7 +438,7 @@ jobs:
           if 'KEY_EXPORT_DIAGNOSTICS' not in text:
               text = text.replace(
                   '    public static final String KEY_ABOUT_PREFERENCES = "preferences_about";',
-                  '    public static final String KEY_ABOUT_PREFERENCES = "preferences_about";\\n'
+                  '    public static final String KEY_ABOUT_PREFERENCES = "preferences_about";\n'
                   '    public static final String KEY_EXPORT_DIAGNOSTICS = "export_diagnostics";',
                   1)
           click_marker = '''        Preference novaVersion = (Preference) findPreference("preferences_version");
@@ -465,13 +465,13 @@ jobs:
           if 'import com.archos.mediacenter.video.utils.DiagnosticsCrashHandler;' not in text:
               text = text.replace(
                   'import com.archos.mediacenter.video.utils.CodecDiscovery;',
-                  'import com.archos.mediacenter.video.utils.CodecDiscovery;\\n'
+                  'import com.archos.mediacenter.video.utils.CodecDiscovery;\n'
                   'import com.archos.mediacenter.video.utils.DiagnosticsCrashHandler;',
                   1)
           if 'DiagnosticsCrashHandler.install(this);' not in text:
               text = text.replace(
                   '        configureFullLoggingAsync();',
-                  '        configureFullLoggingAsync();\\n        DiagnosticsCrashHandler.install(this);',
+                  '        configureFullLoggingAsync();\n        DiagnosticsCrashHandler.install(this);',
                   1)
           app.write_text(text, encoding="utf-8")
 
@@ -480,14 +480,14 @@ jobs:
           text = player.read_text(encoding="utf-8")
           text = text.replace(
               '                      enterPictureInPictureMode(builder.build());',
-              '                      log.info("PiP: entering handheld PiP video={}x{}", videoWidth, videoHeight);\\n'
+              '                      log.info("PiP: entering handheld PiP video={}x{}", videoWidth, videoHeight);\n'
               '                      enterPictureInPictureMode(builder.build());',
               1)
           text = text.replace(
-              '    public void onPictureInPictureModeChanged(boolean isInPict){\\n'
+              '    public void onPictureInPictureModeChanged(boolean isInPict){\n'
               '        super.onPictureInPictureModeChanged(isInPict);',
-              '    public void onPictureInPictureModeChanged(boolean isInPict){\\n'
-              '        super.onPictureInPictureModeChanged(isInPict);\\n'
+              '    public void onPictureInPictureModeChanged(boolean isInPict){\n'
+              '        super.onPictureInPictureModeChanged(isInPict);\n'
               '        log.info("PiP: mode changed isInPiP={}", isInPict);',
               1)
           player.write_text(text, encoding="utf-8")
