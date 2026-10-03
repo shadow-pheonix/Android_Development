@@ -497,6 +497,30 @@ jobs:
           grep -n -A8 -B3 "DiagnosticsExporter.export" nova/Video/src/main/java/com/archos/mediacenter/video/utils/VideoPreferencesCommon.java
           grep -n -A4 -B2 'appender-ref ref="LOG_FILE"' nova/Video/res/raw/logback_full.xml
 
+      - name: Package exact PiP source snapshot
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cd nova/Video
+          git add -A
+          TREE="$(git write-tree)"
+          echo "Patched source tree: $TREE"
+          test "$TREE" = "4d5da6acf407abd510e4da0e0510b11d63925031"
+          git reset
+          tar -czf ../../artifacts/NOVA-pip-current-Video-source.tar.gz .
+          cd ../..
+          sha256sum artifacts/NOVA-pip-current-Video-source.tar.gz | tee artifacts/SOURCE_SHA256.txt
+
+      - name: Upload exact PiP source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-pip-current-video-source
+          path: |
+            artifacts/NOVA-pip-current-Video-source.tar.gz
+            artifacts/SOURCE_SHA256.txt
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Build signed universal debug APK
         run: |
           cd nova/Video
