@@ -256,7 +256,8 @@ jobs:
           ! grep -q ".github/patches" .github/workflows/nova-pip.yml
           git add -A
           git add -f nova
-          git diff --cached --name-status | head -200
+          git diff --cached --name-status > /tmp/nova-cleanup-files.txt
+          sed -n '1,200p' /tmp/nova-cleanup-files.txt
           git diff --cached --stat
 
       - name: Commit cleaned source-of-truth repository
