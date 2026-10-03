@@ -58,8 +58,8 @@ jobs:
           mkdir -p /tmp/final-patches
           tar -xzf .github/patches/nova-final-feature-patches.tar.gz -C /tmp/final-patches
           (cd /tmp/final-patches && sha256sum -c PATCH_SHA256.txt)
-          git -C nova/MediaLib apply /tmp/final-patches/medialib-hdr.patch
-          git -C nova/native/avos apply /tmp/final-patches/avos-hdr.patch
+          git apply --directory=nova/MediaLib /tmp/final-patches/medialib-hdr.patch
+          git apply --directory=nova/native/avos /tmp/final-patches/avos-hdr.patch
 
       - name: Verify exact finalized source trees
         shell: bash
