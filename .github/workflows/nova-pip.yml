@@ -1,0 +1,168 @@
+name: Nova PiP APK
+
+on:
+  push:
+    branches: [ "nova-pip-build" ]
+    paths:
+      - ".github/workflows/nova-pip.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_LATEST_HOME }}
+      ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_LATEST_HOME }}
+
+    steps:
+      - name: Checkout builder repo
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Install build packages
+        run: |
+          sudo apt-get update || sudo apt-get update
+          sudo apt-get install -y nasm meson ninja-build maven build-essential wget curl unzip git pkg-config
+
+      - name: Install repo tool
+        run: |
+          curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo | sudo tee /usr/local/bin/repo >/dev/null
+          sudo chmod a+x /usr/local/bin/repo
+
+      - name: Retrieve latest Nova upstream
+        run: |
+          mkdir nova
+          cd nova
+          repo init -u https://github.com/nova-video-player/aos-AVP -b nova -m v6_4.xml
+          repo sync -j 4
+          repo forall -c 'git checkout -t $REPO_REMOTE/$REPO_RREV || git checkout $REPO_RREV'
+          echo "AVP revision:"
+          git -C AVP log -1 --oneline
+          echo "Video revision:"
+          git -C Video log -1 --oneline
+
+      - name: Add handheld native Picture-in-Picture
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("nova/Video/src/main/java/com/archos/mediacenter/video/player/PlayerActivity.java")
+          source = path.read_text(encoding="utf-8")
+
+          marker = """    @Override
+              protected void onResume() {"""
+
+          if "enterHandheldPictureInPicture()" in source:
+              raise SystemExit("Handheld PiP patch already present upstream; refusing to duplicate it.")
+
+          block = r"""
+              private boolean canEnterHandheldPictureInPicture() {
+                  return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                          && !TVUtils.isTV(this)
+                          && !isFinishing()
+                          && !isDestroyed()
+                          && mPlayer != null
+                          && mPlayer.isPlaying()
+                          && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
+                          && !isInPictureInPictureMode();
+              }
+
+              private void enterHandheldPictureInPicture() {
+                  if (!canEnterHandheldPictureInPicture()) {
+                      return;
+                  }
+
+                  try {
+                      PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
+
+                      int videoWidth = mPlayer.getVideoWidth();
+                      int videoHeight = mPlayer.getVideoHeight();
+                      if (videoWidth > 0 && videoHeight > 0) {
+                          double ratio = (double) videoWidth / videoHeight;
+                          if (ratio >= 1.0 / 2.39 && ratio <= 2.39) {
+                              builder.setAspectRatio(new Rational(videoWidth, videoHeight));
+                          }
+                      }
+
+                      View targetView = (mSurfaceController != null && mSurfaceController.getView() != null)
+                              ? mSurfaceController.getView() : mRootView;
+                      if (targetView != null) {
+                          Rect sourceRectHint = new Rect();
+                          targetView.getGlobalVisibleRect(sourceRectHint);
+                          builder.setSourceRectHint(sourceRectHint);
+                      }
+
+                      if (mPlayerController != null) {
+                          mPlayerController.hide();
+                      }
+                      enterPictureInPictureMode(builder.build());
+                  } catch (IllegalArgumentException | IllegalStateException e) {
+                      log.warn("Unable to enter handheld picture-in-picture", e);
+                  }
+              }
+
+              @Override
+              protected void onUserLeaveHint() {
+                  super.onUserLeaveHint();
+                  enterHandheldPictureInPicture();
+              }
+
+          """
+
+          if marker not in source:
+              raise SystemExit("Could not find onResume insertion point in PlayerActivity.java")
+
+          source = source.replace(marker, block + marker, 1)
+          path.write_text(source, encoding="utf-8")
+          PY
+
+          grep -n -A55 -B5 "canEnterHandheldPictureInPicture" nova/Video/src/main/java/com/archos/mediacenter/video/player/PlayerActivity.java
+
+      - name: Configure stable custom signing key
+        shell: bash
+        run: |
+          cat > /tmp/nova-custom-dev.b64 <<'EOF'
+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
+EOF
+          base64 -d /tmp/nova-custom-dev.b64 > nova/Video/nova-custom-dev.jks
+          cat > nova/Video/keystore.properties <<'EOF'
+storeFile=nova-custom-dev.jks
+storePassword=nova-custom
+keyAlias=nova-custom
+keyPassword=nova-custom
+EOF
+
+      - name: Build signed universal release APK
+        run: |
+          cd nova/Video
+          ./gradlew --no-daemon -Puniversal assembleNoamazonRelease
+
+      - name: Collect APK
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          find nova/Video/build/outputs/apk -type f -name "*.apk" -print
+          APK="$(find nova/Video/build/outputs/apk -type f -name "*.apk" | head -n 1)"
+          test -n "$APK"
+          cp "$APK" artifacts/Nova-PiP-latest-upstream.apk
+          sha256sum artifacts/Nova-PiP-latest-upstream.apk | tee artifacts/SHA256.txt
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-pip-latest-upstream
+          path: |
+            artifacts/Nova-PiP-latest-upstream.apk
+            artifacts/SHA256.txt
+          if-no-files-found: error
+          retention-days: 14
