@@ -4,13 +4,15 @@ A multi-app Android development monorepo for building, testing, debugging, and p
 
 ## Mandatory for AI/agent development
 
-Before making any change, read **[AGENTS.md](./AGENTS.md)** completely. Its routing and local-first rules are mandatory.
+Before making any change, read **[AGENTS.md](./AGENTS.md)** completely. Its routing, diagnostics, and local-first rules are mandatory.
 
 The core rule is simple:
 
 > **Develop and verify locally first. Commit only a coherent, checked batch. Use GitHub Actions afterward for authoritative Android build/test validation and APK generation.**
 
 For an app that already exists, a fresh chat must first clone or synchronize the current repository locally and continue from that existing source.
+
+Every app developed here must also provide an **Export diagnostics** feature that saves a debugging ZIP under `Internal storage/AppDebug/<AppName>/`. See [docs/DIAGNOSTICS.md](docs/DIAGNOSTICS.md).
 
 ## Repository layout
 
@@ -20,7 +22,8 @@ Android_Development/
 ├── README.md
 ├── docs/
 │   ├── ROUTING.md
-│   └── WORKFLOW.md
+│   ├── WORKFLOW.md
+│   └── DIAGNOSTICS.md
 ├── .github/
 │   └── workflows/
 ├── apps/
@@ -30,7 +33,7 @@ Android_Development/
 └── <legacy root test app>
 ```
 
-New apps normally belong under `apps/<AppName>/`. Each app should remain independently understandable and buildable, with its own package/application ID, versioning, source, resources, and artifact output.
+New apps normally belong under `apps/<AppName>/`. Each app should remain independently understandable and buildable, with its own package/application ID, versioning, source, resources, diagnostics, and artifact output.
 
 The current root-level Android project is a legacy/test project and should not be moved unless migration is explicitly requested.
 
@@ -38,6 +41,7 @@ The current root-level Android project is a legacy/test project and should not b
 
 - **Agent/task routing:** [docs/ROUTING.md](docs/ROUTING.md)
 - **Development and validation flow:** [docs/WORKFLOW.md](docs/WORKFLOW.md)
+- **Mandatory diagnostics standard:** [docs/DIAGNOSTICS.md](docs/DIAGNOSTICS.md)
 
 ## App strategy
 

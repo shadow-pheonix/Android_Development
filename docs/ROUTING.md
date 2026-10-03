@@ -17,7 +17,12 @@ Use this document after reading the root `AGENTS.md`.
    - **Yes** → read it after the root `AGENTS.md` and before editing.
    - **No** → root instructions govern the workflow.
 
-4. **Which CI workflow should run?**
+4. **Does the app have the mandatory diagnostics baseline?**
+   - **New app** → implement it before first normal APK handoff.
+   - **Existing app without it** → add it during active development unless the user explicitly defers it.
+   - See [DIAGNOSTICS.md](DIAGNOSTICS.md).
+
+5. **Which CI workflow should run?**
    - App-only change → only that app's workflow.
    - Shared dependency change → affected apps only.
    - Docs-only change → no Android build by default.
@@ -34,13 +39,14 @@ Minimum sequence:
 1. Sync the monorepo locally.
 2. Choose a unique app directory and application ID.
 3. Create the complete app locally.
-4. Add app documentation and app-level `AGENTS.md` only when useful.
-5. Run all available local validation.
-6. Review the complete diff.
-7. Commit/push the coherent batch.
-8. Run the app-specific GitHub Actions workflow.
-9. Inspect build/test results.
-10. Produce the APK artifact.
+4. Implement mandatory diagnostics export to `AppDebug/<AppName>/` according to [DIAGNOSTICS.md](DIAGNOSTICS.md).
+5. Add app documentation and app-level `AGENTS.md` only when useful.
+6. Run all available local validation.
+7. Review the complete diff.
+8. Commit/push the coherent batch.
+9. Run the app-specific GitHub Actions workflow.
+10. Inspect build/test results.
+11. Produce the APK artifact.
 
 ## Route B — existing app
 
@@ -52,13 +58,14 @@ Minimum sequence:
 2. Clone or sync the current GitHub repository locally.
 3. Locate the exact target app.
 4. Read its README, app-level `AGENTS.md`, build files, and relevant source.
-5. Establish a baseline when the change is substantial or risky.
-6. Implement locally.
-7. Validate locally.
-8. Review the diff.
-9. Commit/push the coherent batch.
-10. Run only the relevant CI workflow.
-11. Produce the APK artifact after successful validation.
+5. Inspect whether the mandatory diagnostics baseline exists; add it during active development if missing unless explicitly deferred.
+6. Establish a baseline when the change is substantial or risky.
+7. Implement locally.
+8. Validate locally.
+9. Review the diff.
+10. Commit/push the coherent batch.
+11. Run only the relevant CI workflow.
+12. Produce the APK artifact after successful validation.
 
 ### Legacy root project
 

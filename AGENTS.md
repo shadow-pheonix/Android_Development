@@ -10,6 +10,7 @@ Detailed guidance:
 
 - [Task routing](docs/ROUTING.md)
 - [Development workflow](docs/WORKFLOW.md)
+- [Mandatory diagnostics standard](docs/DIAGNOSTICS.md)
 
 ## Repository model
 
@@ -19,6 +20,19 @@ Detailed guidance:
 - Each app should remain independently understandable and buildable.
 - Shared code/tooling belongs in `shared/` only when it has a genuine multi-app use case.
 - The existing root-level Android project is a legacy/test project. **Do not move or restructure it unless explicitly asked.**
+
+## Mandatory app baseline
+
+Every Android app developed in this repository **MUST include diagnostics export from its initial development baseline**.
+
+- The app **MUST provide a user-accessible `Export diagnostics` action** in builds used for development/testing.
+- The exported ZIP **MUST be saved under user-visible internal/shared storage at `AppDebug/<AppName>/`** (normally `/storage/emulated/0/AppDebug/<AppName>/` on standard Android devices), using Android storage APIs that remain compatible with scoped storage.
+- The ZIP **MUST contain bounded application logs plus crash, device, app, and build information sufficient for debugging**.
+- Logs **MUST rotate/be bounded** so diagnostics cannot grow without limit.
+- Diagnostics **MUST NOT contain passwords, auth tokens, signing material, private keys, or unnecessary sensitive user content**.
+- The exporter and expected ZIP contents **MUST follow [docs/DIAGNOSTICS.md](docs/DIAGNOSTICS.md)**.
+
+An app is not considered ready for its first APK handoff until this diagnostics baseline is implemented and locally reviewed, unless the user explicitly requests a temporary exception.
 
 ## Mandatory task routing
 
@@ -30,14 +44,15 @@ Use this route when the requested app does not yet exist in the repository.
 
 **Required order:**
 
-**prepare locally → create `apps/<AppName>/` locally → complete development locally → validate locally → review final diff → commit/push finalized batch → GitHub Actions build/test → APK/artifact**
+**prepare locally → create `apps/<AppName>/` locally → complete development locally (including mandatory diagnostics) → validate locally → review final diff → commit/push finalized batch → GitHub Actions build/test → APK/artifact**
 
 Rules:
 
 1. **MUST develop the app locally first.**
 2. **MUST complete and verify the intended development batch locally before committing app files to GitHub.**
-3. **MUST NOT use direct GitHub file creation/editing as the normal development environment.**
-4. GitHub Actions is used after the local batch is ready for authoritative Android-specific build/test validation and APK generation.
+3. **MUST implement the mandatory diagnostics baseline before the first APK handoff.**
+4. **MUST NOT use direct GitHub file creation/editing as the normal development environment.**
+5. GitHub Actions is used after the local batch is ready for authoritative Android-specific build/test validation and APK generation.
 
 ### Route B — existing app, including a fresh chat
 
@@ -45,16 +60,17 @@ Use this route when the app already exists in `apps/<AppName>/` or as an explici
 
 **Required order:**
 
-**read root `AGENTS.md` → clone/sync current GitHub repository locally → identify exact target app → read app-level instructions → develop locally → validate locally → review final diff → commit/push coherent changes → GitHub Actions build/test → APK/artifact**
+**read root `AGENTS.md` → clone/sync current GitHub repository locally → identify exact target app → read app-level instructions → verify diagnostics baseline exists → develop locally → validate locally → review final diff → commit/push coherent changes → GitHub Actions build/test → APK/artifact**
 
 Rules:
 
 1. **MUST clone the current repository locally if no current local checkout exists.**
 2. If a local checkout exists, **MUST fetch/sync the relevant branch/commit before editing**.
-3. **MUST inspect the existing app, its build files, README, and app-level `AGENTS.md` if present before modifying it.**
-4. **MUST continue from the existing source.** Do not recreate the app from memory or start a disconnected replacement project.
-5. **MUST complete and verify changes locally before committing/pushing them.**
-6. Direct GitHub editing is not a substitute for the required local workflow.
+3. **MUST inspect the existing app, its build files, README, app-level `AGENTS.md` if present, and diagnostics implementation before modifying it.**
+4. If the app lacks the mandatory diagnostics baseline, **MUST add it as part of active development unless the user explicitly requests otherwise.**
+5. **MUST continue from the existing source.** Do not recreate the app from memory or start a disconnected replacement project.
+6. **MUST complete and verify changes locally before committing/pushing them.**
+7. Direct GitHub editing is not a substitute for the required local workflow.
 
 ### Route C — shared code, CI, docs, or repository infrastructure
 
@@ -96,11 +112,11 @@ An app may contain `apps/<AppName>/AGENTS.md`.
 
 - Root `AGENTS.md` is always mandatory.
 - App-level instructions add app-specific requirements.
-- App-level instructions do not cancel mandatory root workflow, safety, secrets, or local-first requirements unless the root file explicitly permits it.
+- App-level instructions do not cancel mandatory root workflow, diagnostics, safety, secrets, or local-first requirements unless the root file explicitly permits it.
 
 ## Secrets and signing
 
-Never commit private signing keys, passwords, tokens, credentials, or secrets into source, workflows, patches, logs, or repository history. Use approved secret storage or temporary development signing where appropriate.
+Never commit private signing keys, passwords, tokens, credentials, or secrets into source, workflows, patches, logs, diagnostics bundles, or repository history. Use approved secret storage or temporary development signing where appropriate.
 
 ## Ready-to-push gate
 
@@ -108,6 +124,7 @@ A change may be pushed only when all applicable items are true:
 
 - intended work for the current batch is complete;
 - current repository/app source was synced before development;
+- mandatory diagnostics support is present for app-development work;
 - locally available checks passed;
 - final diff was reviewed;
 - target app boundaries were respected;
