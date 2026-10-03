@@ -70,6 +70,45 @@ Until one of those needs exists, prefer keeping the app under `apps/<AppName>/`.
 
 If an app later needs independence, it may be extracted into its own repository deliberately. Do not split it casually during unrelated development.
 
+### Fresh App and Fresh-Chat Continuity Rules
+
+These rules are **mandatory** and apply before normal development begins.
+
+#### Starting a brand-new app
+
+When development starts for a new app that does not yet exist under `apps/<AppName>/`:
+
+1. **MUST create and develop the app in the local working environment first.**
+2. **MUST complete the intended development batch locally before creating the corresponding app source tree on GitHub.**
+3. **MUST run all locally available verification first**, including syntax/structure checks, targeted tests, static inspection, and final diff review.
+4. **MUST NOT use direct GitHub file creation/edits as the normal development environment for the new app.**
+5. Only after the local implementation is internally complete and verified **MAY the finalized app files be committed/pushed to GitHub**.
+6. After the verified files are on GitHub, **MUST use GitHub Actions for the authoritative Android build/test steps and APK generation** that require the Android build environment.
+7. If CI finds an Android/environment-specific problem, **MUST bring the fix back into the local working copy, verify locally as far as possible, then push a focused correction**. Do not patch the app directly in GitHub as the primary fix loop.
+
+Required order for a fresh app:
+
+**Create locally → develop locally → verify locally → review final diff locally → commit/push finalized batch → build/test in GitHub Actions → produce APK.**
+
+#### Starting a fresh chat for an app that already exists
+
+When a new/fresh chat is asked to continue, modify, debug, or build an app that already exists under `apps/<AppName>/`:
+
+1. **MUST first obtain the current repository state from GitHub into the local working environment before editing anything.**
+2. **MUST clone the repository locally if it is not already present.**
+3. If a local clone already exists, **MUST fetch/sync the relevant current branch/commit from GitHub before development** so the local copy matches the repository state.
+4. **MUST inspect the existing app folder and its app-level `AGENTS.md`, README, build files, and relevant source before making changes.**
+5. **MUST continue development from that existing local checkout.** Do not recreate the app from memory, start a disconnected replacement project, or treat prior GitHub source as optional context.
+6. **MUST complete and verify the requested development locally first.**
+7. Only after the local changes are complete, locally checked, and the final diff is reviewed **MAY the changes be committed/pushed to GitHub**.
+8. **MUST then use GitHub Actions for authoritative Android build/test validation and APK generation.**
+
+Required order for an existing app in a fresh chat:
+
+**Read root AGENTS.md → clone/sync current GitHub repository to local → inspect existing target app → read app-level instructions → develop locally → verify locally → review final diff → commit/push coherent changes → build/test in GitHub Actions → produce APK.**
+
+These rules apply even when GitHub connector tools can directly edit repository files. Direct repository editing is not a substitute for the required local development workflow.
+
 ### Local-First Development Is Required
 
 1. **MUST develop locally first.** Prepare, edit, inspect, and refine source code, scripts, patches, and configuration in the local working environment before committing them to GitHub.
