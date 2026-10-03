@@ -5,6 +5,7 @@ on:
     branches: [ "nova-pip-build" ]
     paths:
       - ".github/workflows/nova-pip.yml"
+      - ".github/patches/**"
   workflow_dispatch:
 
 permissions:
@@ -38,13 +39,17 @@ jobs:
           curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo | sudo tee /usr/local/bin/repo >/dev/null
           sudo chmod a+x /usr/local/bin/repo
 
-      - name: Retrieve latest Nova upstream
+      - name: Retrieve pinned Nova source
         run: |
           mkdir nova
           cd nova
           repo init -u https://github.com/nova-video-player/aos-AVP -b nova -m v6_4.xml
           repo sync -j 4
           repo forall -c 'git checkout -t $REPO_REMOTE/$REPO_RREV || git checkout $REPO_RREV'
+          # Exact source revisions used and validated in the local development environment.
+          git -C Video checkout --detach cab25da088a28601795c795c9ad6375f2054f60a
+          git -C MediaLib checkout --detach 3e904a4e657c2abc9a6b12192a095d52714041b7
+          git -C native/avos checkout --detach 1a7b5b278654cac0ba8ba4aa3eb35d455af23510
           echo "AVP revision:"
           git -C AVP log -1 --oneline
           echo "Video revision:"
@@ -521,6 +526,50 @@ jobs:
           grep -n -A8 -B3 "DiagnosticsExporter.export" nova/Video/src/main/java/com/archos/mediacenter/video/utils/VideoPreferencesCommon.java
           grep -n -A4 -B2 'appender-ref ref="LOG_FILE"' nova/Video/res/raw/logback_full.xml
 
+      - name: Apply locally validated subtitle and HDR patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf feature-patches
+          mkdir feature-patches
+          tar -xzf "$GITHUB_WORKSPACE/.github/patches/nova-final-feature-patches.tar.gz" -C feature-patches
+          (
+            cd feature-patches
+            sha256sum -c PATCH_SHA256.txt
+          )
+
+          git -C nova/Video apply --check feature-patches/video-subtitle-hdr.patch
+          git -C nova/MediaLib apply --check feature-patches/medialib-hdr.patch
+          git -C nova/native/avos apply --check feature-patches/avos-hdr.patch
+
+          git -C nova/Video apply feature-patches/video-subtitle-hdr.patch
+          git -C nova/MediaLib apply feature-patches/medialib-hdr.patch
+          git -C nova/native/avos apply feature-patches/avos-hdr.patch
+
+          git -C nova/Video diff --check
+          git -C nova/MediaLib diff --check
+          git -C nova/native/avos diff --check
+
+          git -C nova/Video add -A
+          VIDEO_TREE="$(git -C nova/Video write-tree)"
+          echo "Video final tree: $VIDEO_TREE"
+          test "$VIDEO_TREE" = "1bc28f7532b520658b1c6cf7482924a9ef121f8e"
+          git -C nova/Video reset
+
+          git -C nova/MediaLib add -A
+          MEDIALIB_TREE="$(git -C nova/MediaLib write-tree)"
+          echo "MediaLib final tree: $MEDIALIB_TREE"
+          test "$MEDIALIB_TREE" = "14bbdf89b76725df73b31116c0bf5eedeb83f650"
+          git -C nova/MediaLib reset
+
+          git -C nova/native/avos add -A
+          AVOS_TREE="$(git -C nova/native/avos write-tree)"
+          echo "avos final tree: $AVOS_TREE"
+          test "$AVOS_TREE" = "1af5b2e0c3662ba624be0d73016e4e6add360769"
+          git -C nova/native/avos reset
+
+          echo "Final source trees exactly match the locally validated implementation."
+
       - name: Package exact PiP source snapshot
         shell: bash
         run: |
@@ -529,7 +578,7 @@ jobs:
           git add -A
           TREE="$(git write-tree)"
           echo "Patched source tree: $TREE"
-          test "$TREE" = "4d5da6acf407abd510e4da0e0510b11d63925031"
+          test "$TREE" = "1bc28f7532b520658b1c6cf7482924a9ef121f8e"
           git reset
           tar -czf ../../artifacts/NOVA-pip-current-Video-source.tar.gz .
           cd ../..
@@ -557,15 +606,15 @@ jobs:
           find nova/Video/build/outputs/apk -type f -name "*.apk" -print
           APK="$(find nova/Video/build/outputs/apk -type f -name "*.apk" | head -n 1)"
           test -n "$APK"
-          cp "$APK" artifacts/Nova-PiP-Diagnostics-latest-upstream.apk
-          sha256sum artifacts/Nova-PiP-Diagnostics-latest-upstream.apk | tee artifacts/SHA256.txt
+          cp "$APK" artifacts/Nova-PiP-Diagnostics-Subtitles-HDRtoSDR.apk
+          sha256sum artifacts/Nova-PiP-Diagnostics-Subtitles-HDRtoSDR.apk | tee artifacts/SHA256.txt
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: nova-pip-diagnostics-latest-upstream
+          name: nova-pip-diagnostics-subtitles-hdr2sdr
           path: |
-            artifacts/Nova-PiP-Diagnostics-latest-upstream.apk
+            artifacts/Nova-PiP-Diagnostics-Subtitles-HDRtoSDR.apk
             artifacts/SHA256.txt
           if-no-files-found: error
           retention-days: 14
