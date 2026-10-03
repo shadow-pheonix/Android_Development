@@ -1,11 +1,13 @@
-name: Nova PiP APK
+name: Nova APK
 
 on:
   push:
     branches: [ "nova-pip-build" ]
     paths:
+      - "nova/**"
       - ".github/workflows/nova-pip.yml"
-      - ".github/patches/**"
+      - "AGENTS.md"
+      - "README.md"
   workflow_dispatch:
 
 permissions:
@@ -15,12 +17,32 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-
     steps:
-      - name: Checkout build recipe
+      - name: Checkout finalized Nova source
         uses: actions/checkout@v4
 
-      - name: Configure NDK environment
+      - name: Verify checked-in source trees
+        shell: bash
+        run: |
+          set -euo pipefail
+          verify_tree() {
+            local repo="$1"
+            local expected="$2"
+            local tmp
+            tmp="$(mktemp -d)"
+            cp -a "$repo/." "$tmp/"
+            git -C "$tmp" init -q
+            git -C "$tmp" add -f -A
+            actual="$(git -C "$tmp" write-tree)"
+            rm -rf "$tmp"
+            echo "$repo tree: $actual"
+            test "$actual" = "$expected"
+          }
+          verify_tree nova/Video 1bc28f7532b520658b1c6cf7482924a9ef121f8e
+          verify_tree nova/MediaLib 14bbdf89b76725df73b31116c0bf5eedeb83f650
+          verify_tree nova/native/avos 1af5b2e0c3662ba624be0d73016e4e6add360769
+
+      - name: Configure Android build environment
         shell: bash
         run: |
           echo "ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
@@ -42,572 +64,36 @@ jobs:
           curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo | sudo tee /usr/local/bin/repo >/dev/null
           sudo chmod a+x /usr/local/bin/repo
 
-      - name: Retrieve pinned Nova source
-        run: |
-          mkdir nova
-          cd nova
-          repo init -u https://github.com/nova-video-player/aos-AVP -b nova -m v6_4.xml
-          repo sync -j 4
-          repo forall -c 'git checkout -t $REPO_REMOTE/$REPO_RREV || git checkout $REPO_RREV'
-          # Exact source revisions used and validated in the local development environment.
-          git -C Video checkout --detach cab25da088a28601795c795c9ad6375f2054f60a
-          git -C MediaLib checkout --detach 3e904a4e657c2abc9a6b12192a095d52714041b7
-          git -C native/avos checkout --detach 1a7b5b278654cac0ba8ba4aa3eb35d455af23510
-          echo "AVP revision:"
-          git -C AVP log -1 --oneline
-          echo "Video revision:"
-          git -C Video log -1 --oneline
-
-      - name: Package exact dependency source snapshots
-        shell: bash
-        run: |
-          mkdir -p artifacts
-          cd nova/MediaLib
-          test "$(git rev-parse 'HEAD^{tree}')" = "d1820068f34b767f823fef0c6dd511518272bf2d"
-          tar -czf ../../artifacts/NOVA-pip-current-MediaLib-source.tar.gz .
-          cd ../native/avos
-          test "$(git rev-parse 'HEAD^{tree}')" = "b2e0c2dbd642aecf414d633587bb7b3f4353d454"
-          tar -czf ../../../artifacts/NOVA-pip-current-avos-source.tar.gz .
-          cd ../../..
-          sha256sum artifacts/NOVA-pip-current-MediaLib-source.tar.gz artifacts/NOVA-pip-current-avos-source.tar.gz | tee artifacts/DEPS_SOURCE_SHA256.txt
-
-      - name: Upload exact dependency source snapshots
-        uses: actions/upload-artifact@v4
-        with:
-          name: nova-pip-current-deps-source
-          path: |
-            artifacts/NOVA-pip-current-MediaLib-source.tar.gz
-            artifacts/NOVA-pip-current-avos-source.tar.gz
-            artifacts/DEPS_SOURCE_SHA256.txt
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Add handheld native Picture-in-Picture
-        shell: bash
-        run: |
-          python3 <<'PY'
-          from pathlib import Path
-
-          path = Path("nova/Video/src/main/java/com/archos/mediacenter/video/player/PlayerActivity.java")
-          source = path.read_text(encoding="utf-8")
-
-          marker = "\n    @Override\n    protected void onResume() {"
-
-          if "enterHandheldPictureInPicture()" in source:
-              raise SystemExit("Handheld PiP patch already present upstream; refusing to duplicate it.")
-
-          block = r'''
-              @androidx.annotation.RequiresApi(Build.VERSION_CODES.O)
-              private boolean canEnterHandheldPictureInPicture() {
-                  return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                          && !TVUtils.isTV(this)
-                          && !isFinishing()
-                          && !isDestroyed()
-                          && mPlayer != null
-                          && mPlayer.isPlaying()
-                          && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
-                          && !isInPictureInPictureMode();
-              }
-
-              @androidx.annotation.RequiresApi(Build.VERSION_CODES.O)
-              private void enterHandheldPictureInPicture() {
-                  if (!canEnterHandheldPictureInPicture()) {
-                      return;
-                  }
-
-                  try {
-                      PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
-
-                      int videoWidth = mPlayer.getVideoWidth();
-                      int videoHeight = mPlayer.getVideoHeight();
-                      if (videoWidth > 0 && videoHeight > 0) {
-                          double ratio = (double) videoWidth / videoHeight;
-                          if (ratio >= 1.0 / 2.39 && ratio <= 2.39) {
-                              builder.setAspectRatio(new Rational(videoWidth, videoHeight));
-                          }
-                      }
-
-                      View targetView = (mSurfaceController != null && mSurfaceController.getView() != null)
-                              ? mSurfaceController.getView() : mRootView;
-                      if (targetView != null) {
-                          Rect sourceRectHint = new Rect();
-                          targetView.getGlobalVisibleRect(sourceRectHint);
-                          builder.setSourceRectHint(sourceRectHint);
-                      }
-
-                      if (mPlayerController != null) {
-                          mPlayerController.hide();
-                      }
-                      enterPictureInPictureMode(builder.build());
-                  } catch (IllegalArgumentException | IllegalStateException e) {
-                      log.warn("Unable to enter handheld picture-in-picture", e);
-                  }
-              }
-
-              @Override
-              protected void onUserLeaveHint() {
-                  super.onUserLeaveHint();
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                      enterHandheldPictureInPicture();
-                  }
-              }
-          '''
-
-          if marker not in source:
-              raise SystemExit("Could not find onResume insertion point in PlayerActivity.java")
-
-          source = source.replace(marker, "\n" + block + marker, 1)
-          path.write_text(source, encoding="utf-8")
-          PY
-
-          grep -n -A55 -B5 "canEnterHandheldPictureInPicture" nova/Video/src/main/java/com/archos/mediacenter/video/player/PlayerActivity.java
-
-
-      - name: Add diagnostics logging and export
-        shell: bash
-        run: |
-          cat > nova/Video/src/main/java/com/archos/mediacenter/video/utils/DiagnosticsExporter.java <<'JAVA'
-          package com.archos.mediacenter.video.utils;
-
-          import android.content.Context;
-          import android.content.Intent;
-          import android.net.Uri;
-          import android.os.Build;
-          import android.os.Handler;
-          import android.os.Looper;
-          import android.widget.Toast;
-
-          import androidx.core.content.FileProvider;
-
-          import com.archos.mediacenter.video.BuildConfig;
-
-          import org.slf4j.Logger;
-          import org.slf4j.LoggerFactory;
-
-          import java.io.BufferedInputStream;
-          import java.io.BufferedOutputStream;
-          import java.io.File;
-          import java.io.FileInputStream;
-          import java.io.FileOutputStream;
-          import java.io.IOException;
-          import java.nio.charset.StandardCharsets;
-          import java.text.SimpleDateFormat;
-          import java.util.Arrays;
-          import java.util.Date;
-          import java.util.Locale;
-          import java.util.zip.ZipEntry;
-          import java.util.zip.ZipOutputStream;
-
-          public final class DiagnosticsExporter {
-              private static final Logger log = LoggerFactory.getLogger(DiagnosticsExporter.class);
-              private static final int BUFFER_SIZE = 64 * 1024;
-
-              private DiagnosticsExporter() {}
-
-              public static void export(Context context) {
-                  if (context == null) {
-                      return;
-                  }
-                  final Context appContext = context.getApplicationContext();
-                  final Handler mainHandler = new Handler(Looper.getMainLooper());
-
-                  new Thread(() -> {
-                      try {
-                          File bundle = createBundle(appContext);
-                          mainHandler.post(() -> shareBundle(context, bundle));
-                      } catch (Exception e) {
-                          log.error("Diagnostics export failed", e);
-                          mainHandler.post(() -> Toast.makeText(
-                                  context,
-                                  "Could not create diagnostics: " + e.getClass().getSimpleName(),
-                                  Toast.LENGTH_LONG).show());
-                      }
-                  }, "diagnostics-export").start();
-              }
-
-              private static File createBundle(Context context) throws IOException {
-                  File externalFiles = context.getExternalFilesDir(null);
-                  if (externalFiles == null) {
-                      throw new IOException("External files directory unavailable");
-                  }
-
-                  File logDir = new File(externalFiles, "logback");
-                  File diagnosticsDir = new File(externalFiles, "diagnostics");
-                  if (!diagnosticsDir.isDirectory() && !diagnosticsDir.mkdirs()) {
-                      throw new IOException("Could not create diagnostics directory");
-                  }
-
-                  String stamp = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(new Date());
-                  File outFile = new File(diagnosticsDir, "nova-diagnostics-" + stamp + ".zip");
-
-                  try (ZipOutputStream zip = new ZipOutputStream(
-                          new BufferedOutputStream(new FileOutputStream(outFile)))) {
-                      addText(zip, "diagnostics-info.txt", buildMetadata(context, logDir));
-
-                      if (logDir.isDirectory()) {
-                          File[] files = logDir.listFiles();
-                          if (files != null) {
-                              Arrays.sort(files, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-                              for (File file : files) {
-                                  if (file.isFile()
-                                          && (file.getName().startsWith("nova")
-                                              || "last-crash.txt".equals(file.getName())
-                                              || "logback.xml".equals(file.getName()))) {
-                                      addFile(zip, file, "logs/" + file.getName());
-                                  }
-                              }
-                          }
-                      }
-                  }
-
-                  log.info("Diagnostics bundle created: {} ({} bytes)", outFile.getName(), outFile.length());
-                  return outFile;
-              }
-
-              private static String buildMetadata(Context context, File logDir) {
-                  StringBuilder info = new StringBuilder();
-                  info.append("Nova diagnostics\n");
-                  info.append("generated=").append(new Date()).append('\n');
-                  info.append("app_version=").append(BuildConfig.VERSION_NAME).append('\n');
-                  info.append("app_version_code=").append(BuildConfig.VERSION_CODE).append('\n');
-                  info.append("package=").append(BuildConfig.APPLICATION_ID).append('\n');
-                  info.append("manufacturer=").append(Build.MANUFACTURER).append('\n');
-                  info.append("model=").append(Build.MODEL).append('\n');
-                  info.append("device=").append(Build.DEVICE).append('\n');
-                  info.append("android_release=").append(Build.VERSION.RELEASE).append('\n');
-                  info.append("sdk=").append(Build.VERSION.SDK_INT).append('\n');
-                  info.append("abis=").append(Arrays.toString(Build.SUPPORTED_ABIS)).append('\n');
-                  info.append("max_heap_mb=").append(Runtime.getRuntime().maxMemory() / (1024 * 1024)).append('\n');
-                  info.append("locale=").append(Locale.getDefault().toLanguageTag()).append('\n');
-                  info.append("log_directory_present=").append(logDir.isDirectory()).append('\n');
-                  return info.toString();
-              }
-
-              private static void addText(ZipOutputStream zip, String name, String text) throws IOException {
-                  ZipEntry entry = new ZipEntry(name);
-                  zip.putNextEntry(entry);
-                  zip.write(text.getBytes(StandardCharsets.UTF_8));
-                  zip.closeEntry();
-              }
-
-              private static void addFile(ZipOutputStream zip, File file, String name) throws IOException {
-                  ZipEntry entry = new ZipEntry(name);
-                  entry.setTime(file.lastModified());
-                  zip.putNextEntry(entry);
-                  byte[] buffer = new byte[BUFFER_SIZE];
-                  try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file))) {
-                      int count;
-                      while ((count = in.read(buffer)) != -1) {
-                          zip.write(buffer, 0, count);
-                      }
-                  }
-                  zip.closeEntry();
-              }
-
-              private static void shareBundle(Context context, File bundle) {
-                  try {
-                      Uri uri = FileProvider.getUriForFile(
-                              context,
-                              BuildConfig.APPLICATION_ID + ".provider",
-                              bundle);
-                      Intent send = new Intent(Intent.ACTION_SEND);
-                      send.setType("application/zip");
-                      send.putExtra(Intent.EXTRA_STREAM, uri);
-                      send.putExtra(Intent.EXTRA_SUBJECT, "Nova diagnostics " + BuildConfig.VERSION_NAME);
-                      send.setClipData(android.content.ClipData.newRawUri("Nova diagnostics", uri));
-                      send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                      Intent chooser = Intent.createChooser(send, "Share Nova diagnostics");
-                      if (!(context instanceof android.app.Activity)) {
-                          chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                      }
-                      context.startActivity(chooser);
-                  } catch (Exception e) {
-                      log.error("Could not share diagnostics bundle", e);
-                      Toast.makeText(context, "Diagnostics created, but sharing failed", Toast.LENGTH_LONG).show();
-                  }
-              }
-          }
-          JAVA
-
-          cat > nova/Video/src/main/java/com/archos/mediacenter/video/utils/DiagnosticsCrashHandler.java <<'JAVA'
-          package com.archos.mediacenter.video.utils;
-
-          import android.content.Context;
-          import android.os.Build;
-
-          import com.archos.mediacenter.video.BuildConfig;
-
-          import java.io.File;
-          import java.io.FileOutputStream;
-          import java.io.PrintWriter;
-          import java.text.SimpleDateFormat;
-          import java.util.Date;
-          import java.util.Locale;
-
-          public final class DiagnosticsCrashHandler implements Thread.UncaughtExceptionHandler {
-              private static volatile boolean installed;
-              private final Context appContext;
-              private final Thread.UncaughtExceptionHandler previous;
-
-              private DiagnosticsCrashHandler(Context context, Thread.UncaughtExceptionHandler previous) {
-                  this.appContext = context.getApplicationContext();
-                  this.previous = previous;
-              }
-
-              public static synchronized void install(Context context) {
-                  if (installed || context == null) {
-                      return;
-                  }
-                  Thread.UncaughtExceptionHandler current = Thread.getDefaultUncaughtExceptionHandler();
-                  Thread.setDefaultUncaughtExceptionHandler(new DiagnosticsCrashHandler(context, current));
-                  installed = true;
-              }
-
-              @Override
-              public void uncaughtException(Thread thread, Throwable throwable) {
-                  try {
-                      File externalFiles = appContext.getExternalFilesDir(null);
-                      if (externalFiles != null) {
-                          File logDir = new File(externalFiles, "logback");
-                          if (logDir.isDirectory() || logDir.mkdirs()) {
-                              File crashFile = new File(logDir, "last-crash.txt");
-                              try (PrintWriter writer = new PrintWriter(new FileOutputStream(crashFile, false))) {
-                                  writer.println("Nova uncaught Java crash");
-                                  writer.println("timestamp=" + new SimpleDateFormat(
-                                          "yyyy-MM-dd HH:mm:ss.SSS Z", Locale.US).format(new Date()));
-                                  writer.println("thread=" + (thread == null ? "unknown" : thread.getName()));
-                                  writer.println("app_version=" + BuildConfig.VERSION_NAME);
-                                  writer.println("device=" + Build.MANUFACTURER + " " + Build.MODEL);
-                                  writer.println("android=" + Build.VERSION.RELEASE + " sdk=" + Build.VERSION.SDK_INT);
-                                  writer.println();
-                                  if (throwable != null) {
-                                      throwable.printStackTrace(writer);
-                                  }
-                                  writer.flush();
-                              }
-                          }
-                      }
-                  } catch (Throwable ignored) {
-                  } finally {
-                      if (previous != null) {
-                          previous.uncaughtException(thread, throwable);
-                      } else {
-                          android.os.Process.killProcess(android.os.Process.myPid());
-                          System.exit(10);
-                      }
-                  }
-              }
-          }
-          JAVA
-
-          cat > nova/Video/res/values/diagnostics_strings.xml <<'XML'
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <string name="preferences_export_diagnostics_title">Export diagnostics</string>
-              <string name="preferences_export_diagnostics_summary">Create a ZIP with Nova logs, crash details and basic device/app information for debugging</string>
-          </resources>
-          XML
-
-          python3 <<'PY'
-          from pathlib import Path
-
-          # Attach rolling file logging and make the player path detailed enough for debugging.
-          logback = Path("nova/Video/res/raw/logback_full.xml")
-          text = logback.read_text(encoding="utf-8")
-          text = text.replace(
-              "<pattern>%msg%n</pattern>\n        </encoder>\n        <filter class=\"ch.qos.logback.classic.filter.LevelFilter\">\n            <!-- exclude trace from logcat-->\n            <level>DEBUG</level>\n        </filter>\n        <rollingPolicy",
-              "<pattern>%date{ISO8601} [%thread] %-5level %logger{64} - %msg%n</pattern>\n        </encoder>\n        <filter class=\"ch.qos.logback.classic.filter.ThresholdFilter\">\n            <level>DEBUG</level>\n        </filter>\n        <rollingPolicy",
-              1)
-          for logger_name in [
-              "com.archos.mediacenter.video.player.Player",
-              "com.archos.mediacenter.video.player.SurfaceController",
-              "com.archos.mediacenter.video.player.PlayerActivity",
-              "com.archos.mediacenter.video.player.PlayerController",
-              "com.archos.mediacenter.video.player.PlayerService",
-          ]:
-              text = text.replace(
-                  f'<logger name="{logger_name}" level="INFO"/>',
-                  f'<logger name="{logger_name}" level="DEBUG"/>')
-          if '<logger name="com.archos.medialib" level="DEBUG"/>' not in text:
-              text = text.replace(
-                  '    <!-- Debug permissions -->',
-                  '    <logger name="com.archos.medialib" level="DEBUG"/>\n\n    <!-- Debug permissions -->',
-                  1)
-          text = text.replace(
-              '    <root level="INFO">\n        <appender-ref ref="logcat"/>\n    </root>',
-              '    <root level="INFO">\n        <appender-ref ref="logcat"/>\n        <appender-ref ref="LOG_FILE"/>\n    </root>',
-              1)
-          if '<appender-ref ref="LOG_FILE"/>' not in text:
-              raise SystemExit("Failed to attach LOG_FILE appender")
-          logback.write_text(text, encoding="utf-8")
-
-          # Add Export diagnostics to the About section.
-          prefs_xml = Path("nova/Video/res/xml/preferences_video.xml")
-          text = prefs_xml.read_text(encoding="utf-8")
-          version_item = '''        <Preference
-                      android:title="@string/APP_INFO"
-                      android:selectable="false"
-                      android:key="preferences_version"
-                      app:iconSpaceReserved="false"/>
-          '''
-          diag_item = '''
-                  <Preference
-                      android:key="export_diagnostics"
-                      android:title="@string/preferences_export_diagnostics_title"
-                      android:summary="@string/preferences_export_diagnostics_summary"
-                      app:iconSpaceReserved="false"/>
-          '''
-          if 'android:key="export_diagnostics"' not in text:
-              if version_item not in text:
-                  raise SystemExit("Could not locate version preference")
-              text = text.replace(version_item, version_item + diag_item, 1)
-          prefs_xml.write_text(text, encoding="utf-8")
-
-          # Wire the preference click.
-          prefs_java = Path("nova/Video/src/main/java/com/archos/mediacenter/video/utils/VideoPreferencesCommon.java")
-          text = prefs_java.read_text(encoding="utf-8")
-          if 'KEY_EXPORT_DIAGNOSTICS' not in text:
-              text = text.replace(
-                  '    public static final String KEY_ABOUT_PREFERENCES = "preferences_about";',
-                  '    public static final String KEY_ABOUT_PREFERENCES = "preferences_about";\n'
-                  '    public static final String KEY_EXPORT_DIAGNOSTICS = "export_diagnostics";',
-                  1)
-          click_marker = '''        Preference novaVersion = (Preference) findPreference("preferences_version");
-                  novaVersion.setTitle(mSharedPreferences.getString("nova_version", "@string/APP_INFO"));
-          '''
-          click_code = '''
-                  Preference exportDiagnostics = findPreference(KEY_EXPORT_DIAGNOSTICS);
-                  if (exportDiagnostics != null) {
-                      exportDiagnostics.setOnPreferenceClickListener(preference -> {
-                          DiagnosticsExporter.export(getActivity());
-                          return true;
-                      });
-                  }
-          '''
-          if 'DiagnosticsExporter.export(getActivity())' not in text:
-              if click_marker not in text:
-                  raise SystemExit("Could not locate About preference initialization")
-              text = text.replace(click_marker, click_marker + click_code, 1)
-          prefs_java.write_text(text, encoding="utf-8")
-
-          # Install the crash capture handler once on app startup.
-          app = Path("nova/Video/src/main/java/com/archos/mediacenter/video/CustomApplication.java")
-          text = app.read_text(encoding="utf-8")
-          if 'import com.archos.mediacenter.video.utils.DiagnosticsCrashHandler;' not in text:
-              text = text.replace(
-                  'import com.archos.mediacenter.video.utils.CodecDiscovery;',
-                  'import com.archos.mediacenter.video.utils.CodecDiscovery;\n'
-                  'import com.archos.mediacenter.video.utils.DiagnosticsCrashHandler;',
-                  1)
-          if 'DiagnosticsCrashHandler.install(this);' not in text:
-              text = text.replace(
-                  '        configureFullLoggingAsync();',
-                  '        configureFullLoggingAsync();\n        DiagnosticsCrashHandler.install(this);',
-                  1)
-          app.write_text(text, encoding="utf-8")
-
-          # Add explicit PiP diagnostics around the custom handheld path and the existing mode callback.
-          player = Path("nova/Video/src/main/java/com/archos/mediacenter/video/player/PlayerActivity.java")
-          text = player.read_text(encoding="utf-8")
-          text = text.replace(
-              '                      enterPictureInPictureMode(builder.build());',
-              '                      log.info("PiP: entering PiP video={}x{}", mPlayer != null ? mPlayer.getVideoWidth() : 0, mPlayer != null ? mPlayer.getVideoHeight() : 0);\n'
-              '                      enterPictureInPictureMode(builder.build());',
-              1)
-          text = text.replace(
-              '    public void onPictureInPictureModeChanged(boolean isInPict){\n'
-              '        super.onPictureInPictureModeChanged(isInPict);',
-              '    public void onPictureInPictureModeChanged(boolean isInPict){\n'
-              '        super.onPictureInPictureModeChanged(isInPict);\n'
-              '        log.info("PiP: mode changed isInPiP={}", isInPict);',
-              1)
-          player.write_text(text, encoding="utf-8")
-          PY
-
-          grep -n -A8 -B3 "export_diagnostics" nova/Video/res/xml/preferences_video.xml
-          grep -n -A8 -B3 "DiagnosticsExporter.export" nova/Video/src/main/java/com/archos/mediacenter/video/utils/VideoPreferencesCommon.java
-          grep -n -A4 -B2 'appender-ref ref="LOG_FILE"' nova/Video/res/raw/logback_full.xml
-
-      - name: Apply locally validated subtitle and HDR patches
+      - name: Retrieve unchanged Nova dependencies
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf feature-patches
-          mkdir feature-patches
-          tar -xzf "$GITHUB_WORKSPACE/.github/patches/nova-final-feature-patches.tar.gz" -C feature-patches
-          (
-            cd feature-patches
-            sha256sum -c PATCH_SHA256.txt
-          )
-
-          git -C nova/Video apply --check "$GITHUB_WORKSPACE/feature-patches/video-subtitle-hdr.patch"
-          git -C nova/MediaLib apply --check "$GITHUB_WORKSPACE/feature-patches/medialib-hdr.patch"
-          git -C nova/native/avos apply --check "$GITHUB_WORKSPACE/feature-patches/avos-hdr.patch"
-
-          git -C nova/Video apply "$GITHUB_WORKSPACE/feature-patches/video-subtitle-hdr.patch"
-          git -C nova/MediaLib apply "$GITHUB_WORKSPACE/feature-patches/medialib-hdr.patch"
-          git -C nova/native/avos apply "$GITHUB_WORKSPACE/feature-patches/avos-hdr.patch"
-
-          git -C nova/Video diff --check
-          git -C nova/MediaLib diff --check
-          git -C nova/native/avos diff --check
-
-          git -C nova/Video add -A
-          VIDEO_TREE="$(git -C nova/Video write-tree)"
-          echo "Video final tree: $VIDEO_TREE"
-          test "$VIDEO_TREE" = "1bc28f7532b520658b1c6cf7482924a9ef121f8e"
-          git -C nova/Video reset
-
-          git -C nova/MediaLib add -A
-          MEDIALIB_TREE="$(git -C nova/MediaLib write-tree)"
-          echo "MediaLib final tree: $MEDIALIB_TREE"
-          test "$MEDIALIB_TREE" = "14bbdf89b76725df73b31116c0bf5eedeb83f650"
-          git -C nova/MediaLib reset
-
-          git -C nova/native/avos add -A
-          AVOS_TREE="$(git -C nova/native/avos write-tree)"
-          echo "avos final tree: $AVOS_TREE"
-          test "$AVOS_TREE" = "1af5b2e0c3662ba624be0d73016e4e6add360769"
-          git -C nova/native/avos reset
-
-          echo "Final source trees exactly match the locally validated implementation."
-
-      - name: Package exact PiP source snapshot
-        shell: bash
-        run: |
-          mkdir -p artifacts
-          cd nova/Video
-          git add -A
-          TREE="$(git write-tree)"
-          echo "Patched source tree: $TREE"
-          test "$TREE" = "1bc28f7532b520658b1c6cf7482924a9ef121f8e"
-          git reset
-          tar -czf ../../artifacts/NOVA-pip-current-Video-source.tar.gz .
-          cd ../..
-          sha256sum artifacts/NOVA-pip-current-Video-source.tar.gz | tee artifacts/SOURCE_SHA256.txt
-
-      - name: Upload exact PiP source snapshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: nova-pip-current-video-source
-          path: |
-            artifacts/NOVA-pip-current-Video-source.tar.gz
-            artifacts/SOURCE_SHA256.txt
-          if-no-files-found: error
-          retention-days: 14
+          mkdir buildtree
+          cd buildtree
+          repo init -u https://github.com/nova-video-player/aos-AVP -b nova -m v6_4.xml
+          repo sync -j 4
+          repo forall -c 'git checkout -t $REPO_REMOTE/$REPO_RREV || git checkout $REPO_RREV'
+          git -C Video checkout --detach cab25da088a28601795c795c9ad6375f2054f60a
+          git -C MediaLib checkout --detach 3e904a4e657c2abc9a6b12192a095d52714041b7
+          git -C native/avos checkout --detach 1a7b5b278654cac0ba8ba4aa3eb35d455af23510
+          rm -rf Video MediaLib native/avos
+          cp -a "$GITHUB_WORKSPACE/nova/Video" Video
+          cp -a "$GITHUB_WORKSPACE/nova/MediaLib" MediaLib
+          mkdir -p native
+          cp -a "$GITHUB_WORKSPACE/nova/native/avos" native/avos
+          cp AVP/Makefile Makefile
 
       - name: Build signed universal debug APK
         run: |
-          cd nova/Video
+          cd buildtree/Video
           ./gradlew --no-daemon -Puniversal assembleNoamazonDebug
 
       - name: Collect APK
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p artifacts
-          find nova/Video/build/outputs/apk -type f -name "*.apk" -print
-          APK="$(find nova/Video/build/outputs/apk -type f -name "*.apk" | head -n 1)"
+          APK="$(find buildtree/Video/build/outputs/apk -type f -name '*.apk' | head -n 1)"
           test -n "$APK"
           cp "$APK" artifacts/Nova-PiP-Diagnostics-Subtitles-HDRtoSDR.apk
           sha256sum artifacts/Nova-PiP-Diagnostics-Subtitles-HDRtoSDR.apk | tee artifacts/SHA256.txt
