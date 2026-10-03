@@ -1,9 +1,15 @@
-# Android_Development
+# Android_Development — Nova
 
-## Mandatory instructions
+`nova-pip-build` is the canonical development branch for the current custom Nova build.
 
-**Before making any change in this repository, read [AGENTS.md](./AGENTS.md) in full. Compliance with `AGENTS.md` is compulsory for all agents, assistants, contributors, scripts, and automated development workflows.**
+The finalized modified source is checked in directly under `nova/`:
 
-Do not begin source-code, build-script, workflow, configuration, or project modifications until the requirements in `AGENTS.md` have been reviewed and are being followed.
+- `nova/Video`
+- `nova/MediaLib`
+- `nova/native/avos`
 
-In particular, this repository requires a **local-first development workflow**: develop and validate changes locally first, review the final diff, then commit/push coherent changes and use GitHub Actions for final Android-specific validation and APK/artifact generation.
+Current feature baseline: handheld PiP, diagnostics/export, local subtitle-file loading, and HDR-to-SDR conversion.
+
+Development follows [AGENTS.md](./AGENTS.md): develop and validate locally first, review the final diff, commit coherent source changes, then use GitHub Actions only for authoritative Android/NDK validation and APK generation.
+
+The build workflow does not inject feature source or apply feature patches. It validates the checked-in source trees, retrieves unchanged upstream dependencies, builds Nova, and uploads the APK artifact.
