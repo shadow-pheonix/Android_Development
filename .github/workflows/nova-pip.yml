@@ -50,6 +50,30 @@ jobs:
           echo "Video revision:"
           git -C Video log -1 --oneline
 
+      - name: Package exact dependency source snapshots
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cd nova/MediaLib
+          test "$(git rev-parse 'HEAD^{tree}')" = "d1820068f34b767f823fef0c6dd511518272bf2d"
+          tar -czf ../../artifacts/NOVA-pip-current-MediaLib-source.tar.gz .
+          cd ../native/avos
+          test "$(git rev-parse 'HEAD^{tree}')" = "b2e0c2dbd642aecf414d633587bb7b3f4353d454"
+          tar -czf ../../../artifacts/NOVA-pip-current-avos-source.tar.gz .
+          cd ../../..
+          sha256sum artifacts/NOVA-pip-current-MediaLib-source.tar.gz artifacts/NOVA-pip-current-avos-source.tar.gz | tee artifacts/DEPS_SOURCE_SHA256.txt
+
+      - name: Upload exact dependency source snapshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-pip-current-deps-source
+          path: |
+            artifacts/NOVA-pip-current-MediaLib-source.tar.gz
+            artifacts/NOVA-pip-current-avos-source.tar.gz
+            artifacts/DEPS_SOURCE_SHA256.txt
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Add handheld native Picture-in-Picture
         shell: bash
         run: |
