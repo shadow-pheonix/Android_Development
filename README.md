@@ -76,3 +76,12 @@ An app can be extracted later if necessary, so creating a separate repository at
 ## Preferred development flow
 
 **Read AGENTS.md → select the target app under `apps/` → prepare locally → validate locally → inspect final diff → commit coherent batch → build/test in GitHub Actions → fix any CI-specific issue locally → produce APK/artifact.**
+
+## Fresh app / fresh chat rule
+
+For a **brand-new app**, development must be completed and checked in the local working environment first. The finalized app is committed to GitHub only after local verification, and GitHub Actions is then used for the authoritative Android build and APK generation.
+
+For an **existing app in a fresh chat**, the current `Android_Development` repository must first be cloned or synchronized from GitHub into the local working environment. Development must continue from that existing local checkout; the app must not be recreated from memory or edited directly on GitHub as the primary development loop.
+
+See `AGENTS.md` for the mandatory detailed workflow.
+
