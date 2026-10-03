@@ -480,7 +480,7 @@ jobs:
           text = player.read_text(encoding="utf-8")
           text = text.replace(
               '                      enterPictureInPictureMode(builder.build());',
-              '                      log.info("PiP: entering handheld PiP video={}x{}", videoWidth, videoHeight);\n'
+              '                      log.info("PiP: entering PiP video={}x{}", mPlayer != null ? mPlayer.getVideoWidth() : 0, mPlayer != null ? mPlayer.getVideoHeight() : 0);\n'
               '                      enterPictureInPictureMode(builder.build());',
               1)
           text = text.replace(
