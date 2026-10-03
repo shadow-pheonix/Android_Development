@@ -17,6 +17,9 @@ jobs:
     timeout-minutes: 45
 
     steps:
+      - name: Checkout build recipe
+        uses: actions/checkout@v4
+
       - name: Configure NDK environment
         shell: bash
         run: |
