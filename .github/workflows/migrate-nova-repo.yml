@@ -34,8 +34,20 @@ jobs:
           gh run download 37145367592 --repo "$GITHUB_REPOSITORY" \
             --name nova-pip-current-deps-source --dir /tmp/nova-migrate/deps
 
-          (cd /tmp/nova-migrate/video && sha256sum -c SOURCE_SHA256.txt)
-          (cd /tmp/nova-migrate/deps && sha256sum -c DEPS_SOURCE_SHA256.txt)
+          (
+            cd /tmp/nova-migrate/video
+            while read -r hash path; do
+              file="${path##*/}"
+              printf '%s  %s\n' "$hash" "$file"
+            done < SOURCE_SHA256.txt | sha256sum -c -
+          )
+          (
+            cd /tmp/nova-migrate/deps
+            while read -r hash path; do
+              file="${path##*/}"
+              printf '%s  %s\n' "$hash" "$file"
+            done < DEPS_SOURCE_SHA256.txt | sha256sum -c -
+          )
 
           tar -xzf /tmp/nova-migrate/video/NOVA-pip-current-Video-source.tar.gz -C nova/Video
           tar -xzf /tmp/nova-migrate/deps/NOVA-pip-current-MediaLib-source.tar.gz -C nova/MediaLib
