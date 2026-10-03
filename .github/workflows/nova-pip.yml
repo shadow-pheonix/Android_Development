@@ -541,13 +541,13 @@ jobs:
             sha256sum -c PATCH_SHA256.txt
           )
 
-          git -C nova/Video apply --check feature-patches/video-subtitle-hdr.patch
-          git -C nova/MediaLib apply --check feature-patches/medialib-hdr.patch
-          git -C nova/native/avos apply --check feature-patches/avos-hdr.patch
+          git -C nova/Video apply --check "$GITHUB_WORKSPACE/feature-patches/video-subtitle-hdr.patch"
+          git -C nova/MediaLib apply --check "$GITHUB_WORKSPACE/feature-patches/medialib-hdr.patch"
+          git -C nova/native/avos apply --check "$GITHUB_WORKSPACE/feature-patches/avos-hdr.patch"
 
-          git -C nova/Video apply feature-patches/video-subtitle-hdr.patch
-          git -C nova/MediaLib apply feature-patches/medialib-hdr.patch
-          git -C nova/native/avos apply feature-patches/avos-hdr.patch
+          git -C nova/Video apply "$GITHUB_WORKSPACE/feature-patches/video-subtitle-hdr.patch"
+          git -C nova/MediaLib apply "$GITHUB_WORKSPACE/feature-patches/medialib-hdr.patch"
+          git -C nova/native/avos apply "$GITHUB_WORKSPACE/feature-patches/avos-hdr.patch"
 
           git -C nova/Video diff --check
           git -C nova/MediaLib diff --check
