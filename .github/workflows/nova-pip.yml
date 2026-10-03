@@ -65,6 +65,7 @@ jobs:
               raise SystemExit("Handheld PiP patch already present upstream; refusing to duplicate it.")
 
           block = r'''
+              @androidx.annotation.RequiresApi(Build.VERSION_CODES.O)
               private boolean canEnterHandheldPictureInPicture() {
                   return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                           && !TVUtils.isTV(this)
@@ -76,6 +77,7 @@ jobs:
                           && !isInPictureInPictureMode();
               }
 
+              @androidx.annotation.RequiresApi(Build.VERSION_CODES.O)
               private void enterHandheldPictureInPicture() {
                   if (!canEnterHandheldPictureInPicture()) {
                       return;
@@ -113,7 +115,9 @@ jobs:
               @Override
               protected void onUserLeaveHint() {
                   super.onUserLeaveHint();
-                  enterHandheldPictureInPicture();
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                      enterHandheldPictureInPicture();
+                  }
               }
           '''
 
