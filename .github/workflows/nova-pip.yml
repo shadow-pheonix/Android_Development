@@ -130,6 +130,373 @@ jobs:
 
           grep -n -A55 -B5 "canEnterHandheldPictureInPicture" nova/Video/src/main/java/com/archos/mediacenter/video/player/PlayerActivity.java
 
+
+      - name: Add diagnostics logging and export
+        shell: bash
+        run: |
+          cat > nova/Video/src/main/java/com/archos/mediacenter/video/utils/DiagnosticsExporter.java <<'JAVA'
+          package com.archos.mediacenter.video.utils;
+
+          import android.content.Context;
+          import android.content.Intent;
+          import android.net.Uri;
+          import android.os.Build;
+          import android.os.Handler;
+          import android.os.Looper;
+          import android.widget.Toast;
+
+          import androidx.core.content.FileProvider;
+
+          import com.archos.mediacenter.video.BuildConfig;
+
+          import org.slf4j.Logger;
+          import org.slf4j.LoggerFactory;
+
+          import java.io.BufferedInputStream;
+          import java.io.BufferedOutputStream;
+          import java.io.File;
+          import java.io.FileInputStream;
+          import java.io.FileOutputStream;
+          import java.io.IOException;
+          import java.nio.charset.StandardCharsets;
+          import java.text.SimpleDateFormat;
+          import java.util.Arrays;
+          import java.util.Date;
+          import java.util.Locale;
+          import java.util.zip.ZipEntry;
+          import java.util.zip.ZipOutputStream;
+
+          public final class DiagnosticsExporter {
+              private static final Logger log = LoggerFactory.getLogger(DiagnosticsExporter.class);
+              private static final int BUFFER_SIZE = 64 * 1024;
+
+              private DiagnosticsExporter() {}
+
+              public static void export(Context context) {
+                  if (context == null) {
+                      return;
+                  }
+                  final Context appContext = context.getApplicationContext();
+                  final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+                  new Thread(() -> {
+                      try {
+                          File bundle = createBundle(appContext);
+                          mainHandler.post(() -> shareBundle(context, bundle));
+                      } catch (Exception e) {
+                          log.error("Diagnostics export failed", e);
+                          mainHandler.post(() -> Toast.makeText(
+                                  context,
+                                  "Could not create diagnostics: " + e.getClass().getSimpleName(),
+                                  Toast.LENGTH_LONG).show());
+                      }
+                  }, "diagnostics-export").start();
+              }
+
+              private static File createBundle(Context context) throws IOException {
+                  File externalFiles = context.getExternalFilesDir(null);
+                  if (externalFiles == null) {
+                      throw new IOException("External files directory unavailable");
+                  }
+
+                  File logDir = new File(externalFiles, "logback");
+                  File diagnosticsDir = new File(externalFiles, "diagnostics");
+                  if (!diagnosticsDir.isDirectory() && !diagnosticsDir.mkdirs()) {
+                      throw new IOException("Could not create diagnostics directory");
+                  }
+
+                  String stamp = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(new Date());
+                  File outFile = new File(diagnosticsDir, "nova-diagnostics-" + stamp + ".zip");
+
+                  try (ZipOutputStream zip = new ZipOutputStream(
+                          new BufferedOutputStream(new FileOutputStream(outFile)))) {
+                      addText(zip, "diagnostics-info.txt", buildMetadata(context, logDir));
+
+                      if (logDir.isDirectory()) {
+                          File[] files = logDir.listFiles();
+                          if (files != null) {
+                              Arrays.sort(files, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                              for (File file : files) {
+                                  if (file.isFile()
+                                          && (file.getName().startsWith("nova")
+                                              || "last-crash.txt".equals(file.getName())
+                                              || "logback.xml".equals(file.getName()))) {
+                                      addFile(zip, file, "logs/" + file.getName());
+                                  }
+                              }
+                          }
+                      }
+                  }
+
+                  log.info("Diagnostics bundle created: {} ({} bytes)", outFile.getName(), outFile.length());
+                  return outFile;
+              }
+
+              private static String buildMetadata(Context context, File logDir) {
+                  StringBuilder info = new StringBuilder();
+                  info.append("Nova diagnostics\n");
+                  info.append("generated=").append(new Date()).append('\n');
+                  info.append("app_version=").append(BuildConfig.VERSION_NAME).append('\n');
+                  info.append("app_version_code=").append(BuildConfig.VERSION_CODE).append('\n');
+                  info.append("package=").append(BuildConfig.APPLICATION_ID).append('\n');
+                  info.append("manufacturer=").append(Build.MANUFACTURER).append('\n');
+                  info.append("model=").append(Build.MODEL).append('\n');
+                  info.append("device=").append(Build.DEVICE).append('\n');
+                  info.append("android_release=").append(Build.VERSION.RELEASE).append('\n');
+                  info.append("sdk=").append(Build.VERSION.SDK_INT).append('\n');
+                  info.append("abis=").append(Arrays.toString(Build.SUPPORTED_ABIS)).append('\n');
+                  info.append("max_heap_mb=").append(Runtime.getRuntime().maxMemory() / (1024 * 1024)).append('\n');
+                  info.append("locale=").append(Locale.getDefault().toLanguageTag()).append('\n');
+                  info.append("log_directory_present=").append(logDir.isDirectory()).append('\n');
+                  return info.toString();
+              }
+
+              private static void addText(ZipOutputStream zip, String name, String text) throws IOException {
+                  ZipEntry entry = new ZipEntry(name);
+                  zip.putNextEntry(entry);
+                  zip.write(text.getBytes(StandardCharsets.UTF_8));
+                  zip.closeEntry();
+              }
+
+              private static void addFile(ZipOutputStream zip, File file, String name) throws IOException {
+                  ZipEntry entry = new ZipEntry(name);
+                  entry.setTime(file.lastModified());
+                  zip.putNextEntry(entry);
+                  byte[] buffer = new byte[BUFFER_SIZE];
+                  try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file))) {
+                      int count;
+                      while ((count = in.read(buffer)) != -1) {
+                          zip.write(buffer, 0, count);
+                      }
+                  }
+                  zip.closeEntry();
+              }
+
+              private static void shareBundle(Context context, File bundle) {
+                  try {
+                      Uri uri = FileProvider.getUriForFile(
+                              context,
+                              BuildConfig.APPLICATION_ID + ".provider",
+                              bundle);
+                      Intent send = new Intent(Intent.ACTION_SEND);
+                      send.setType("application/zip");
+                      send.putExtra(Intent.EXTRA_STREAM, uri);
+                      send.putExtra(Intent.EXTRA_SUBJECT, "Nova diagnostics " + BuildConfig.VERSION_NAME);
+                      send.setClipData(android.content.ClipData.newRawUri("Nova diagnostics", uri));
+                      send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                      Intent chooser = Intent.createChooser(send, "Share Nova diagnostics");
+                      if (!(context instanceof android.app.Activity)) {
+                          chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                      }
+                      context.startActivity(chooser);
+                  } catch (Exception e) {
+                      log.error("Could not share diagnostics bundle", e);
+                      Toast.makeText(context, "Diagnostics created, but sharing failed", Toast.LENGTH_LONG).show();
+                  }
+              }
+          }
+          JAVA
+
+          cat > nova/Video/src/main/java/com/archos/mediacenter/video/utils/DiagnosticsCrashHandler.java <<'JAVA'
+          package com.archos.mediacenter.video.utils;
+
+          import android.content.Context;
+          import android.os.Build;
+
+          import com.archos.mediacenter.video.BuildConfig;
+
+          import java.io.File;
+          import java.io.FileOutputStream;
+          import java.io.PrintWriter;
+          import java.text.SimpleDateFormat;
+          import java.util.Date;
+          import java.util.Locale;
+
+          public final class DiagnosticsCrashHandler implements Thread.UncaughtExceptionHandler {
+              private static volatile boolean installed;
+              private final Context appContext;
+              private final Thread.UncaughtExceptionHandler previous;
+
+              private DiagnosticsCrashHandler(Context context, Thread.UncaughtExceptionHandler previous) {
+                  this.appContext = context.getApplicationContext();
+                  this.previous = previous;
+              }
+
+              public static synchronized void install(Context context) {
+                  if (installed || context == null) {
+                      return;
+                  }
+                  Thread.UncaughtExceptionHandler current = Thread.getDefaultUncaughtExceptionHandler();
+                  Thread.setDefaultUncaughtExceptionHandler(new DiagnosticsCrashHandler(context, current));
+                  installed = true;
+              }
+
+              @Override
+              public void uncaughtException(Thread thread, Throwable throwable) {
+                  try {
+                      File externalFiles = appContext.getExternalFilesDir(null);
+                      if (externalFiles != null) {
+                          File logDir = new File(externalFiles, "logback");
+                          if (logDir.isDirectory() || logDir.mkdirs()) {
+                              File crashFile = new File(logDir, "last-crash.txt");
+                              try (PrintWriter writer = new PrintWriter(new FileOutputStream(crashFile, false))) {
+                                  writer.println("Nova uncaught Java crash");
+                                  writer.println("timestamp=" + new SimpleDateFormat(
+                                          "yyyy-MM-dd HH:mm:ss.SSS Z", Locale.US).format(new Date()));
+                                  writer.println("thread=" + (thread == null ? "unknown" : thread.getName()));
+                                  writer.println("app_version=" + BuildConfig.VERSION_NAME);
+                                  writer.println("device=" + Build.MANUFACTURER + " " + Build.MODEL);
+                                  writer.println("android=" + Build.VERSION.RELEASE + " sdk=" + Build.VERSION.SDK_INT);
+                                  writer.println();
+                                  if (throwable != null) {
+                                      throwable.printStackTrace(writer);
+                                  }
+                                  writer.flush();
+                              }
+                          }
+                      }
+                  } catch (Throwable ignored) {
+                  } finally {
+                      if (previous != null) {
+                          previous.uncaughtException(thread, throwable);
+                      } else {
+                          android.os.Process.killProcess(android.os.Process.myPid());
+                          System.exit(10);
+                      }
+                  }
+              }
+          }
+          JAVA
+
+          cat > nova/Video/res/values/diagnostics_strings.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="preferences_export_diagnostics_title">Export diagnostics</string>
+              <string name="preferences_export_diagnostics_summary">Create a ZIP with Nova logs, crash details and basic device/app information for debugging</string>
+          </resources>
+          XML
+
+          python3 <<'PY'
+          from pathlib import Path
+
+          # Attach rolling file logging and make the player path detailed enough for debugging.
+          logback = Path("nova/Video/res/raw/logback_full.xml")
+          text = logback.read_text(encoding="utf-8")
+          text = text.replace(
+              "<pattern>%msg%n</pattern>\\n        </encoder>\\n        <filter class=\"ch.qos.logback.classic.filter.LevelFilter\">\\n            <!-- exclude trace from logcat-->\\n            <level>DEBUG</level>\\n        </filter>\\n        <rollingPolicy",
+              "<pattern>%date{ISO8601} [%thread] %-5level %logger{64} - %msg%n</pattern>\\n        </encoder>\\n        <filter class=\"ch.qos.logback.classic.filter.ThresholdFilter\">\\n            <level>DEBUG</level>\\n        </filter>\\n        <rollingPolicy",
+              1)
+          for logger_name in [
+              "com.archos.mediacenter.video.player.Player",
+              "com.archos.mediacenter.video.player.SurfaceController",
+              "com.archos.mediacenter.video.player.PlayerActivity",
+              "com.archos.mediacenter.video.player.PlayerController",
+              "com.archos.mediacenter.video.player.PlayerService",
+          ]:
+              text = text.replace(
+                  f'<logger name="{logger_name}" level="INFO"/>',
+                  f'<logger name="{logger_name}" level="DEBUG"/>')
+          if '<logger name="com.archos.medialib" level="DEBUG"/>' not in text:
+              text = text.replace(
+                  '    <!-- Debug permissions -->',
+                  '    <logger name="com.archos.medialib" level="DEBUG"/>\\n\\n    <!-- Debug permissions -->',
+                  1)
+          text = text.replace(
+              '    <root level="INFO">\\n        <appender-ref ref="logcat"/>\\n    </root>',
+              '    <root level="INFO">\\n        <appender-ref ref="logcat"/>\\n        <appender-ref ref="LOG_FILE"/>\\n    </root>',
+              1)
+          if '<appender-ref ref="LOG_FILE"/>' not in text:
+              raise SystemExit("Failed to attach LOG_FILE appender")
+          logback.write_text(text, encoding="utf-8")
+
+          # Add Export diagnostics to the About section.
+          prefs_xml = Path("nova/Video/res/xml/preferences_video.xml")
+          text = prefs_xml.read_text(encoding="utf-8")
+          version_item = '''        <Preference
+                      android:title="@string/APP_INFO"
+                      android:selectable="false"
+                      android:key="preferences_version"
+                      app:iconSpaceReserved="false"/>
+          '''
+          diag_item = '''
+                  <Preference
+                      android:key="export_diagnostics"
+                      android:title="@string/preferences_export_diagnostics_title"
+                      android:summary="@string/preferences_export_diagnostics_summary"
+                      app:iconSpaceReserved="false"/>
+          '''
+          if 'android:key="export_diagnostics"' not in text:
+              if version_item not in text:
+                  raise SystemExit("Could not locate version preference")
+              text = text.replace(version_item, version_item + diag_item, 1)
+          prefs_xml.write_text(text, encoding="utf-8")
+
+          # Wire the preference click.
+          prefs_java = Path("nova/Video/src/main/java/com/archos/mediacenter/video/utils/VideoPreferencesCommon.java")
+          text = prefs_java.read_text(encoding="utf-8")
+          if 'KEY_EXPORT_DIAGNOSTICS' not in text:
+              text = text.replace(
+                  '    public static final String KEY_ABOUT_PREFERENCES = "preferences_about";',
+                  '    public static final String KEY_ABOUT_PREFERENCES = "preferences_about";\\n'
+                  '    public static final String KEY_EXPORT_DIAGNOSTICS = "export_diagnostics";',
+                  1)
+          click_marker = '''        Preference novaVersion = (Preference) findPreference("preferences_version");
+                  novaVersion.setTitle(mSharedPreferences.getString("nova_version", "@string/APP_INFO"));
+          '''
+          click_code = '''
+                  Preference exportDiagnostics = findPreference(KEY_EXPORT_DIAGNOSTICS);
+                  if (exportDiagnostics != null) {
+                      exportDiagnostics.setOnPreferenceClickListener(preference -> {
+                          DiagnosticsExporter.export(getActivity());
+                          return true;
+                      });
+                  }
+          '''
+          if 'DiagnosticsExporter.export(getActivity())' not in text:
+              if click_marker not in text:
+                  raise SystemExit("Could not locate About preference initialization")
+              text = text.replace(click_marker, click_marker + click_code, 1)
+          prefs_java.write_text(text, encoding="utf-8")
+
+          # Install the crash capture handler once on app startup.
+          app = Path("nova/Video/src/main/java/com/archos/mediacenter/video/CustomApplication.java")
+          text = app.read_text(encoding="utf-8")
+          if 'import com.archos.mediacenter.video.utils.DiagnosticsCrashHandler;' not in text:
+              text = text.replace(
+                  'import com.archos.mediacenter.video.utils.CodecDiscovery;',
+                  'import com.archos.mediacenter.video.utils.CodecDiscovery;\\n'
+                  'import com.archos.mediacenter.video.utils.DiagnosticsCrashHandler;',
+                  1)
+          if 'DiagnosticsCrashHandler.install(this);' not in text:
+              text = text.replace(
+                  '        configureFullLoggingAsync();',
+                  '        configureFullLoggingAsync();\\n        DiagnosticsCrashHandler.install(this);',
+                  1)
+          app.write_text(text, encoding="utf-8")
+
+          # Add explicit PiP diagnostics around the custom handheld path and the existing mode callback.
+          player = Path("nova/Video/src/main/java/com/archos/mediacenter/video/player/PlayerActivity.java")
+          text = player.read_text(encoding="utf-8")
+          text = text.replace(
+              '                      enterPictureInPictureMode(builder.build());',
+              '                      log.info("PiP: entering handheld PiP video={}x{}", videoWidth, videoHeight);\\n'
+              '                      enterPictureInPictureMode(builder.build());',
+              1)
+          text = text.replace(
+              '    public void onPictureInPictureModeChanged(boolean isInPict){\\n'
+              '        super.onPictureInPictureModeChanged(isInPict);',
+              '    public void onPictureInPictureModeChanged(boolean isInPict){\\n'
+              '        super.onPictureInPictureModeChanged(isInPict);\\n'
+              '        log.info("PiP: mode changed isInPiP={}", isInPict);',
+              1)
+          player.write_text(text, encoding="utf-8")
+          PY
+
+          grep -n -A8 -B3 "export_diagnostics" nova/Video/res/xml/preferences_video.xml
+          grep -n -A8 -B3 "DiagnosticsExporter.export" nova/Video/src/main/java/com/archos/mediacenter/video/utils/VideoPreferencesCommon.java
+          grep -n -A4 -B2 'appender-ref ref="LOG_FILE"' nova/Video/res/raw/logback_full.xml
+
       - name: Build signed universal debug APK
         run: |
           cd nova/Video
@@ -142,15 +509,15 @@ jobs:
           find nova/Video/build/outputs/apk -type f -name "*.apk" -print
           APK="$(find nova/Video/build/outputs/apk -type f -name "*.apk" | head -n 1)"
           test -n "$APK"
-          cp "$APK" artifacts/Nova-PiP-latest-upstream.apk
-          sha256sum artifacts/Nova-PiP-latest-upstream.apk | tee artifacts/SHA256.txt
+          cp "$APK" artifacts/Nova-PiP-Diagnostics-latest-upstream.apk
+          sha256sum artifacts/Nova-PiP-Diagnostics-latest-upstream.apk | tee artifacts/SHA256.txt
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: nova-pip-latest-upstream
+          name: nova-pip-diagnostics-latest-upstream
           path: |
-            artifacts/Nova-PiP-latest-upstream.apk
+            artifacts/Nova-PiP-Diagnostics-latest-upstream.apk
             artifacts/SHA256.txt
           if-no-files-found: error
           retention-days: 14
