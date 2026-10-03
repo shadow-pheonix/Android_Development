@@ -1,87 +1,57 @@
 # Android_Development
 
-This repository is the primary Android development **monorepo** for building, testing, debugging, and producing APKs for multiple independent Android apps from one GitHub repository.
+A multi-app Android development monorepo for building, testing, debugging, and producing APKs from one GitHub repository.
 
-## Mandatory instructions
+## Mandatory for AI/agent development
 
-**Before making any change in this repository, read [AGENTS.md](./AGENTS.md) in full. Compliance with `AGENTS.md` is compulsory for all agents, assistants, contributors, scripts, and automated development workflows.**
+Before making any change, read **[AGENTS.md](./AGENTS.md)** completely. Its routing and local-first rules are mandatory.
 
-Do not begin source-code, build-script, workflow, configuration, or project modifications until the requirements in `AGENTS.md` have been reviewed and are being followed.
+The core rule is simple:
 
-In particular, this repository requires a **local-first development workflow**: develop and validate changes locally first, review the final diff, then commit/push coherent changes and use GitHub Actions for final Android-specific validation and APK/artifact generation.
+> **Develop and verify locally first. Commit only a coherent, checked batch. Use GitHub Actions afterward for authoritative Android build/test validation and APK generation.**
 
-## Repository strategy: monorepo
+For an app that already exists, a fresh chat must first clone or synchronize the current repository locally and continue from that existing source.
 
-Use this single repository for multiple Android apps instead of creating a new GitHub repository for every experiment, utility, prototype, or personal app.
-
-New apps should normally live under:
+## Repository layout
 
 ```text
 Android_Development/
 ├── AGENTS.md
 ├── README.md
+├── docs/
+│   ├── ROUTING.md
+│   └── WORKFLOW.md
 ├── .github/
 │   └── workflows/
 ├── apps/
 │   ├── AppOne/
-│   ├── AppTwo/
-│   └── AppThree/
-└── shared/
+│   └── AppTwo/
+├── shared/
+└── <legacy root test app>
 ```
 
-Each directory under `apps/<AppName>/` should be treated as an independent Android application workspace with its own:
+New apps normally belong under `apps/<AppName>/`. Each app should remain independently understandable and buildable, with its own package/application ID, versioning, source, resources, and artifact output.
 
-- Gradle project/configuration as appropriate;
-- application/package ID;
-- versioning;
-- source and resources;
-- app-specific documentation when useful;
-- diagnostics/testing configuration when needed;
-- APK/artifact output;
-- optional app-level `AGENTS.md` for rules that apply only to that app.
+The current root-level Android project is a legacy/test project and should not be moved unless migration is explicitly requested.
 
-Shared code or tooling that is genuinely useful to multiple apps may live under `shared/`. Do not move app-specific code into `shared/` merely for convenience.
+## Start here
 
-## CI behavior
+- **Agent/task routing:** [docs/ROUTING.md](docs/ROUTING.md)
+- **Development and validation flow:** [docs/WORKFLOW.md](docs/WORKFLOW.md)
 
-GitHub Actions should be scoped so that changing one app does not unnecessarily build every other app.
+## App strategy
 
-Prefer path-filtered workflows such as:
+Keep prototypes, personal utilities, experiments, and small-to-medium apps in this monorepo by default.
 
-```yaml
-on:
-  push:
-    paths:
-      - "apps/ExampleApp/**"
-```
+Consider a separate repository only when an app materially benefits from independent release management, collaborators/permissions, issues, secrets/CI, visibility, or long-term history.
 
-A workflow may also be reusable/shared where that reduces duplication without coupling unrelated apps.
+An app can be extracted later; it does not need a separate repository from day one.
 
-## When to use a separate repository
+## CI strategy
 
-Keep experiments, prototypes, personal utilities, and small-to-medium independent apps in this monorepo by default.
+CI should be routed to the affected app only whenever practical.
 
-Consider extracting an app into its own GitHub repository when it becomes a substantial standalone project with needs such as:
-
-- a separate release lifecycle;
-- independent collaborators or permissions;
-- separate issues/project management;
-- app-specific secrets or CI infrastructure;
-- independent public/private visibility;
-- substantial long-term maintenance;
-- a need for completely independent repository history.
-
-An app can be extracted later if necessary, so creating a separate repository at the beginning is not required.
-
-## Preferred development flow
-
-**Read AGENTS.md → select the target app under `apps/` → prepare locally → validate locally → inspect final diff → commit coherent batch → build/test in GitHub Actions → fix any CI-specific issue locally → produce APK/artifact.**
-
-## Fresh app / fresh chat rule
-
-For a **brand-new app**, development must be completed and checked in the local working environment first. The finalized app is committed to GitHub only after local verification, and GitHub Actions is then used for the authoritative Android build and APK generation.
-
-For an **existing app in a fresh chat**, the current `Android_Development` repository must first be cloned or synchronized from GitHub into the local working environment. Development must continue from that existing local checkout; the app must not be recreated from memory or edited directly on GitHub as the primary development loop.
-
-See `AGENTS.md` for the mandatory detailed workflow.
-
+- App-specific workflows should use `paths` filters.
+- Documentation-only changes should not trigger Android builds by default.
+- Shared changes should validate only the apps they actually affect.
+- APK artifact names should identify the app and build type.

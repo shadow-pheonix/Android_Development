@@ -1,8 +1,14 @@
-name: Build Android APK
+name: Build Legacy Test APK
 
 on:
   pull_request:
     branches: [ "main" ]
+    paths:
+      - "app/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+      - ".github/workflows/android.yml"
   workflow_dispatch:
 
 jobs:
@@ -37,6 +43,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: github-test-app-debug
+          name: legacy-test-app-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
