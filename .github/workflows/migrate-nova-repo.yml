@@ -1,0 +1,257 @@
+name: Migrate Nova to checked-in source
+
+on:
+  push:
+    branches: [ "nova-pip-build" ]
+    paths:
+      - ".github/workflows/migrate-nova-repo.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Materialize finalized Nova source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf nova /tmp/nova-migrate /tmp/final-patches
+          mkdir -p nova/Video nova/MediaLib nova/native/avos /tmp/nova-migrate
+
+          gh run download 37145367592 --repo "$GITHUB_REPOSITORY" \
+            --name nova-pip-current-video-source --dir /tmp/nova-migrate/video
+          gh run download 37145367592 --repo "$GITHUB_REPOSITORY" \
+            --name nova-pip-current-deps-source --dir /tmp/nova-migrate/deps
+
+          (cd /tmp/nova-migrate/video && sha256sum -c SOURCE_SHA256.txt)
+          (cd /tmp/nova-migrate/deps && sha256sum -c DEPS_SOURCE_SHA256.txt)
+
+          tar -xzf /tmp/nova-migrate/video/NOVA-pip-current-Video-source.tar.gz -C nova/Video
+          tar -xzf /tmp/nova-migrate/deps/NOVA-pip-current-MediaLib-source.tar.gz -C nova/MediaLib
+          tar -xzf /tmp/nova-migrate/deps/NOVA-pip-current-avos-source.tar.gz -C nova/native/avos
+
+          rm -rf nova/Video/.git nova/MediaLib/.git nova/native/avos/.git
+
+          mkdir -p /tmp/final-patches
+          tar -xzf .github/patches/nova-final-feature-patches.tar.gz -C /tmp/final-patches
+          (cd /tmp/final-patches && sha256sum -c PATCH_SHA256.txt)
+          git -C nova/MediaLib apply /tmp/final-patches/medialib-hdr.patch
+          git -C nova/native/avos apply /tmp/final-patches/avos-hdr.patch
+
+      - name: Verify exact finalized source trees
+        shell: bash
+        run: |
+          set -euo pipefail
+          verify_tree() {
+            local dir="$1"
+            local expected="$2"
+            git -C "$dir" init -q
+            git -C "$dir" add -f -A
+            actual="$(git -C "$dir" write-tree)"
+            echo "$dir tree: $actual"
+            test "$actual" = "$expected"
+            rm -rf "$dir/.git"
+          }
+          verify_tree nova/Video 1bc28f7532b520658b1c6cf7482924a9ef121f8e
+          verify_tree nova/MediaLib 14bbdf89b76725df73b31116c0bf5eedeb83f650
+          verify_tree nova/native/avos 1af5b2e0c3662ba624be0d73016e4e6add360769
+
+      - name: Install clean repository workflow and metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > nova/SOURCE_BASELINE.md <<'DOC'
+          # Nova source baseline
+
+          This directory is the source of truth for the custom Nova build on the `nova-pip-build` branch.
+
+          Final checked-in component trees:
+
+          - `Video`: `1bc28f7532b520658b1c6cf7482924a9ef121f8e`
+          - `MediaLib`: `14bbdf89b76725df73b31116c0bf5eedeb83f650`
+          - `native/avos`: `1af5b2e0c3662ba624be0d73016e4e6add360769`
+
+          Upstream bases used for this development line:
+
+          - Video: `cab25da088a28601795c795c9ad6375f2054f60a`
+          - MediaLib: `3e904a4e657c2abc9a6b12192a095d52714041b7`
+          - native/avos: `1a7b5b278654cac0ba8ba4aa3eb35d455af23510`
+
+          Current custom feature set: handheld PiP, exportable diagnostics, local subtitle-file loading, and HDR-to-SDR decoder tone mapping.
+
+          Feature source is checked in directly. CI must not regenerate or patch these features.
+          DOC
+
+          cat > README.md <<'DOC'
+          # Android_Development — Nova
+
+          `nova-pip-build` is the canonical development branch for the current custom Nova build.
+
+          The finalized modified source is checked in directly under `nova/`:
+
+          - `nova/Video`
+          - `nova/MediaLib`
+          - `nova/native/avos`
+
+          Current feature baseline: handheld PiP, diagnostics/export, local subtitle-file loading, and HDR-to-SDR conversion.
+
+          Development follows [AGENTS.md](./AGENTS.md): develop and validate locally first, review the final diff, commit coherent source changes, then use GitHub Actions only for authoritative Android/NDK validation and APK generation.
+
+          The build workflow does not inject feature source or apply feature patches. It validates the checked-in source trees, retrieves unchanged upstream dependencies, builds Nova, and uploads the APK artifact.
+          DOC
+
+          cat > .github/workflows/nova-pip.yml <<'WORKFLOW'
+          name: Nova APK
+
+          on:
+            push:
+              branches: [ "nova-pip-build" ]
+              paths:
+                - "nova/**"
+                - ".github/workflows/nova-pip.yml"
+                - "AGENTS.md"
+                - "README.md"
+            workflow_dispatch:
+
+          permissions:
+            contents: read
+
+          jobs:
+            build:
+              runs-on: ubuntu-latest
+              timeout-minutes: 45
+              steps:
+                - name: Checkout finalized Nova source
+                  uses: actions/checkout@v4
+
+                - name: Verify checked-in source trees
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    verify_tree() {
+                      local repo="$1"
+                      local expected="$2"
+                      local tmp
+                      tmp="$(mktemp -d)"
+                      cp -a "$repo/." "$tmp/"
+                      git -C "$tmp" init -q
+                      git -C "$tmp" add -f -A
+                      actual="$(git -C "$tmp" write-tree)"
+                      rm -rf "$tmp"
+                      echo "$repo tree: $actual"
+                      test "$actual" = "$expected"
+                    }
+                    verify_tree nova/Video 1bc28f7532b520658b1c6cf7482924a9ef121f8e
+                    verify_tree nova/MediaLib 14bbdf89b76725df73b31116c0bf5eedeb83f650
+                    verify_tree nova/native/avos 1af5b2e0c3662ba624be0d73016e4e6add360769
+
+                - name: Configure Android build environment
+                  shell: bash
+                  run: |
+                    echo "ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+                    echo "ANDROID_NDK_ROOT=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+
+                - name: Set up Java 17
+                  uses: actions/setup-java@v4
+                  with:
+                    java-version: "17"
+                    distribution: "temurin"
+
+                - name: Install build packages
+                  run: |
+                    sudo apt-get update || sudo apt-get update
+                    sudo apt-get install -y nasm meson ninja-build maven build-essential wget curl unzip git pkg-config
+
+                - name: Install repo tool
+                  run: |
+                    curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo | sudo tee /usr/local/bin/repo >/dev/null
+                    sudo chmod a+x /usr/local/bin/repo
+
+                - name: Retrieve unchanged Nova dependencies
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    mkdir buildtree
+                    cd buildtree
+                    repo init -u https://github.com/nova-video-player/aos-AVP -b nova -m v6_4.xml
+                    repo sync -j 4
+                    repo forall -c 'git checkout -t $REPO_REMOTE/$REPO_RREV || git checkout $REPO_RREV'
+                    git -C Video checkout --detach cab25da088a28601795c795c9ad6375f2054f60a
+                    git -C MediaLib checkout --detach 3e904a4e657c2abc9a6b12192a095d52714041b7
+                    git -C native/avos checkout --detach 1a7b5b278654cac0ba8ba4aa3eb35d455af23510
+                    rm -rf Video MediaLib native/avos
+                    cp -a "$GITHUB_WORKSPACE/nova/Video" Video
+                    cp -a "$GITHUB_WORKSPACE/nova/MediaLib" MediaLib
+                    mkdir -p native
+                    cp -a "$GITHUB_WORKSPACE/nova/native/avos" native/avos
+
+                - name: Build signed universal debug APK
+                  run: |
+                    cd buildtree/Video
+                    ./gradlew --no-daemon -Puniversal assembleNoamazonDebug
+
+                - name: Collect APK
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    mkdir -p artifacts
+                    APK="$(find buildtree/Video/build/outputs/apk -type f -name '*.apk' | head -n 1)"
+                    test -n "$APK"
+                    cp "$APK" artifacts/Nova-PiP-Diagnostics-Subtitles-HDRtoSDR.apk
+                    sha256sum artifacts/Nova-PiP-Diagnostics-Subtitles-HDRtoSDR.apk | tee artifacts/SHA256.txt
+
+                - name: Upload APK
+                  uses: actions/upload-artifact@v4
+                  with:
+                    name: nova-pip-diagnostics-subtitles-hdr2sdr
+                    path: |
+                      artifacts/Nova-PiP-Diagnostics-Subtitles-HDRtoSDR.apk
+                      artifacts/SHA256.txt
+                    if-no-files-found: error
+                    retention-days: 14
+          WORKFLOW
+
+          rm -rf .github/patches .github/overlays
+          rm -rf app build.gradle gradle.properties settings.gradle BUILD_TRIGGER.md
+          rm -f .github/workflows/android.yml .github/workflows/migrate-nova-repo.yml
+
+      - name: Validate cleanup before commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d nova/Video
+          test -d nova/MediaLib
+          test -d nova/native/avos
+          test ! -e .github/patches
+          test ! -e .github/overlays
+          test ! -e app
+          test ! -e .github/workflows/android.yml
+          test ! -e .github/workflows/migrate-nova-repo.yml
+          ! grep -q "git apply" .github/workflows/nova-pip.yml
+          ! grep -q "Add handheld native Picture-in-Picture" .github/workflows/nova-pip.yml
+          ! grep -q "Add diagnostics logging and export" .github/workflows/nova-pip.yml
+          ! grep -q ".github/patches" .github/workflows/nova-pip.yml
+          git add -A
+          git add -f nova
+          git diff --cached --name-status | head -200
+          git diff --cached --stat
+
+      - name: Commit cleaned source-of-truth repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "ChatGPT"
+          git config user.email "chatgpt@local.invalid"
+          git commit -m "Make finalized Nova source the repository of record"
+          git push origin HEAD:nova-pip-build
