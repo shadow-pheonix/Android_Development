@@ -1,73 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
+    android:orientation="vertical"
     android:background="@color/background">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textColor="@color/text_primary"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+        <include android:id="@+id/homeScreen" layout="@layout/screen_home" />
+        <include android:id="@+id/searchScreen" layout="@layout/screen_search" android:visibility="gone" />
+        <include android:id="@+id/detailScreen" layout="@layout/screen_detail" android:visibility="gone" />
+        <include android:id="@+id/manualScreen" layout="@layout/screen_manual" android:visibility="gone" />
+        <include android:id="@+id/progressScreen" layout="@layout/screen_progress" android:visibility="gone" />
+        <include android:id="@+id/profileScreen" layout="@layout/screen_profile" android:visibility="gone" />
+    </FrameLayout>
 
-        <TextView android:id="@+id/dateText" android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="4dp" android:textColor="@color/text_secondary" android:textSize="15sp" />
+    <LinearLayout
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:background="@drawable/bg_bottom_nav">
 
-        <TextView android:id="@+id/summaryText" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="18dp" android:background="@color/surface" android:padding="16dp"
-            android:textColor="@color/text_primary" android:textSize="17sp" />
+        <LinearLayout android:id="@+id/navHome" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/navHomeIcon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⌂" android:textColor="@color/accent" android:textSize="26sp" android:textStyle="bold" />
+            <TextView android:id="@+id/navHomeLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Home" android:textColor="@color/accent" android:textSize="11sp" android:textStyle="bold" />
+        </LinearLayout>
 
-        <TextView android:id="@+id/databaseStatusText" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="14dp" android:textColor="@color/text_secondary" android:textSize="13sp" />
+        <LinearLayout android:id="@+id/navSearch" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/navSearchIcon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⌕" android:textColor="@color/text_secondary" android:textSize="27sp" />
+            <TextView android:id="@+id/navSearchLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Search" android:textColor="@color/text_secondary" android:textSize="11sp" />
+        </LinearLayout>
 
-        <EditText android:id="@+id/searchInput" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="14dp" android:hint="@string/food_search" android:inputType="text" />
+        <FrameLayout android:id="@+id/navAdd" android:layout_width="64dp" android:layout_height="64dp" android:layout_marginLeft="4dp" android:layout_marginRight="4dp" android:background="@drawable/bg_fab">
+            <TextView android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="+" android:textColor="@color/text_primary" android:textSize="34sp" />
+        </FrameLayout>
 
-        <Button android:id="@+id/searchButton" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="@string/search" />
+        <LinearLayout android:id="@+id/navProgress" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/navProgressIcon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="▥" android:textColor="@color/text_secondary" android:textSize="23sp" />
+            <TextView android:id="@+id/navProgressLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Progress" android:textColor="@color/text_secondary" android:textSize="11sp" />
+        </LinearLayout>
 
-        <LinearLayout android:id="@+id/searchResultsContainer" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical" />
-
-        <TextView android:id="@+id/selectedFoodDetails" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="12dp" android:background="@color/surface" android:padding="12dp"
-            android:textColor="@color/text_secondary" android:textSize="14sp" android:visibility="gone" />
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="20dp"
-            android:text="@string/manual_entry" android:textColor="@color/text_primary" android:textSize="19sp" android:textStyle="bold" />
-
-        <EditText android:id="@+id/nameInput" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:hint="@string/food_name" android:inputType="textCapSentences" />
-        <EditText android:id="@+id/gramsInput" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:hint="@string/grams" android:inputType="numberDecimal" />
-        <EditText android:id="@+id/caloriesInput" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:hint="@string/calories_100g" android:inputType="numberDecimal" />
-        <EditText android:id="@+id/proteinInput" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:hint="@string/protein_100g" android:inputType="numberDecimal" />
-        <EditText android:id="@+id/carbsInput" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:hint="@string/carbs_100g" android:inputType="numberDecimal" />
-        <EditText android:id="@+id/fatInput" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:hint="@string/fat_100g" android:inputType="numberDecimal" />
-
-        <Button android:id="@+id/addButton" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="10dp" android:text="@string/add_food" />
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="24dp"
-            android:text="@string/recent_entries" android:textColor="@color/text_primary" android:textSize="19sp" android:textStyle="bold" />
-
-        <LinearLayout android:id="@+id/entriesContainer" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" android:orientation="vertical" />
-
-        <Button android:id="@+id/exportButton" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="24dp" android:text="@string/export_diagnostics" />
+        <LinearLayout android:id="@+id/navProfile" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/navProfileIcon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="○" android:textColor="@color/text_secondary" android:textSize="24sp" />
+            <TextView android:id="@+id/navProfileLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Profile" android:textColor="@color/text_secondary" android:textSize="11sp" />
+        </LinearLayout>
     </LinearLayout>
-</ScrollView>
+</LinearLayout>

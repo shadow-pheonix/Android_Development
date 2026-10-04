@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp">
+        <TextView style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Progress" />
+        <TextView style="@style/Text.Body" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="Nutrition trends and goals" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="220dp" android:layout_marginTop="20dp" android:gravity="center" android:orientation="vertical" android:padding="24dp" android:background="@drawable/bg_card_alt">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="▥" android:textColor="@color/accent" android:textSize="52sp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Progress is the next feature" android:textColor="@color/text_primary" android:textSize="18sp" android:textStyle="bold" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center" android:text="The UI shell is ready. We can add daily/weekly charts, goals and streaks one by one." android:textColor="@color/text_secondary" android:textSize="13sp" android:textAlignment="center" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

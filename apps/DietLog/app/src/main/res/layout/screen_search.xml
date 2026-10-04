@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="18dp"
+        android:paddingTop="18dp"
+        android:paddingRight="18dp"
+        android:paddingBottom="24dp">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                <TextView style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Find Food" />
+                <TextView style="@style/Text.Body" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Search our offline Indian food database" />
+            </LinearLayout>
+            <TextView android:layout_width="wrap_content" android:layout_height="36dp" android:gravity="center" android:paddingLeft="12dp" android:paddingRight="12dp" android:background="@drawable/bg_chip" android:text="⌁  Offline" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView android:id="@+id/databaseStatusText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="Offline food database" android:textColor="@color/text_tertiary" android:textSize="11sp" />
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="12dp" android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/bg_input">
+            <TextView android:layout_width="42dp" android:layout_height="match_parent" android:gravity="center" android:text="⌕" android:textColor="@color/text_secondary" android:textSize="25sp" />
+            <EditText android:id="@+id/searchInput" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@null" android:hint="@string/food_search" android:inputType="text" android:imeOptions="actionSearch" android:singleLine="true" android:textColor="@color/text_primary" android:textColorHint="@color/text_tertiary" android:textSize="14sp" />
+            <TextView android:id="@+id/searchButton" android:layout_width="52dp" android:layout_height="match_parent" android:gravity="center" android:text="▥" android:textColor="@color/accent" android:textSize="21sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="104dp" android:layout_marginTop="14dp" android:orientation="horizontal">
+            <LinearLayout android:id="@+id/barcodeTile" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="6dp" android:orientation="vertical" android:gravity="center" android:background="@drawable/bg_card_alt">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="▥" android:textColor="@color/accent" android:textSize="30sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Scan Barcode" android:textColor="@color/text_primary" android:textSize="14sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Feature coming next" android:textColor="@color/text_secondary" android:textSize="11sp" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/voiceTile" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginStart="6dp" android:orientation="vertical" android:gravity="center" android:background="@drawable/bg_card">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textColor="@color/text_primary" android:textSize="24sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Voice Search" android:textColor="@color/text_primary" android:textSize="14sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Feature coming next" android:textColor="@color/text_secondary" android:textSize="11sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:scrollbars="none">
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:layout_width="wrap_content" android:layout_height="40dp" android:gravity="center" android:paddingLeft="17dp" android:paddingRight="17dp" android:background="@drawable/bg_chip_selected" android:text="All" android:textColor="@color/black" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="40dp" android:layout_marginStart="8dp" android:gravity="center" android:paddingLeft="17dp" android:paddingRight="17dp" android:background="@drawable/bg_chip" android:text="Indian" android:textColor="@color/text_secondary" />
+                <TextView android:layout_width="wrap_content" android:layout_height="40dp" android:layout_marginStart="8dp" android:gravity="center" android:paddingLeft="17dp" android:paddingRight="17dp" android:background="@drawable/bg_chip" android:text="Breakfast" android:textColor="@color/text_secondary" />
+                <TextView android:layout_width="wrap_content" android:layout_height="40dp" android:layout_marginStart="8dp" android:gravity="center" android:paddingLeft="17dp" android:paddingRight="17dp" android:background="@drawable/bg_chip" android:text="Snacks" android:textColor="@color/text_secondary" />
+                <TextView android:layout_width="wrap_content" android:layout_height="40dp" android:layout_marginStart="8dp" android:gravity="center" android:paddingLeft="17dp" android:paddingRight="17dp" android:background="@drawable/bg_chip" android:text="Packaged" android:textColor="@color/text_secondary" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:gravity="center_vertical">
+            <TextView android:id="@+id/searchSectionTitle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Popular Foods" android:textColor="@color/text_primary" android:textSize="19sp" android:textStyle="bold" />
+            <TextView android:id="@+id/manualEntryButton" android:layout_width="wrap_content" android:layout_height="36dp" android:gravity="center" android:paddingLeft="12dp" android:paddingRight="12dp" android:background="@drawable/bg_chip" android:text="+ Manual" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/searchResultsContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="vertical" />
+    </LinearLayout>
+</ScrollView>

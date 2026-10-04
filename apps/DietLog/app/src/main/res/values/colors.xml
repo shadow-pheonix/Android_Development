@@ -1,7 +1,23 @@
 <resources>
-    <color name="background">#FFFDF8</color>
-    <color name="surface">#FFFFFFFF</color>
-    <color name="text_primary">#FF1F1F1F</color>
-    <color name="text_secondary">#FF666666</color>
-    <color name="accent">#FF2F6E4E</color>
+    <color name="background">#050D10</color>
+    <color name="background_alt">#07161A</color>
+    <color name="surface">#0B1B20</color>
+    <color name="surface_alt">#0E2429</color>
+    <color name="surface_elevated">#122A30</color>
+    <color name="outline">#1B3A41</color>
+    <color name="outline_soft">#123038</color>
+    <color name="text_primary">#F4F8F9</color>
+    <color name="text_secondary">#94A9AD</color>
+    <color name="text_tertiary">#647C82</color>
+    <color name="accent">#00E7B4</color>
+    <color name="accent_dark">#00B894</color>
+    <color name="cyan">#2AB7FF</color>
+    <color name="protein">#2AB7FF</color>
+    <color name="carbs">#E6D62C</color>
+    <color name="fat">#FFA32B</color>
+    <color name="calories">#FF654D</color>
+    <color name="sugar">#F47BC5</color>
+    <color name="fiber">#A5DE2C</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
 </resources>

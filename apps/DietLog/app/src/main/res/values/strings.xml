@@ -1,19 +1,19 @@
 <resources>
-    <string name="app_name">Diet Log</string>
-    <string name="food_search">Search offline foods or enter barcode</string>
+    <string name="app_name">DietLog</string>
+    <string name="food_search">Search food (e.g. idli, biryani, paneer)</string>
     <string name="search">Search</string>
     <string name="database_status">Offline food database</string>
-    <string name="selected_food">Selected food details</string>
     <string name="food_name">Food name</string>
     <string name="grams">Amount (g)</string>
     <string name="calories_100g">Calories / 100 g</string>
     <string name="protein_100g">Protein / 100 g</string>
     <string name="carbs_100g">Carbs / 100 g</string>
     <string name="fat_100g">Fat / 100 g</string>
-    <string name="add_food">Add food</string>
+    <string name="add_food">Add to Diary</string>
     <string name="export_diagnostics">Export diagnostics</string>
-    <string name="recent_entries">Today’s entries</string>
+    <string name="recent_entries">Today’s Food Log</string>
     <string name="empty_entries">No foods logged today.</string>
     <string name="no_results">No offline matches.</string>
-    <string name="manual_entry">Manual entry</string>
+    <string name="manual_entry">Manual Food Entry</string>
+    <string name="coming_later">We’ll add this feature in a later step.</string>
 </resources>
