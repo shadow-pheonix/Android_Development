@@ -2,11 +2,11 @@
 
 `nova-pip-build` is the canonical development branch for the current custom Nova build.
 
-The finalized modified source is checked in directly under `nova/`:
+The finalized modified source is checked in directly under `apps/Nova/`:
 
-- `nova/Video`
-- `nova/MediaLib`
-- `nova/native/avos`
+- `apps/Nova/Video`
+- `apps/Nova/MediaLib`
+- `apps/Nova/native/avos`
 
 Current feature baseline: handheld PiP, diagnostics/export, local subtitle-file loading, and HDR-to-SDR conversion.
 

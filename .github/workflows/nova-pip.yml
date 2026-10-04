@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "nova-pip-build" ]
     paths:
-      - "nova/**"
+      - "apps/Nova/**"
       - ".github/workflows/nova-pip.yml"
       - "AGENTS.md"
       - "README.md"
@@ -38,9 +38,9 @@ jobs:
             echo "$repo tree: $actual"
             test "$actual" = "$expected"
           }
-          verify_tree nova/Video 1bc28f7532b520658b1c6cf7482924a9ef121f8e
-          verify_tree nova/MediaLib 14bbdf89b76725df73b31116c0bf5eedeb83f650
-          verify_tree nova/native/avos 675e0e04707905a605797fc314181ccc363ca0c3
+          verify_tree apps/Nova/Video 1bc28f7532b520658b1c6cf7482924a9ef121f8e
+          verify_tree apps/Nova/MediaLib 14bbdf89b76725df73b31116c0bf5eedeb83f650
+          verify_tree apps/Nova/native/avos 675e0e04707905a605797fc314181ccc363ca0c3
 
       - name: Configure Android build environment
         shell: bash
@@ -77,10 +77,10 @@ jobs:
           git -C MediaLib checkout --detach 3e904a4e657c2abc9a6b12192a095d52714041b7
           git -C native/avos checkout --detach c594ce3b4c8c2d1dc7e1dd050812801e2040560f
           rm -rf Video MediaLib native/avos
-          cp -a "$GITHUB_WORKSPACE/nova/Video" Video
-          cp -a "$GITHUB_WORKSPACE/nova/MediaLib" MediaLib
+          cp -a "$GITHUB_WORKSPACE/apps/Nova/Video" Video
+          cp -a "$GITHUB_WORKSPACE/apps/Nova/MediaLib" MediaLib
           mkdir -p native
-          cp -a "$GITHUB_WORKSPACE/nova/native/avos" native/avos
+          cp -a "$GITHUB_WORKSPACE/apps/Nova/native/avos" native/avos
 
       - name: Build signed universal debug APK
         run: |
