@@ -245,8 +245,7 @@ public final class MainActivity extends Activity {
             TextView day = findViewById(id);
             LocalDate date = monday.plusDays(i);
             String dow = date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.getDefault());
-            day.setText(dow + "
-" + date.getDayOfMonth());
+            day.setText(dow + System.lineSeparator() + date.getDayOfMonth());
             if (date.equals(today)) {
                 day.setBackgroundResource(R.drawable.bg_calendar_selected);
                 day.setTextColor(getColor(R.color.accent));
@@ -434,8 +433,7 @@ public final class MainActivity extends Activity {
     }
 
     private static void appendLine(StringBuilder out, String label, String value) {
-        if (value != null && !value.trim().isEmpty()) out.append(label).append(": ").append(value.trim()).append('
-');
+        if (value != null && !value.trim().isEmpty()) out.append(label).append(": ").append(value.trim()).append(System.lineSeparator());
     }
 
     private void changeServingCount(int delta) {
@@ -458,18 +456,12 @@ public final class MainActivity extends Activity {
         double grams = parseOptional(detailGramsInput, baseServingGrams * servingCount);
         double factor = grams / 100.0;
         detailTotalCalories.setText(selectedFood.calories == null ? "— kcal" : String.format(Locale.getDefault(), "%.0f kcal", selectedFood.calories * factor));
-        detailTotalProtein.setText("Protein
-" + scaled(selectedFood.protein, factor, "g"));
-        detailTotalCarbs.setText("Carbs
-" + scaled(selectedFood.carbs, factor, "g"));
-        detailTotalFat.setText("Fat
-" + scaled(selectedFood.fat, factor, "g"));
-        detailTotalFiber.setText("Fibre
-" + scaled(selectedFood.fiber, factor, "g"));
-        detailTotalSugar.setText("Sugar
-" + scaled(selectedFood.sugars, factor, "g"));
-        detailTotalSodium.setText("Sodium
-" + (selectedFood.sodium == null ? "—" : String.format(Locale.getDefault(), "%.0fmg", selectedFood.sodium * factor * 1000.0)));
+        detailTotalProtein.setText("Protein" + System.lineSeparator() + scaled(selectedFood.protein, factor, "g"));
+        detailTotalCarbs.setText("Carbs" + System.lineSeparator() + scaled(selectedFood.carbs, factor, "g"));
+        detailTotalFat.setText("Fat" + System.lineSeparator() + scaled(selectedFood.fat, factor, "g"));
+        detailTotalFiber.setText("Fibre" + System.lineSeparator() + scaled(selectedFood.fiber, factor, "g"));
+        detailTotalSugar.setText("Sugar" + System.lineSeparator() + scaled(selectedFood.sugars, factor, "g"));
+        detailTotalSodium.setText("Sodium" + System.lineSeparator() + (selectedFood.sodium == null ? "—" : String.format(Locale.getDefault(), "%.0fmg", selectedFood.sodium * factor * 1000.0)));
     }
 
     private String scaled(Double value, double factor, String suffix) {
@@ -589,8 +581,7 @@ public final class MainActivity extends Activity {
 
     private String compact(String value, int max) {
         if (value == null) return "";
-        String cleaned = value.replace('
-', ' ').trim();
+        String cleaned = value.replace((char) 10, ' ').trim();
         return cleaned.length() <= max ? cleaned : cleaned.substring(0, Math.max(1, max - 1)) + "…";
     }
 
