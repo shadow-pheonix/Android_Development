@@ -261,6 +261,13 @@ clamp is restricted to sinks without `put_time`; enabling it on resume would
 manufacture a forward jump followed by a backward jump at anchor publication.
 The MediaCodec renderer uses the published Mode 1 clock after seek, without
 clamping it back to the preview frame during initialization or later reanchoring.
+On a new Mode 1 clock anchor, `put_time` installs the renderer offset from that
+publication's heard timestamp and wall timestamp together, under the renderer
+lock. It does not wait for the renderer thread to sample a later refill burst.
+This prevents thread scheduling from selecting a different startup phase or
+creating a large compensating slew after seek. A heard timestamp of zero is
+valid; only the missing wall reference marks an unset Mode 1 scheduler anchor.
+Paused seek previews retain their existing behavior until audio resumes.
 
 An ordinary pause on a backend that preserves queued output retains the valid,
 pause-shifted Mode 1 renderer anchor. The resume-pending edge alone does not
@@ -273,12 +280,36 @@ publications cannot complete the window. Its minimum wall-minus-heard offset
 selects the fullest queue observation, avoiding the first-burst refill transient.
 
 The measured phase change sets a one-shot video correction, bounded to 4ms and
-10% of the playback interval per distinct frame. Repeated pauses restart the
-measurement window but retain the original phase reference, including when they
-interrupt a correction. Ordinary playback does not continuously chase this
-static clock. Seek, flush, hard reanchor and manual A/V delay changes invalidate
-the reference. This uses neither Mode 2's dynamic clock nor the diagnostic IEC
-occupancy observer and does not estimate downstream receiver latency.
+10% of the playback interval per distinct frame. Ordinary pauses retain both the
+original phase and an unfinished measurement window. Resume shifts the window's
+wall reference and minimum offset by the paused duration, so only playing time
+counts toward its completion. A window spanning pauses starts recovery and is
+then confirmed by a fresh window; an earlier minimum must not permanently hide
+a phase change in the other direction.
+
+Pause freezes an active correction instead of discarding it. At the next resume,
+before releasing the producers, the renderer applies its measured residual up
+to two video frames (capped at 100ms). Any remainder uses the normal per-frame
+slew. This prevents repeated short play intervals from indefinitely postponing
+measurement and repeatedly cancelling recovery. The resume step requires the
+same valid Mode 1 output and manual delay; seek/startup or invalid anchors bypass
+it. Ordinary playback does not continuously chase the static clock.
+Hard reanchors, non-seek flushes, audio reconfiguration and manual
+A/V delay changes invalidate the reference. This uses neither Mode 2's dynamic
+clock nor the diagnostic IEC occupancy observer and does not estimate downstream
+receiver latency.
+
+A seek on the same Mode 1 audio output preserves only this relative phase,
+guarded by the audio lifecycle generation and manual delay. It still discards
+the old absolute timestamps, scheduler anchors, queue observations and active
+correction. Once the new audio clock is established and the refill measurement
+window completes, a one-shot correction restores any remaining difference from
+the preserved phase. The first publication already anchors the new renderer,
+so this correction handles refill variation rather than renderer startup delay.
+Chained seeks and seeks while paused retain the reference without waiting for
+audio during preview. A seek
+before the initial reference exists simply establishes a new reference normally.
+Late-frame catch-up and genuine audio-gap handling retain their existing policy.
 
 Seek, missing anchors, discarded output, speed changes and genuine
 clock discontinuities still use the existing reanchor paths. Mode 2 and PCM

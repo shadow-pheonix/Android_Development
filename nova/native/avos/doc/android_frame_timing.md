@@ -31,9 +31,16 @@ changes. There is no current runtime `android_sync=0` branch in `sfdec2`.
   threshold. Direct mode 2 normally keeps its render offset stable after
   initialization. A newly trusted dynamic
   clock first completes any monotonic heard-time hold while the renderer remains
-  on its provisional anchor. Once the dynamic phase is ready, the renderer makes
-  one explicit audio-based reanchor instead of stacking a second slew on that
-  correction. Later transition and resume corrections remain bounded per frame.
+  on its provisional anchor. Once the dynamic phase is ready, an established
+  audio-owned renderer anchor within 100ms of the trusted clock uses fast bounded
+  recovery, avoiding a deadline jump for a small remaining phase error. Missing
+  anchors, a pending seek reanchor, and larger errors retain the explicit
+  audio-based reanchor so startup does not acquire a second multi-second slew.
+  The smooth handoff preserves the per-frame guard across lookahead retries.
+  Later transition and resume corrections remain bounded per frame.
+  Mode 2 applies at most 5ms per distinct frame during fast recovery and 0.2ms
+  during steady tracking. Any remainder carries into a subsequent frame; the
+  final step cannot snap through a second step's worth of correction.
 - A PCM resume on a backend that preserves queued output keeps the pause-shifted
   renderer anchor until the first accepted write publishes its clock. With an established audio anchor,
   corrections up to 350ms use a slew with an 8ms initial deadband instead of an
@@ -43,8 +50,17 @@ changes. There is no current runtime `android_sync=0` branch in `sfdec2`.
   51 frames, rather than 201 frames at the cold-start correction rate. The
   correction is still applied, preventing cumulative pause/resume phase error.
   Missing anchors, seek/speed transitions,
-  and larger discontinuities retain the hard reset. A new pause cancels the
-  current slew and the next resume computes a fresh target. Passthrough resume
+  and larger discontinuities retain the hard reset. Ordinary pauses freeze an
+  unfinished resume correction. The next resume applies at most two
+  speed-adjusted frame intervals (capped at 100ms) of that measured residual;
+  backward correction is also capped by the paused duration so the combined
+  pause shift cannot move deadlines backward. The target and renderer offset
+  then receive the same pause shift, and the remaining correction keeps its
+  per-frame limit until the fresh post-resume clock updates the target. This
+  prevents rapid taps from repeatedly cancelling convergence and accumulating
+  enough error to trigger the 350ms hard reset. The retained correction is
+  invalidated by an output-generation, seek-epoch, speed-mapping or manual-delay
+  change. Cold-start corrections still reset on pause. Passthrough resume
   policy is unchanged.
 - Manual A/V delay (`s->av_delay`) is also slewed in the render path through
   `effective_av_delay` (bounded per-frame step) so large UI jumps do not create
@@ -53,6 +69,12 @@ changes. There is no current runtime `android_sync=0` branch in `sfdec2`.
 The video thread limits submission to a 200ms lookahead window and releases a
 frame without rendering when it is already more than 200ms late. Frames inside
 that window are submitted to MediaCodec with the computed deadline.
+
+`video_render_diag` includes `render_seq`, a render-thread-owned counter advanced
+after every successful timed submission, even with diagnostic logging disabled.
+It persists across pause, seek and flush and resets with a new decoder instance.
+This distinguishes omitted timing records from deadline errors between adjacent
+submissions. A successful submission does not prove physical display timing.
 
 ## Frame Snapping and Wall-Clock Mapping (`Source/codec_sfdec2.c`)
 
