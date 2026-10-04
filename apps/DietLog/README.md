@@ -1,42 +1,39 @@
 # DietLog
 
-Android diet logging app focused on fast calorie/macro logging with an Indian-food-first data strategy.
+Offline-first Android diet logger focused on Indian foods.
 
-## Current baseline
+## Current functionality
 
-- Manual food logging using per-100 g calories, protein, carbs and fat.
-- Automatic scaling to the consumed gram amount.
-- SQLite persistence and today's totals/history.
-- Provider abstraction ready for remote food search.
-- Mandatory bounded logs, crash capture, and `Export diagnostics`.
-- Diagnostics first attempt `Internal storage/AppDebug/DietLog/`; if Android scoped storage rejects a root-level generic ZIP, the exporter falls back to `Internal storage/Download/AppDebug/DietLog/` without requesting all-files access.
+- Today's calories, protein, carbs and fat.
+- Manual logging by grams and per-100 g nutrition.
+- Fully offline food search after installation; no runtime food API and no API keys.
+- Numeric barcode lookup against the bundled India packaged-food catalogue.
+- Tap a search result to populate the logger and view product/nutrition details.
+- SQLite meal history.
+- Mandatory bounded logs, crash capture and `Export diagnostics`.
 
-## Indian food data strategy
+## Bundled food catalogue
 
-### FatSecret
+The build pipeline generates `app/src/main/assets/offline_foods.db` before Android compilation from pinned source snapshots:
 
-Use the official FatSecret Platform API only through a server-side proxy. Never embed the FatSecret client secret in the APK. The proxy should obtain OAuth 2.0 client-credentials tokens, search with the India region enabled, and return normalized food/serving results to this app.
+1. Open Food Facts India snapshot — 18,613 packaged products in the pinned July 2026 dataset.
+2. OpenLabel's India OFF subset — ingredient/category enrichment for overlapping barcodes.
+3. IFCT 2017 — 542 Indian raw ingredients.
+4. USDA SR Legacy — 7,793 general foods/drinks.
+5. INDB — 1,014 cooked Indian dishes for this private/personal build.
 
-The client data model keeps provider `food_id` and `serving_id` separately because FatSecret explicitly permits those identifiers to be retained indefinitely while most returned food/nutrition content is subject to its current storage/refresh terms.
+The exact de-duplicated row count is printed and validated during CI. See `NOTICE_DATA.md` for licensing/provenance.
 
-### Supplemental sources
+The SQLite schema preserves the useful structured fields (barcode, brand, categories, serving, macros, sugar, fibre, saturated fat, salt, Nutri-Score, NOVA, ingredients, etc.) plus `extra_json` containing the complete source row available to the builder.
 
-- IFCT 2017 is appropriate for authoritative Indian raw ingredient composition.
-- A barcode/open-food database can supplement packaged foods where licensing permits.
-- User-created foods/recipes remain local and editable.
+## Rebuilding the database
 
-The intended search ranking is: exact recent/user foods → Indian packaged result → Indian generic/composite result → IFCT raw ingredient → manual creation.
+`tools/build_food_db.py` accepts local source files and produces the SQLite asset. It uses Python stdlib plus `openpyxl` only for INDB `.xlsx` parsing. Fixtures and `tools/test_builder.py` validate the transform locally without network access.
 
 ## Build
 
-From this directory with Java 17, Android SDK 35 and Gradle 8.9 available:
+CI downloads pinned datasets, builds and validates the offline database, then runs:
 
 ```bash
 gradle --no-daemon lintDebug testDebugUnitTest assembleDebug
-```
-
-APK output:
-
-```text
-app/build/outputs/apk/debug/app-debug.apk
 ```

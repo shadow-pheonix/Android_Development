@@ -1,10 +1,9 @@
 <resources>
     <string name="app_name">Diet Log</string>
-    <string name="today">Today</string>
-    <string name="calories">Calories</string>
-    <string name="protein">Protein</string>
-    <string name="carbs">Carbs</string>
-    <string name="fat">Fat</string>
+    <string name="food_search">Search offline foods or enter barcode</string>
+    <string name="search">Search</string>
+    <string name="database_status">Offline food database</string>
+    <string name="selected_food">Selected food details</string>
     <string name="food_name">Food name</string>
     <string name="grams">Amount (g)</string>
     <string name="calories_100g">Calories / 100 g</string>
@@ -15,5 +14,6 @@
     <string name="export_diagnostics">Export diagnostics</string>
     <string name="recent_entries">Today’s entries</string>
     <string name="empty_entries">No foods logged today.</string>
-    <string name="data_source_note">Food search provider: ready for server-backed Indian food API. Manual logging works now.</string>
+    <string name="no_results">No offline matches.</string>
+    <string name="manual_entry">Manual entry</string>
 </resources>

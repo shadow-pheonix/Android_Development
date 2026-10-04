@@ -19,104 +19,55 @@
             android:textSize="28sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/dateText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/text_secondary"
-            android:textSize="15sp" />
+        <TextView android:id="@+id/dateText" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:textColor="@color/text_secondary" android:textSize="15sp" />
 
-        <TextView
-            android:id="@+id/summaryText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:background="@color/surface"
-            android:padding="16dp"
-            android:textColor="@color/text_primary"
-            android:textSize="17sp" />
+        <TextView android:id="@+id/summaryText" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="18dp" android:background="@color/surface" android:padding="16dp"
+            android:textColor="@color/text_primary" android:textSize="17sp" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/data_source_note"
-            android:textColor="@color/text_secondary"
-            android:textSize="13sp" />
+        <TextView android:id="@+id/databaseStatusText" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="14dp" android:textColor="@color/text_secondary" android:textSize="13sp" />
 
-        <EditText
-            android:id="@+id/nameInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:hint="@string/food_name"
-            android:inputType="textCapSentences" />
+        <EditText android:id="@+id/searchInput" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="14dp" android:hint="@string/food_search" android:inputType="text" />
 
-        <EditText
-            android:id="@+id/gramsInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/grams"
-            android:inputType="numberDecimal" />
+        <Button android:id="@+id/searchButton" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/search" />
 
-        <EditText
-            android:id="@+id/caloriesInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/calories_100g"
-            android:inputType="numberDecimal" />
-
-        <EditText
-            android:id="@+id/proteinInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/protein_100g"
-            android:inputType="numberDecimal" />
-
-        <EditText
-            android:id="@+id/carbsInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/carbs_100g"
-            android:inputType="numberDecimal" />
-
-        <EditText
-            android:id="@+id/fatInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/fat_100g"
-            android:inputType="numberDecimal" />
-
-        <Button
-            android:id="@+id/addButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="@string/add_food" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/recent_entries"
-            android:textColor="@color/text_primary"
-            android:textSize="19sp"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:id="@+id/entriesContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+        <LinearLayout android:id="@+id/searchResultsContainer" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="vertical" />
 
-        <Button
-            android:id="@+id/exportButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/export_diagnostics" />
+        <TextView android:id="@+id/selectedFoodDetails" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:background="@color/surface" android:padding="12dp"
+            android:textColor="@color/text_secondary" android:textSize="14sp" android:visibility="gone" />
 
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="20dp"
+            android:text="@string/manual_entry" android:textColor="@color/text_primary" android:textSize="19sp" android:textStyle="bold" />
+
+        <EditText android:id="@+id/nameInput" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/food_name" android:inputType="textCapSentences" />
+        <EditText android:id="@+id/gramsInput" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/grams" android:inputType="numberDecimal" />
+        <EditText android:id="@+id/caloriesInput" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/calories_100g" android:inputType="numberDecimal" />
+        <EditText android:id="@+id/proteinInput" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/protein_100g" android:inputType="numberDecimal" />
+        <EditText android:id="@+id/carbsInput" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/carbs_100g" android:inputType="numberDecimal" />
+        <EditText android:id="@+id/fatInput" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/fat_100g" android:inputType="numberDecimal" />
+
+        <Button android:id="@+id/addButton" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:text="@string/add_food" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="24dp"
+            android:text="@string/recent_entries" android:textColor="@color/text_primary" android:textSize="19sp" android:textStyle="bold" />
+
+        <LinearLayout android:id="@+id/entriesContainer" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:orientation="vertical" />
+
+        <Button android:id="@+id/exportButton" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="24dp" android:text="@string/export_diagnostics" />
     </LinearLayout>
 </ScrollView>

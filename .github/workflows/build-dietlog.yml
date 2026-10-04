@@ -19,17 +19,12 @@ jobs:
     defaults:
       run:
         working-directory: apps/DietLog
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
       - name: Install Android SDK 35
         shell: bash
         run: |
@@ -37,15 +32,26 @@ jobs:
           test -n "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
-
-      - name: Set up Gradle 8.9
-        uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-
+      - name: Prepare offline food database dependencies
+        run: |
+          python -m pip install --disable-pip-version-check openpyxl==3.1.5
+          mkdir -p .dataset-cache app/src/main/assets
+          curl -fL --retry 3 -o .dataset-cache/off-india.csv             https://raw.githubusercontent.com/mvark/indiafoodstats/71ff743f61edb0eee553e4ea1c9ce86ea427f0d9/data/india_products_18613.csv
+          curl -fL --retry 3 -o .dataset-cache/openlabel-india.ts             https://raw.githubusercontent.com/armaanux/openlabel/af43c0596c50713debb68e7be5454c6723a0f4a0/src/data/off/off-india.data.ts
+          curl -fL --retry 3 -o .dataset-cache/ifct.csv             https://raw.githubusercontent.com/krishnabhat/indian-food-nutrition-mcp/94272b169f2c16cd45e53c97f096ce8a189af3db/data/ifct-compositions.csv
+          curl -fL --retry 3 -o .dataset-cache/usda.csv             https://raw.githubusercontent.com/krishnabhat/indian-food-nutrition-mcp/94272b169f2c16cd45e53c97f096ce8a189af3db/data/usda-foods.csv
+          curl -fL --retry 3 -o .dataset-cache/indb.xlsx             https://raw.githubusercontent.com/lindsayjaacks/Indian-Nutrient-Databank-INDB-/fbdb62bec519c6e2468582a799fb47e194b42558/INDB.xlsx
+      - name: Test and build offline catalogue
+        run: |
+          python -m unittest tools.test_builder -v
+          python tools/build_food_db.py             --off .dataset-cache/off-india.csv             --openlabel .dataset-cache/openlabel-india.ts             --ifct .dataset-cache/ifct.csv             --usda .dataset-cache/usda.csv             --indb .dataset-cache/indb.xlsx             --output app/src/main/assets/offline_foods.db
+          python tools/validate_food_db.py app/src/main/assets/offline_foods.db --min-foods 26000
+          ls -lh app/src/main/assets/offline_foods.db
       - name: Lint, unit test, and build debug APK
         run: gradle --no-daemon lintDebug testDebugUnitTest assembleDebug
-
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
