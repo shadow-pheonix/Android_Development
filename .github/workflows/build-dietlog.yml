@@ -13,6 +13,9 @@ on:
       - ".github/workflows/build-dietlog.yml"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,6 +24,8 @@ jobs:
         working-directory: apps/DietLog
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -39,22 +44,49 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check openpyxl==3.1.5
           mkdir -p .dataset-cache app/src/main/assets
-          curl -fL --retry 3 -o .dataset-cache/off-india.csv             https://raw.githubusercontent.com/mvark/indiafoodstats/71ff743f61edb0eee553e4ea1c9ce86ea427f0d9/data/india_products_18613.csv
-          curl -fL --retry 3 -o .dataset-cache/openlabel-india.ts             https://raw.githubusercontent.com/armaanux/openlabel/af43c0596c50713debb68e7be5454c6723a0f4a0/src/data/off/off-india.data.ts
-          curl -fL --retry 3 -o .dataset-cache/ifct.csv             https://raw.githubusercontent.com/krishnabhat/indian-food-nutrition-mcp/94272b169f2c16cd45e53c97f096ce8a189af3db/data/ifct-compositions.csv
-          curl -fL --retry 3 -o .dataset-cache/usda.csv             https://raw.githubusercontent.com/krishnabhat/indian-food-nutrition-mcp/94272b169f2c16cd45e53c97f096ce8a189af3db/data/usda-foods.csv
-          curl -fL --retry 3 -o .dataset-cache/indb.xlsx             https://raw.githubusercontent.com/lindsayjaacks/Indian-Nutrient-Databank-INDB-/fbdb62bec519c6e2468582a799fb47e194b42558/INDB.xlsx
+          curl -fL --retry 3 -o .dataset-cache/off-india.csv https://raw.githubusercontent.com/mvark/indiafoodstats/71ff743f61edb0eee553e4ea1c9ce86ea427f0d9/data/india_products_18613.csv
+          curl -fL --retry 3 -o .dataset-cache/openlabel-india.ts https://raw.githubusercontent.com/armaanux/openlabel/af43c0596c50713debb68e7be5454c6723a0f4a0/src/data/off/off-india.data.ts
+          curl -fL --retry 3 -o .dataset-cache/ifct.csv https://raw.githubusercontent.com/krishnabhat/indian-food-nutrition-mcp/94272b169f2c16cd45e53c97f096ce8a189af3db/data/ifct-compositions.csv
+          curl -fL --retry 3 -o .dataset-cache/usda.csv https://raw.githubusercontent.com/krishnabhat/indian-food-nutrition-mcp/94272b169f2c16cd45e53c97f096ce8a189af3db/data/usda-foods.csv
+          curl -fL --retry 3 -o .dataset-cache/indb.xlsx https://raw.githubusercontent.com/lindsayjaacks/Indian-Nutrient-Databank-INDB-/fbdb62bec519c6e2468582a799fb47e194b42558/INDB.xlsx
       - name: Test and build offline catalogue
         run: |
           python -m unittest tools.test_builder -v
-          python tools/build_food_db.py             --off .dataset-cache/off-india.csv             --openlabel .dataset-cache/openlabel-india.ts             --ifct .dataset-cache/ifct.csv             --usda .dataset-cache/usda.csv             --indb .dataset-cache/indb.xlsx             --output app/src/main/assets/offline_foods.db
+          python tools/build_food_db.py \
+            --off .dataset-cache/off-india.csv \
+            --openlabel .dataset-cache/openlabel-india.ts \
+            --ifct .dataset-cache/ifct.csv \
+            --usda .dataset-cache/usda.csv \
+            --indb .dataset-cache/indb.xlsx \
+            --output app/src/main/assets/offline_foods.db
           python tools/validate_food_db.py app/src/main/assets/offline_foods.db --min-foods 26000
           ls -lh app/src/main/assets/offline_foods.db
       - name: Lint, unit test, and build debug APK
         run: gradle --no-daemon lintDebug testDebugUnitTest assembleDebug
-      - name: Upload debug APK
+      - name: Prepare release APK
+        if: github.event_name != 'pull_request'
+        run: cp app/build/outputs/apk/debug/app-debug.apk DietLog-debug.apk
+      - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: dietlog-debug
           path: apps/DietLog/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      - name: Publish rolling DietLog release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git tag -f dietlog-latest "$GITHUB_SHA"
+          git push origin refs/tags/dietlog-latest --force
+
+          if gh release view dietlog-latest >/dev/null 2>&1; then
+            gh release upload dietlog-latest DietLog-debug.apk --clobber
+            gh release edit dietlog-latest \
+              --title "DietLog Latest Debug" \
+              --notes "Latest successful DietLog debug build from commit $GITHUB_SHA. The APK includes the bundled offline food database."
+          else
+            gh release create dietlog-latest DietLog-debug.apk \
+              --title "DietLog Latest Debug" \
+              --notes "Latest successful DietLog debug build from commit $GITHUB_SHA. The APK includes the bundled offline food database."
+          fi
