@@ -1,0 +1,53 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.shadowphoenix.dietlog'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.shadowphoenix.dietlog'
+        minSdk 29
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+
+        buildConfigField 'String', 'SOURCE_COMMIT', '"' + (System.getenv('GITHUB_SHA') ?: 'local') + '"'
+        buildConfigField 'String', 'CI_RUN_ID', '"' + (System.getenv('GITHUB_RUN_ID') ?: 'local') + '"'
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+
+    lint {
+        abortOnError true
+        checkReleaseBuilds false
+    }
+}
+
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}
