@@ -40,7 +40,7 @@ jobs:
           }
           verify_tree nova/Video 1bc28f7532b520658b1c6cf7482924a9ef121f8e
           verify_tree nova/MediaLib 14bbdf89b76725df73b31116c0bf5eedeb83f650
-          verify_tree nova/native/avos 1af5b2e0c3662ba624be0d73016e4e6add360769
+          verify_tree nova/native/avos 675e0e04707905a605797fc314181ccc363ca0c3
 
       - name: Configure Android build environment
         shell: bash
@@ -75,7 +75,7 @@ jobs:
           repo forall -c 'git checkout -t $REPO_REMOTE/$REPO_RREV || git checkout $REPO_RREV'
           git -C Video checkout --detach cab25da088a28601795c795c9ad6375f2054f60a
           git -C MediaLib checkout --detach 3e904a4e657c2abc9a6b12192a095d52714041b7
-          git -C native/avos checkout --detach 1a7b5b278654cac0ba8ba4aa3eb35d455af23510
+          git -C native/avos checkout --detach c594ce3b4c8c2d1dc7e1dd050812801e2040560f
           rm -rf Video MediaLib native/avos
           cp -a "$GITHUB_WORKSPACE/nova/Video" Video
           cp -a "$GITHUB_WORKSPACE/nova/MediaLib" MediaLib
