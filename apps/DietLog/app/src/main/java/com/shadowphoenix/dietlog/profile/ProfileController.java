@@ -105,8 +105,7 @@ public final class ProfileController {
         if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) return true;
         Uri uri = data.getData();
         try {
-            int flags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            activity.getContentResolver().takePersistableUriPermission(uri, flags);
+            activity.getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } catch (RuntimeException ignored) {
             // Some document providers do not offer persistable grants; the current grant can still display the image.
         }
