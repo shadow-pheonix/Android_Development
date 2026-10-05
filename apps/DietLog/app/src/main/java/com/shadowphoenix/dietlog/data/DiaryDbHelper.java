@@ -14,7 +14,7 @@ import java.util.List;
 
 public final class DiaryDbHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "dietlog.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
 
     public DiaryDbHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -30,6 +30,7 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
                 "protein REAL NOT NULL," +
                 "carbs REAL NOT NULL," +
                 "fat REAL NOT NULL," +
+                "meal_type TEXT NOT NULL," +
                 "logged_at INTEGER NOT NULL," +
                 "source TEXT NOT NULL," +
                 "source_food_id TEXT," +
@@ -40,7 +41,18 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        throw new IllegalStateException("No database migration exists from " + oldVersion + " to " + newVersion);
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN meal_type TEXT NOT NULL DEFAULT 'snacks'");
+            db.execSQL("UPDATE food_entries SET meal_type = CASE " +
+                    "WHEN CAST(strftime('%H', logged_at / 1000, 'unixepoch', 'localtime') AS INTEGER) < 11 THEN 'breakfast' " +
+                    "WHEN CAST(strftime('%H', logged_at / 1000, 'unixepoch', 'localtime') AS INTEGER) < 15 THEN 'lunch' " +
+                    "WHEN CAST(strftime('%H', logged_at / 1000, 'unixepoch', 'localtime') AS INTEGER) < 18 THEN 'snacks' " +
+                    "ELSE 'dinner' END");
+            oldVersion = 2;
+        }
+        if (oldVersion != newVersion) {
+            throw new IllegalStateException("No database migration exists from " + oldVersion + " to " + newVersion);
+        }
     }
 
     public long insert(FoodEntry entry) {
@@ -51,6 +63,7 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         values.put("protein", entry.protein);
         values.put("carbs", entry.carbs);
         values.put("fat", entry.fat);
+        values.put("meal_type", entry.mealType);
         values.put("logged_at", entry.loggedAt);
         values.put("source", entry.source);
         values.put("source_food_id", entry.sourceFoodId);
@@ -107,6 +120,7 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
                 c.getDouble(c.getColumnIndexOrThrow("carbs")),
                 c.getDouble(c.getColumnIndexOrThrow("fat")),
                 c.getLong(c.getColumnIndexOrThrow("logged_at")),
+                c.getString(c.getColumnIndexOrThrow("meal_type")),
                 c.getString(c.getColumnIndexOrThrow("source")),
                 c.getString(c.getColumnIndexOrThrow("source_food_id")),
                 c.getString(c.getColumnIndexOrThrow("source_serving_id"))

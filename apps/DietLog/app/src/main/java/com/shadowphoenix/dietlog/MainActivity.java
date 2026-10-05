@@ -24,6 +24,7 @@ import com.shadowphoenix.dietlog.ui.RingProgressView;
 
 import java.text.DateFormat;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.Date;
@@ -66,6 +67,8 @@ public final class MainActivity extends Activity {
     private boolean internalGramsChange;
 
     private EditText nameInput, gramsInput, caloriesInput, proteinInput, carbsInput, fatInput;
+    private TextView detailAddButton, manualAddButton;
+    private String activeMealType = FoodEntry.mealForHour(LocalTime.now().getHour());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -171,6 +174,7 @@ public final class MainActivity extends Activity {
         detailExtra = findViewById(R.id.detailExtra);
         servingCountText = findViewById(R.id.servingCount);
         detailGramsInput = findViewById(R.id.detailGramsInput);
+        detailAddButton = findViewById(R.id.detailAddButton);
 
         nameInput = findViewById(R.id.nameInput);
         gramsInput = findViewById(R.id.gramsInput);
@@ -178,6 +182,8 @@ public final class MainActivity extends Activity {
         proteinInput = findViewById(R.id.proteinInput);
         carbsInput = findViewById(R.id.carbsInput);
         fatInput = findViewById(R.id.fatInput);
+        manualAddButton = findViewById(R.id.addButton);
+        updateMealTargetLabels();
     }
 
     private void configureRings() {
@@ -194,13 +200,21 @@ public final class MainActivity extends Activity {
     private void configureNavigation() {
         navHome.setOnClickListener(v -> showScreen(homeScreen, 0));
         navSearch.setOnClickListener(v -> {
-            if (catalog != null && searchResultsContainer.getChildCount() == 0) loadPopularFoods();
+            setActiveMeal(defaultMealType());
+            if (catalog != null) loadPopularFoods();
             showScreen(searchScreen, 1);
         });
-        navAdd.setOnClickListener(v -> showManualEntry(null, null));
+        navAdd.setOnClickListener(v -> {
+            setActiveMeal(defaultMealType());
+            showManualEntry(null, null);
+        });
         navProgress.setOnClickListener(v -> showScreen(progressScreen, 2));
         navProfile.setOnClickListener(v -> showScreen(profileScreen, 3));
-        findViewById(R.id.homeSeeAll).setOnClickListener(v -> showScreen(searchScreen, 1));
+        findViewById(R.id.homeSeeAll).setOnClickListener(v -> {
+            setActiveMeal(defaultMealType());
+            if (catalog != null) loadPopularFoods();
+            showScreen(searchScreen, 1);
+        });
     }
 
     private void configureSearch() {
@@ -222,7 +236,7 @@ public final class MainActivity extends Activity {
         findViewById(R.id.detailBack).setOnClickListener(v -> showScreen(searchScreen, 1));
         findViewById(R.id.servingMinus).setOnClickListener(v -> changeServingCount(-1));
         findViewById(R.id.servingPlus).setOnClickListener(v -> changeServingCount(1));
-        findViewById(R.id.detailAddButton).setOnClickListener(v -> addSelectedFood());
+        detailAddButton.setOnClickListener(v -> addSelectedFood());
         detailGramsInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -234,7 +248,7 @@ public final class MainActivity extends Activity {
 
     private void configureManualEntry() {
         findViewById(R.id.manualBack).setOnClickListener(v -> showScreen(searchScreen, 1));
-        findViewById(R.id.addButton).setOnClickListener(v -> addManualFood());
+        manualAddButton.setOnClickListener(v -> addManualFood());
     }
 
     private void configureDiagnostics() {
@@ -302,26 +316,85 @@ public final class MainActivity extends Activity {
 
     private void renderDiaryEntries(List<FoodEntry> entries) {
         entriesContainer.removeAllViews();
-        if (entries.isEmpty()) {
-            TextView empty = new TextView(this);
-            empty.setText(getString(R.string.empty_entries));
-            empty.setTextColor(getColor(R.color.text_secondary));
-            empty.setTextSize(13f);
-            empty.setPadding(dp(4), dp(14), dp(4), dp(10));
-            entriesContainer.addView(empty);
-            return;
+        renderMealSection(FoodEntry.MEAL_BREAKFAST, "☀", entries);
+        renderMealSection(FoodEntry.MEAL_LUNCH, "🍱", entries);
+        renderMealSection(FoodEntry.MEAL_SNACKS, "🍎", entries);
+        renderMealSection(FoodEntry.MEAL_DINNER, "☾", entries);
+    }
+
+    private void renderMealSection(String mealType, String icon, List<FoodEntry> entries) {
+        LinearLayout section = new LinearLayout(this);
+        section.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams sectionParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        if (entriesContainer.getChildCount() > 0) sectionParams.topMargin = dp(14);
+        section.setLayoutParams(sectionParams);
+
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        TextView title = new TextView(this);
+        title.setText(icon + "  " + FoodEntry.mealDisplayName(mealType));
+        title.setTextColor(getColor(R.color.text_primary));
+        title.setTextSize(16f);
+        title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
+        title.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        header.addView(title, new LinearLayout.LayoutParams(0, dp(40), 1f));
+
+        double mealCalories = 0.0;
+        for (FoodEntry entry : entries) {
+            if (mealType.equals(entry.mealType)) mealCalories += entry.calories;
         }
-        int count = Math.min(entries.size(), 5);
-        for (int i = 0; i < count; i++) {
-            FoodEntry entry = entries.get(i);
-            View row = getLayoutInflater().inflate(R.layout.item_diary_entry, entriesContainer, false);
+        TextView calories = new TextView(this);
+        calories.setText(String.format(Locale.getDefault(), "%.0f kcal", mealCalories));
+        calories.setTextColor(getColor(R.color.text_secondary));
+        calories.setTextSize(11f);
+        calories.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        calories.setPadding(dp(8), 0, dp(10), 0);
+        header.addView(calories, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(40)));
+
+        TextView add = new TextView(this);
+        add.setText("+ Add");
+        add.setTextColor(getColor(R.color.accent));
+        add.setTextSize(12f);
+        add.setTypeface(add.getTypeface(), android.graphics.Typeface.BOLD);
+        add.setGravity(android.view.Gravity.CENTER);
+        add.setPadding(dp(12), 0, dp(12), 0);
+        add.setBackgroundResource(R.drawable.bg_chip);
+        add.setOnClickListener(v -> openMealSearch(mealType));
+        header.addView(add, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(36)));
+        section.addView(header);
+
+        boolean hasEntries = false;
+        for (FoodEntry entry : entries) {
+            if (!mealType.equals(entry.mealType)) continue;
+            hasEntries = true;
+            View row = getLayoutInflater().inflate(R.layout.item_diary_entry, section, false);
             ((TextView) row.findViewById(R.id.entryIcon)).setText(foodEmoji(entry.name));
             ((TextView) row.findViewById(R.id.entryName)).setText(entry.name);
             ((TextView) row.findViewById(R.id.entryAmount)).setText(String.format(Locale.getDefault(), "%.0f g  •  %s", entry.grams, friendlySource(entry.source)));
             ((TextView) row.findViewById(R.id.entryMacros)).setText(String.format(Locale.getDefault(), "P %.0fg    C %.0fg    F %.0fg", entry.protein, entry.carbs, entry.fat));
             ((TextView) row.findViewById(R.id.entryCalories)).setText(String.format(Locale.getDefault(), "%.0f kcal", entry.calories));
-            entriesContainer.addView(row);
+            section.addView(row);
         }
+
+        if (!hasEntries) {
+            TextView empty = new TextView(this);
+            empty.setText("No foods logged");
+            empty.setTextColor(getColor(R.color.text_tertiary));
+            empty.setTextSize(12f);
+            empty.setPadding(dp(4), dp(4), dp(4), dp(8));
+            section.addView(empty);
+        }
+        entriesContainer.addView(section);
+    }
+
+    private void openMealSearch(String mealType) {
+        setActiveMeal(mealType);
+        searchInput.setText("");
+        if (catalog != null) loadPopularFoods();
+        showScreen(searchScreen, 1);
     }
 
     private void search() {
@@ -333,7 +406,7 @@ public final class MainActivity extends Activity {
         }
         List<CatalogFood> results = catalog.search(q, 30);
         AppLogger.i("Offline search queryLength=" + q.length() + " results=" + results.size());
-        searchSectionTitle.setText("Search Results");
+        searchSectionTitle.setText("Search Results • " + FoodEntry.mealDisplayName(activeMealType));
         renderFoodResults(results);
     }
 
@@ -350,7 +423,7 @@ public final class MainActivity extends Activity {
                 }
             }
         }
-        searchSectionTitle.setText("Popular Foods");
+        searchSectionTitle.setText("Popular Foods • " + FoodEntry.mealDisplayName(activeMealType));
         renderFoodResults(foods);
     }
 
@@ -407,7 +480,8 @@ public final class MainActivity extends Activity {
         setDetailGrams(baseServingGrams);
         detailExtra.setText(detailExtra(food));
         updateDetailTotals();
-        AppLogger.i("Catalog food selected source=" + food.source + " code=" + food.code);
+        updateMealTargetLabels();
+        AppLogger.i("Catalog food selected source=" + food.source + " code=" + food.code + " meal=" + activeMealType);
         showScreen(detailScreen, -1);
     }
 
@@ -487,11 +561,11 @@ public final class MainActivity extends Activity {
             double grams = positive(detailGramsInput, "amount");
             FoodEntry entry = FoodEntry.fromPer100g(selectedFood.name, grams, selectedFood.calories,
                     selectedFood.protein, selectedFood.carbs, selectedFood.fat,
-                    System.currentTimeMillis(), selectedFood.source, selectedFood.code);
+                    System.currentTimeMillis(), activeMealType, selectedFood.source, selectedFood.code);
             long id = diary.insert(entry);
-            AppLogger.i("Food entry added id=" + id + " source=" + selectedFood.source);
+            AppLogger.i("Food entry added id=" + id + " source=" + selectedFood.source + " meal=" + activeMealType);
             refreshHome();
-            toast("Added to today’s diary");
+            toast("Added to " + FoodEntry.mealDisplayName(activeMealType));
             showScreen(homeScreen, 0);
         } catch (Exception e) {
             AppLogger.e("Failed to add selected food", e);
@@ -509,6 +583,7 @@ public final class MainActivity extends Activity {
             setNumber(carbsInput, sourceFood.carbs);
             setNumber(fatInput, sourceFood.fat);
         }
+        updateMealTargetLabels();
         showScreen(manualScreen, -1);
     }
 
@@ -521,12 +596,12 @@ public final class MainActivity extends Activity {
             double protein = nonNegative(proteinInput, "protein");
             double carbs = nonNegative(carbsInput, "carbs");
             double fat = nonNegative(fatInput, "fat");
-            FoodEntry entry = FoodEntry.fromPer100g(name, grams, calories, protein, carbs, fat, System.currentTimeMillis());
+            FoodEntry entry = FoodEntry.fromPer100g(name, grams, calories, protein, carbs, fat, System.currentTimeMillis(), activeMealType);
             long id = diary.insert(entry);
-            AppLogger.i("Food entry added id=" + id + " source=manual");
+            AppLogger.i("Food entry added id=" + id + " source=manual meal=" + activeMealType);
             clearManualInputs();
             refreshHome();
-            toast("Added to today’s diary");
+            toast("Added to " + FoodEntry.mealDisplayName(activeMealType));
             showScreen(homeScreen, 0);
         } catch (IllegalArgumentException e) {
             toast(e.getMessage());
@@ -633,6 +708,22 @@ public final class MainActivity extends Activity {
         } catch (NumberFormatException e) {
             return fallback;
         }
+    }
+
+
+    private String defaultMealType() {
+        return FoodEntry.mealForHour(LocalTime.now().getHour());
+    }
+
+    private void setActiveMeal(String mealType) {
+        activeMealType = FoodEntry.normalizeMealType(mealType);
+        updateMealTargetLabels();
+    }
+
+    private void updateMealTargetLabels() {
+        String mealName = FoodEntry.mealDisplayName(activeMealType);
+        if (detailAddButton != null) detailAddButton.setText("+  Add to " + mealName);
+        if (manualAddButton != null) manualAddButton.setText("+  Add to " + mealName);
     }
 
     private void toast(String message) {
