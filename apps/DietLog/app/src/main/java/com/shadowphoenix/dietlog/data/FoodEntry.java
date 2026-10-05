@@ -1,5 +1,7 @@
 package com.shadowphoenix.dietlog.data;
 
+import com.shadowphoenix.dietlog.nutrition.MicronutrientValues;
+
 import java.util.Locale;
 
 public final class FoodEntry {
@@ -13,10 +15,18 @@ public final class FoodEntry {
     public final double grams, calories, protein, carbs, fat;
     public final long loggedAt;
     public final String mealType, source, sourceFoodId, sourceServingId;
+    public final MicronutrientValues micronutrients;
 
     public FoodEntry(long id, String name, double grams, double calories, double protein,
                      double carbs, double fat, long loggedAt, String mealType, String source,
                      String sourceFoodId, String sourceServingId) {
+        this(id, name, grams, calories, protein, carbs, fat, loggedAt, mealType, source,
+                sourceFoodId, sourceServingId, MicronutrientValues.empty());
+    }
+
+    public FoodEntry(long id, String name, double grams, double calories, double protein,
+                     double carbs, double fat, long loggedAt, String mealType, String source,
+                     String sourceFoodId, String sourceServingId, MicronutrientValues micronutrients) {
         this.id = id;
         this.name = name;
         this.grams = grams;
@@ -29,6 +39,7 @@ public final class FoodEntry {
         this.source = source;
         this.sourceFoodId = sourceFoodId;
         this.sourceServingId = sourceServingId;
+        this.micronutrients = micronutrients == null ? MicronutrientValues.empty() : micronutrients;
     }
 
     public FoodEntry(long id, String name, double grams, double calories, double protein,
@@ -39,11 +50,21 @@ public final class FoodEntry {
 
     public static FoodEntry fromPer100g(String name, double grams, double caloriesPer100g,
                                         double proteinPer100g, double carbsPer100g, double fatPer100g,
-                                        long loggedAt, String mealType, String source, String sourceFoodId) {
+                                        long loggedAt, String mealType, String source, String sourceFoodId,
+                                        MicronutrientValues micronutrientsPer100g) {
         double factor = grams / 100.0;
+        MicronutrientValues micros = micronutrientsPer100g == null
+                ? MicronutrientValues.empty() : micronutrientsPer100g.scaled(factor);
         return new FoodEntry(0, name.trim(), grams, caloriesPer100g * factor, proteinPer100g * factor,
                 carbsPer100g * factor, fatPer100g * factor, loggedAt, mealType,
-                source == null ? "manual" : source, sourceFoodId, null);
+                source == null ? "manual" : source, sourceFoodId, null, micros);
+    }
+
+    public static FoodEntry fromPer100g(String name, double grams, double caloriesPer100g,
+                                        double proteinPer100g, double carbsPer100g, double fatPer100g,
+                                        long loggedAt, String mealType, String source, String sourceFoodId) {
+        return fromPer100g(name, grams, caloriesPer100g, proteinPer100g, carbsPer100g, fatPer100g,
+                loggedAt, mealType, source, sourceFoodId, MicronutrientValues.empty());
     }
 
     public static FoodEntry fromPer100g(String name, double grams, double caloriesPer100g,
@@ -71,17 +92,23 @@ public final class FoodEntry {
         if (grams <= 0.0) throw new IllegalStateException("Existing amount must be greater than zero");
         double factor = newGrams / grams;
         return new FoodEntry(id, name, newGrams, calories * factor, protein * factor,
-                carbs * factor, fat * factor, loggedAt, mealType, source, sourceFoodId, sourceServingId);
+                carbs * factor, fat * factor, loggedAt, mealType, source, sourceFoodId, sourceServingId,
+                micronutrients.scaled(factor));
     }
 
     public FoodEntry withMealType(String newMealType) {
         return new FoodEntry(id, name, grams, calories, protein, carbs, fat, loggedAt,
-                newMealType, source, sourceFoodId, sourceServingId);
+                newMealType, source, sourceFoodId, sourceServingId, micronutrients);
     }
 
     public FoodEntry copyForLog(long newLoggedAt, String newMealType) {
         return new FoodEntry(0, name, grams, calories, protein, carbs, fat, newLoggedAt,
-                newMealType, source, sourceFoodId, sourceServingId);
+                newMealType, source, sourceFoodId, sourceServingId, micronutrients);
+    }
+
+    public FoodEntry withMicronutrients(MicronutrientValues values) {
+        return new FoodEntry(id, name, grams, calories, protein, carbs, fat, loggedAt,
+                mealType, source, sourceFoodId, sourceServingId, values);
     }
 
     public String foodKey() {

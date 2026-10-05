@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.shadowphoenix.dietlog.progress.ProgressData.DailyNutrition;
 import com.shadowphoenix.dietlog.progress.ProgressData.WeightPoint;
+import com.shadowphoenix.dietlog.nutrition.MicronutrientValues;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -19,7 +20,7 @@ import java.util.Map;
 
 public final class DiaryDbHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "dietlog.db";
-    private static final int DB_VERSION = 4;
+    private static final int DB_VERSION = 5;
     private static final int HISTORY_SCAN_LIMIT = 2000;
 
     public DiaryDbHelper(Context context) {
@@ -40,7 +41,8 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
                 "logged_at INTEGER NOT NULL," +
                 "source TEXT NOT NULL," +
                 "source_food_id TEXT," +
-                "source_serving_id TEXT" +
+                "source_serving_id TEXT," +
+                "micronutrients TEXT" +
                 ")");
         db.execSQL("CREATE INDEX idx_food_entries_logged_at ON food_entries(logged_at)");
         createFavoritesTable(db);
@@ -66,6 +68,11 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
             createWeightLogsTable(db);
             oldVersion = 4;
         }
+        if (oldVersion < 5) {
+            addColumnIfMissing(db, "food_entries", "micronutrients", "TEXT");
+            addColumnIfMissing(db, "food_favorites", "micronutrients", "TEXT");
+            oldVersion = 5;
+        }
         if (oldVersion != newVersion) {
             throw new IllegalStateException("No database migration exists from " + oldVersion + " to " + newVersion);
         }
@@ -84,6 +91,7 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         values.put("source", entry.source);
         values.put("source_food_id", entry.sourceFoodId);
         values.put("source_serving_id", entry.sourceServingId);
+        values.put("micronutrients", entry.micronutrients.encode());
         return getWritableDatabase().insertOrThrow("food_entries", null, values);
     }
 
@@ -253,6 +261,7 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         values.put("source", entry.source);
         values.put("source_food_id", entry.sourceFoodId);
         values.put("source_serving_id", entry.sourceServingId);
+        values.put("micronutrients", entry.micronutrients.encode());
         return getWritableDatabase().update("food_entries", values, "id = ?",
                 new String[]{Long.toString(entry.id)});
     }
@@ -312,6 +321,7 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         values.put("source", entry.source == null ? "manual" : entry.source);
         values.put("source_food_id", entry.sourceFoodId);
         values.put("source_serving_id", entry.sourceServingId);
+        values.put("micronutrients", entry.micronutrients.encode());
         values.put("updated_at", System.currentTimeMillis());
         getWritableDatabase().insertWithOnConflict(
                 "food_favorites", null, values, SQLiteDatabase.CONFLICT_REPLACE);
@@ -355,7 +365,8 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
                 c.getString(c.getColumnIndexOrThrow("meal_type")),
                 c.getString(c.getColumnIndexOrThrow("source")),
                 c.getString(c.getColumnIndexOrThrow("source_food_id")),
-                c.getString(c.getColumnIndexOrThrow("source_serving_id"))
+                c.getString(c.getColumnIndexOrThrow("source_serving_id")),
+                MicronutrientValues.decode(c.getString(c.getColumnIndexOrThrow("micronutrients")))
         );
     }
 
@@ -372,8 +383,23 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
                 c.getString(c.getColumnIndexOrThrow("meal_type")),
                 c.getString(c.getColumnIndexOrThrow("source")),
                 c.getString(c.getColumnIndexOrThrow("source_food_id")),
-                c.getString(c.getColumnIndexOrThrow("source_serving_id"))
+                c.getString(c.getColumnIndexOrThrow("source_serving_id")),
+                MicronutrientValues.decode(c.getString(c.getColumnIndexOrThrow("micronutrients")))
         );
+    }
+
+    private static void addColumnIfMissing(SQLiteDatabase db, String table, String column, String definition) {
+        boolean found = false;
+        try (Cursor c = db.rawQuery("PRAGMA table_info(" + table + ")", null)) {
+            int nameIndex = c.getColumnIndexOrThrow("name");
+            while (c.moveToNext()) {
+                if (column.equals(c.getString(nameIndex))) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found) db.execSQL("ALTER TABLE " + table + " ADD COLUMN " + column + " " + definition);
     }
 
     private static void createFavoritesTable(SQLiteDatabase db) {
@@ -389,6 +415,7 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
                 "source TEXT NOT NULL," +
                 "source_food_id TEXT," +
                 "source_serving_id TEXT," +
+                "micronutrients TEXT," +
                 "updated_at INTEGER NOT NULL" +
                 ")");
     }
