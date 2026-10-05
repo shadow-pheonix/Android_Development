@@ -66,6 +66,19 @@ public final class FoodEntry {
                 loggedAt, MEAL_SNACKS, "manual", null);
     }
 
+    public FoodEntry withAmount(double newGrams) {
+        if (!Double.isFinite(newGrams) || newGrams <= 0.0) throw new IllegalArgumentException("Amount must be greater than zero");
+        if (grams <= 0.0) throw new IllegalStateException("Existing amount must be greater than zero");
+        double factor = newGrams / grams;
+        return new FoodEntry(id, name, newGrams, calories * factor, protein * factor,
+                carbs * factor, fat * factor, loggedAt, mealType, source, sourceFoodId, sourceServingId);
+    }
+
+    public FoodEntry withMealType(String newMealType) {
+        return new FoodEntry(id, name, grams, calories, protein, carbs, fat, loggedAt,
+                newMealType, source, sourceFoodId, sourceServingId);
+    }
+
     public static String normalizeMealType(String mealType) {
         if (mealType == null) return MEAL_SNACKS;
         switch (mealType.trim().toLowerCase(Locale.ROOT)) {

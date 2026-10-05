@@ -72,7 +72,11 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
     }
 
     public List<FoodEntry> getTodayEntries() {
-        long[] bounds = todayBounds();
+        return getEntriesForDate(LocalDate.now(ZoneId.systemDefault()));
+    }
+
+    public List<FoodEntry> getEntriesForDate(LocalDate date) {
+        long[] bounds = dateBounds(date);
         List<FoodEntry> result = new ArrayList<>();
         try (Cursor c = getReadableDatabase().query(
                 "food_entries",
@@ -91,7 +95,11 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
     }
 
     public double[] getTodayTotals() {
-        long[] bounds = todayBounds();
+        return getTotalsForDate(LocalDate.now(ZoneId.systemDefault()));
+    }
+
+    public double[] getTotalsForDate(LocalDate date) {
+        long[] bounds = dateBounds(date);
         try (Cursor c = getReadableDatabase().rawQuery(
                 "SELECT COALESCE(SUM(calories),0), COALESCE(SUM(protein),0), " +
                         "COALESCE(SUM(carbs),0), COALESCE(SUM(fat),0) " +
@@ -102,6 +110,27 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
             }
         }
         return new double[]{0, 0, 0, 0};
+    }
+
+    public int update(FoodEntry entry) {
+        ContentValues values = new ContentValues();
+        values.put("name", entry.name);
+        values.put("grams", entry.grams);
+        values.put("calories", entry.calories);
+        values.put("protein", entry.protein);
+        values.put("carbs", entry.carbs);
+        values.put("fat", entry.fat);
+        values.put("meal_type", entry.mealType);
+        values.put("logged_at", entry.loggedAt);
+        values.put("source", entry.source);
+        values.put("source_food_id", entry.sourceFoodId);
+        values.put("source_serving_id", entry.sourceServingId);
+        return getWritableDatabase().update("food_entries", values, "id = ?",
+                new String[]{Long.toString(entry.id)});
+    }
+
+    public int delete(long id) {
+        return getWritableDatabase().delete("food_entries", "id = ?", new String[]{Long.toString(id)});
     }
 
     public long getEntryCount() {
@@ -127,11 +156,10 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         );
     }
 
-    private static long[] todayBounds() {
+    private static long[] dateBounds(LocalDate date) {
         ZoneId zone = ZoneId.systemDefault();
-        LocalDate today = LocalDate.now(zone);
-        Instant start = today.atStartOfDay(zone).toInstant();
-        Instant end = today.plusDays(1).atStartOfDay(zone).toInstant();
+        Instant start = date.atStartOfDay(zone).toInstant();
+        Instant end = date.plusDays(1).atStartOfDay(zone).toInstant();
         return new long[]{start.toEpochMilli(), end.toEpochMilli()};
     }
 }

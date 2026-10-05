@@ -1,11 +1,13 @@
 package com.shadowphoenix.dietlog;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -22,12 +24,12 @@ import com.shadowphoenix.dietlog.food.FoodCatalogDb;
 import com.shadowphoenix.dietlog.profile.ProfileController;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
 
-import java.text.DateFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -50,6 +52,7 @@ public final class MainActivity extends Activity {
 
     private RingProgressView caloriesRing, proteinRing, carbsRing, fatRing;
     private TextView calorieValue, calorieGoalText, calorieLeft, proteinValue, carbsValue, fatValue;
+    private TextView dateText, foodLogTitle;
     private LinearLayout entriesContainer;
 
     private EditText searchInput;
@@ -69,6 +72,7 @@ public final class MainActivity extends Activity {
     private EditText nameInput, gramsInput, caloriesInput, proteinInput, carbsInput, fatInput;
     private TextView detailAddButton, manualAddButton;
     private String activeMealType = FoodEntry.mealForHour(LocalTime.now().getHour());
+    private LocalDate selectedDate = LocalDate.now();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +85,13 @@ public final class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         diary = new DiaryDbHelper(this);
+        if (savedInstanceState != null) {
+            String savedDate = savedInstanceState.getString("selected_date");
+            if (savedDate != null) {
+                try { selectedDate = LocalDate.parse(savedDate); } catch (Exception ignored) {}
+            }
+            activeMealType = FoodEntry.normalizeMealType(savedInstanceState.getString("active_meal", activeMealType));
+        }
         bindViews();
         profileController = new ProfileController(this, this::refreshHome);
         profileController.bind();
@@ -91,8 +102,6 @@ public final class MainActivity extends Activity {
         configureManualEntry();
         configureDiagnostics();
         configureWeekStrip();
-
-        ((TextView) findViewById(R.id.dateText)).setText(DateFormat.getDateInstance(DateFormat.FULL).format(new Date()));
 
         try {
             catalog = new FoodCatalogDb(this);
@@ -145,7 +154,11 @@ public final class MainActivity extends Activity {
         proteinValue = findViewById(R.id.proteinValue);
         carbsValue = findViewById(R.id.carbsValue);
         fatValue = findViewById(R.id.fatValue);
+        dateText = findViewById(R.id.dateText);
         entriesContainer = findViewById(R.id.entriesContainer);
+        ViewGroup logCard = (ViewGroup) entriesContainer.getParent();
+        ViewGroup logHeader = (ViewGroup) logCard.getChildAt(0);
+        foodLogTitle = (TextView) logHeader.getChildAt(0);
 
         searchInput = findViewById(R.id.searchInput);
         databaseStatusText = findViewById(R.id.databaseStatusText);
@@ -256,18 +269,87 @@ public final class MainActivity extends Activity {
     }
 
     private void configureWeekStrip() {
+        ViewGroup root = (ViewGroup) dateText.getParent();
+        int dateIndex = root.indexOfChild(dateText);
+        root.removeView(dateText);
+
+        LinearLayout controls = new LinearLayout(this);
+        controls.setOrientation(LinearLayout.HORIZONTAL);
+        controls.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(44));
+        controlsParams.topMargin = dp(14);
+        controls.setLayoutParams(controlsParams);
+
+        TextView previous = dateControl("‹", 42);
+        previous.setContentDescription("Previous week");
+        previous.setOnClickListener(v -> selectDate(selectedDate.minusWeeks(1)));
+        controls.addView(previous);
+
+        dateText.setVisibility(View.VISIBLE);
+        dateText.setGravity(android.view.Gravity.CENTER);
+        dateText.setTextColor(getColor(R.color.text_primary));
+        dateText.setTextSize(13f);
+        dateText.setTypeface(dateText.getTypeface(), android.graphics.Typeface.BOLD);
+        dateText.setOnClickListener(v -> selectDate(LocalDate.now()));
+        controls.addView(dateText, new LinearLayout.LayoutParams(0, dp(44), 1f));
+
+        TextView today = dateControl("Today", 64);
+        today.setContentDescription("Jump to today");
+        today.setOnClickListener(v -> selectDate(LocalDate.now()));
+        controls.addView(today);
+
+        TextView next = dateControl("›", 42);
+        next.setContentDescription("Next week");
+        next.setOnClickListener(v -> selectDate(selectedDate.plusWeeks(1)));
+        controls.addView(next);
+
+        root.addView(controls, dateIndex);
+        renderWeekStrip();
+    }
+
+    private TextView dateControl(String text, int widthDp) {
+        TextView control = new TextView(this);
+        control.setText(text);
+        control.setGravity(android.view.Gravity.CENTER);
+        control.setTextColor(getColor(R.color.accent));
+        control.setTextSize(13f);
+        control.setTypeface(control.getTypeface(), android.graphics.Typeface.BOLD);
+        control.setBackgroundResource(R.drawable.bg_chip);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(widthDp), dp(36));
+        params.setMarginStart(dp(4));
+        params.setMarginEnd(dp(4));
+        control.setLayoutParams(params);
+        return control;
+    }
+
+    private void selectDate(LocalDate date) {
+        selectedDate = date;
+        renderWeekStrip();
+        refreshHome();
+        AppLogger.i("Diary date selected=" + selectedDate);
+    }
+
+    private void renderWeekStrip() {
         LocalDate today = LocalDate.now();
-        LocalDate monday = today.minusDays(today.getDayOfWeek().getValue() - 1L);
+        LocalDate monday = selectedDate.minusDays(selectedDate.getDayOfWeek().getValue() - 1L);
+        DateTimeFormatter headerFormat = DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.getDefault());
+        dateText.setText(selectedDate.equals(today) ? "Today • " + selectedDate.format(headerFormat) : selectedDate.format(headerFormat));
         for (int i = 0; i < 7; i++) {
             int id = getResources().getIdentifier("day" + i, "id", getPackageName());
             TextView day = findViewById(id);
             LocalDate date = monday.plusDays(i);
             String dow = date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.getDefault());
             day.setText(dow + System.lineSeparator() + date.getDayOfMonth());
-            if (date.equals(today)) {
+            day.setOnClickListener(v -> selectDate(date));
+            if (date.equals(selectedDate)) {
                 day.setBackgroundResource(R.drawable.bg_calendar_selected);
                 day.setTextColor(getColor(R.color.accent));
                 day.setTypeface(day.getTypeface(), android.graphics.Typeface.BOLD);
+            } else {
+                day.setBackgroundResource(R.drawable.bg_calendar);
+                day.setTextColor(date.equals(today) ? getColor(R.color.accent) : getColor(R.color.text_secondary));
+                day.setTypeface(day.getTypeface(), date.equals(today) ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
             }
         }
     }
@@ -296,7 +378,7 @@ public final class MainActivity extends Activity {
     }
 
     private void refreshHome() {
-        double[] totals = diary.getTodayTotals();
+        double[] totals = diary.getTotalsForDate(selectedDate);
         double calorieGoal = profileController == null ? CALORIE_GOAL : profileController.getCalorieGoal();
         double proteinGoal = profileController == null ? PROTEIN_GOAL : profileController.getProteinGoal();
         double carbsGoal = profileController == null ? CARBS_GOAL : profileController.getCarbsGoal();
@@ -311,7 +393,10 @@ public final class MainActivity extends Activity {
         proteinRing.setProgress((float) (totals[1] / proteinGoal));
         carbsRing.setProgress(carbsGoal <= 0.0 ? 0f : (float) (totals[2] / carbsGoal));
         fatRing.setProgress((float) (totals[3] / fatGoal));
-        renderDiaryEntries(diary.getTodayEntries());
+        LocalDate today = LocalDate.now();
+        foodLogTitle.setText(selectedDate.equals(today) ? "Today’s Food Log" :
+                "Food Log • " + selectedDate.format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())));
+        renderDiaryEntries(diary.getEntriesForDate(selectedDate));
     }
 
     private void renderDiaryEntries(List<FoodEntry> entries) {
@@ -376,6 +461,8 @@ public final class MainActivity extends Activity {
             ((TextView) row.findViewById(R.id.entryAmount)).setText(String.format(Locale.getDefault(), "%.0f g  •  %s", entry.grams, friendlySource(entry.source)));
             ((TextView) row.findViewById(R.id.entryMacros)).setText(String.format(Locale.getDefault(), "P %.0fg    C %.0fg    F %.0fg", entry.protein, entry.carbs, entry.fat));
             ((TextView) row.findViewById(R.id.entryCalories)).setText(String.format(Locale.getDefault(), "%.0f kcal", entry.calories));
+            row.setOnClickListener(v -> showEntryActions(entry));
+            row.setContentDescription("Edit " + entry.name);
             section.addView(row);
         }
 
@@ -388,6 +475,93 @@ public final class MainActivity extends Activity {
             section.addView(empty);
         }
         entriesContainer.addView(section);
+    }
+
+    private void showEntryActions(FoodEntry entry) {
+        String[] actions = {"Edit amount", "Move to another meal", "Delete"};
+        new AlertDialog.Builder(this)
+                .setTitle(entry.name + " • " + formatAmount(entry.grams) + " g")
+                .setItems(actions, (dialog, which) -> {
+                    if (which == 0) showEditAmountDialog(entry);
+                    else if (which == 1) showMoveMealDialog(entry);
+                    else showDeleteEntryDialog(entry);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showEditAmountDialog(FoodEntry entry) {
+        EditText amount = new EditText(this);
+        amount.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        amount.setSingleLine(true);
+        amount.setText(formatAmount(entry.grams));
+        amount.setSelectAllOnFocus(true);
+        amount.setPadding(dp(14), dp(10), dp(14), dp(10));
+
+        LinearLayout container = new LinearLayout(this);
+        container.setPadding(dp(22), 0, dp(22), 0);
+        container.addView(amount, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(52)));
+
+        new AlertDialog.Builder(this)
+                .setTitle("Edit amount • " + entry.name)
+                .setMessage("Enter the amount in grams. Calories and macros will scale automatically.")
+                .setView(container)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    try {
+                        double grams = Double.parseDouble(amount.getText().toString().trim());
+                        FoodEntry updated = entry.withAmount(grams);
+                        if (diary.update(updated) == 1) {
+                            AppLogger.i("Diary entry amount updated id=" + entry.id + " grams=" + grams);
+                            refreshHome();
+                            toast("Amount updated");
+                        } else {
+                            toast("Unable to update entry");
+                        }
+                    } catch (Exception e) {
+                        toast("Enter a valid amount greater than zero");
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showMoveMealDialog(FoodEntry entry) {
+        String[] labels = {"Breakfast", "Lunch", "Snacks", "Dinner"};
+        String[] values = {FoodEntry.MEAL_BREAKFAST, FoodEntry.MEAL_LUNCH, FoodEntry.MEAL_SNACKS, FoodEntry.MEAL_DINNER};
+        int checked = 0;
+        for (int i = 0; i < values.length; i++) if (values[i].equals(entry.mealType)) checked = i;
+        new AlertDialog.Builder(this)
+                .setTitle("Move " + entry.name)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    FoodEntry updated = entry.withMealType(values[which]);
+                    if (diary.update(updated) == 1) {
+                        AppLogger.i("Diary entry moved id=" + entry.id + " meal=" + values[which]);
+                        refreshHome();
+                        toast("Moved to " + labels[which]);
+                    } else {
+                        toast("Unable to move entry");
+                    }
+                    dialog.dismiss();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showDeleteEntryDialog(FoodEntry entry) {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete " + entry.name + "?")
+                .setMessage("This removes the entry from " + selectedDate.format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())) + ".")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    if (diary.delete(entry.id) == 1) {
+                        AppLogger.i("Diary entry deleted id=" + entry.id);
+                        refreshHome();
+                        toast("Entry deleted");
+                    } else {
+                        toast("Unable to delete entry");
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void openMealSearch(String mealType) {
@@ -406,7 +580,7 @@ public final class MainActivity extends Activity {
         }
         List<CatalogFood> results = catalog.search(q, 30);
         AppLogger.i("Offline search queryLength=" + q.length() + " results=" + results.size());
-        searchSectionTitle.setText("Search Results • " + FoodEntry.mealDisplayName(activeMealType));
+        searchSectionTitle.setText("Search Results • " + mealTargetLabel());
         renderFoodResults(results);
     }
 
@@ -423,7 +597,7 @@ public final class MainActivity extends Activity {
                 }
             }
         }
-        searchSectionTitle.setText("Popular Foods • " + FoodEntry.mealDisplayName(activeMealType));
+        searchSectionTitle.setText("Popular Foods • " + mealTargetLabel());
         renderFoodResults(foods);
     }
 
@@ -561,11 +735,11 @@ public final class MainActivity extends Activity {
             double grams = positive(detailGramsInput, "amount");
             FoodEntry entry = FoodEntry.fromPer100g(selectedFood.name, grams, selectedFood.calories,
                     selectedFood.protein, selectedFood.carbs, selectedFood.fat,
-                    System.currentTimeMillis(), activeMealType, selectedFood.source, selectedFood.code);
+                    selectedDateTimestamp(), activeMealType, selectedFood.source, selectedFood.code);
             long id = diary.insert(entry);
             AppLogger.i("Food entry added id=" + id + " source=" + selectedFood.source + " meal=" + activeMealType);
             refreshHome();
-            toast("Added to " + FoodEntry.mealDisplayName(activeMealType));
+            toast(addConfirmationText());
             showScreen(homeScreen, 0);
         } catch (Exception e) {
             AppLogger.e("Failed to add selected food", e);
@@ -596,12 +770,12 @@ public final class MainActivity extends Activity {
             double protein = nonNegative(proteinInput, "protein");
             double carbs = nonNegative(carbsInput, "carbs");
             double fat = nonNegative(fatInput, "fat");
-            FoodEntry entry = FoodEntry.fromPer100g(name, grams, calories, protein, carbs, fat, System.currentTimeMillis(), activeMealType);
+            FoodEntry entry = FoodEntry.fromPer100g(name, grams, calories, protein, carbs, fat, selectedDateTimestamp(), activeMealType);
             long id = diary.insert(entry);
             AppLogger.i("Food entry added id=" + id + " source=manual meal=" + activeMealType);
             clearManualInputs();
             refreshHome();
-            toast("Added to " + FoodEntry.mealDisplayName(activeMealType));
+            toast(addConfirmationText());
             showScreen(homeScreen, 0);
         } catch (IllegalArgumentException e) {
             toast(e.getMessage());
@@ -711,6 +885,21 @@ public final class MainActivity extends Activity {
     }
 
 
+    private long selectedDateTimestamp() {
+        ZoneId zone = ZoneId.systemDefault();
+        LocalDate today = LocalDate.now(zone);
+        if (selectedDate.equals(today)) return System.currentTimeMillis();
+        return selectedDate.atTime(12, 0).atZone(zone).toInstant().toEpochMilli();
+    }
+
+    private String addConfirmationText() {
+        String text = "Added to " + FoodEntry.mealDisplayName(activeMealType);
+        if (!selectedDate.equals(LocalDate.now())) {
+            text += " • " + selectedDate.format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()));
+        }
+        return text;
+    }
+
     private String defaultMealType() {
         return FoodEntry.mealForHour(LocalTime.now().getHour());
     }
@@ -720,10 +909,18 @@ public final class MainActivity extends Activity {
         updateMealTargetLabels();
     }
 
+    private String mealTargetLabel() {
+        String label = FoodEntry.mealDisplayName(activeMealType);
+        if (!selectedDate.equals(LocalDate.now())) {
+            label += " • " + selectedDate.format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()));
+        }
+        return label;
+    }
+
     private void updateMealTargetLabels() {
-        String mealName = FoodEntry.mealDisplayName(activeMealType);
-        if (detailAddButton != null) detailAddButton.setText("+  Add to " + mealName);
-        if (manualAddButton != null) manualAddButton.setText("+  Add to " + mealName);
+        String target = mealTargetLabel();
+        if (detailAddButton != null) detailAddButton.setText("+  Add to " + target);
+        if (manualAddButton != null) manualAddButton.setText("+  Add to " + target);
     }
 
     private void toast(String message) {
@@ -732,6 +929,13 @@ public final class MainActivity extends Activity {
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("selected_date", selectedDate.toString());
+        outState.putString("active_meal", activeMealType);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
