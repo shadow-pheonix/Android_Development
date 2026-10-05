@@ -102,6 +102,46 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         return result;
     }
 
+    public LocalDate getLastLoggedDateBefore(LocalDate beforeDate) {
+        long beforeMillis = dateBounds(beforeDate)[0];
+        try (Cursor c = getReadableDatabase().rawQuery(
+                "SELECT MAX(logged_at) FROM food_entries WHERE logged_at < ?",
+                new String[]{Long.toString(beforeMillis)})) {
+            if (c.moveToFirst() && !c.isNull(0)) {
+                return Instant.ofEpochMilli(c.getLong(0))
+                        .atZone(ZoneId.systemDefault()).toLocalDate();
+            }
+        }
+        return null;
+    }
+
+    public int copyDateToDate(LocalDate sourceDate, LocalDate targetDate) {
+        if (sourceDate == null || targetDate == null || sourceDate.equals(targetDate)) return 0;
+        List<FoodEntry> sourceEntries = getEntriesForDate(sourceDate);
+        if (sourceEntries.isEmpty()) return 0;
+
+        ZoneId zone = ZoneId.systemDefault();
+        long baseTimestamp = targetDate.equals(LocalDate.now(zone))
+                ? System.currentTimeMillis()
+                : targetDate.atTime(12, 0).atZone(zone).toInstant().toEpochMilli();
+
+        SQLiteDatabase writable = getWritableDatabase();
+        int copied = 0;
+        writable.beginTransaction();
+        try {
+            for (int i = 0; i < sourceEntries.size(); i++) {
+                FoodEntry source = sourceEntries.get(i);
+                FoodEntry copy = source.copyForLog(baseTimestamp - i, source.mealType);
+                insert(copy);
+                copied++;
+            }
+            writable.setTransactionSuccessful();
+        } finally {
+            writable.endTransaction();
+        }
+        return copied;
+    }
+
     public double[] getTodayTotals() {
         return getTotalsForDate(LocalDate.now(ZoneId.systemDefault()));
     }

@@ -2,6 +2,7 @@ package com.shadowphoenix.dietlog;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
@@ -56,7 +57,7 @@ public final class MainActivity extends Activity {
 
     private RingProgressView caloriesRing, proteinRing, carbsRing, fatRing;
     private TextView calorieValue, calorieGoalText, calorieLeft, proteinValue, carbsValue, fatValue;
-    private TextView dateText, foodLogTitle;
+    private TextView dateText, foodLogTitle, relogButton;
     private LinearLayout entriesContainer;
 
     private EditText searchInput;
@@ -163,10 +164,9 @@ public final class MainActivity extends Activity {
         carbsValue = findViewById(R.id.carbsValue);
         fatValue = findViewById(R.id.fatValue);
         dateText = findViewById(R.id.dateText);
+        foodLogTitle = findViewById(R.id.foodLogTitle);
+        relogButton = findViewById(R.id.relogButton);
         entriesContainer = findViewById(R.id.entriesContainer);
-        ViewGroup logCard = (ViewGroup) entriesContainer.getParent();
-        ViewGroup logHeader = (ViewGroup) logCard.getChildAt(0);
-        foodLogTitle = (TextView) logHeader.getChildAt(0);
 
         searchInput = findViewById(R.id.searchInput);
         databaseStatusText = findViewById(R.id.databaseStatusText);
@@ -241,6 +241,7 @@ public final class MainActivity extends Activity {
             if (catalog != null) loadPopularFoods();
             showScreen(searchScreen, 1);
         });
+        relogButton.setOnClickListener(v -> showRelogDialog());
     }
 
     private void configureSearch() {
@@ -429,9 +430,109 @@ public final class MainActivity extends Activity {
         carbsRing.setProgress(carbsGoal <= 0.0 ? 0f : (float) (totals[2] / carbsGoal));
         fatRing.setProgress((float) (totals[3] / fatGoal));
         LocalDate today = LocalDate.now();
-        foodLogTitle.setText(selectedDate.equals(today) ? "Today’s Food Log" :
+        boolean viewingToday = selectedDate.equals(today);
+        foodLogTitle.setText(viewingToday ? "Today’s Food Log" :
                 "Food Log • " + selectedDate.format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())));
+        relogButton.setVisibility(viewingToday ? View.VISIBLE : View.GONE);
         renderDiaryEntries(diary.getEntriesForDate(selectedDate));
+    }
+
+    private void showRelogDialog() {
+        LocalDate today = LocalDate.now();
+        if (!selectedDate.equals(today)) {
+            toast("Relog is available from Today.");
+            return;
+        }
+
+        LocalDate yesterday = today.minusDays(1);
+        LocalDate lastLogged = diary.getLastLoggedDateBefore(today);
+        List<String> labels = new ArrayList<>();
+        List<LocalDate> dates = new ArrayList<>();
+
+        labels.add("Yesterday  •  " + formatRelogDate(yesterday));
+        dates.add(yesterday);
+
+        if (lastLogged != null && !lastLogged.equals(yesterday)) {
+            labels.add("Last logged day  •  " + formatRelogDate(lastLogged));
+            dates.add(lastLogged);
+        }
+
+        labels.add("Choose another date…");
+        dates.add(null);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Relog")
+                .setMessage("Copy a previous day’s full food log into today. Foods already logged today will stay.")
+                .setItems(labels.toArray(new String[0]), (dialog, which) -> {
+                    LocalDate sourceDate = dates.get(which);
+                    if (sourceDate == null) showRelogDatePicker(lastLogged != null ? lastLogged : yesterday);
+                    else confirmRelogDate(sourceDate);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showRelogDatePicker(LocalDate initialDate) {
+        LocalDate today = LocalDate.now();
+        LocalDate safeInitial = initialDate == null || !initialDate.isBefore(today)
+                ? today.minusDays(1) : initialDate;
+        DatePickerDialog picker = new DatePickerDialog(
+                this,
+                (view, year, month, dayOfMonth) ->
+                        confirmRelogDate(LocalDate.of(year, month + 1, dayOfMonth)),
+                safeInitial.getYear(),
+                safeInitial.getMonthValue() - 1,
+                safeInitial.getDayOfMonth());
+        long maxMillis = today.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - 1;
+        picker.getDatePicker().setMaxDate(maxMillis);
+        picker.setTitle("Choose day to relog");
+        picker.show();
+    }
+
+    private void confirmRelogDate(LocalDate sourceDate) {
+        LocalDate today = LocalDate.now();
+        if (sourceDate == null || !sourceDate.isBefore(today)) {
+            toast("Choose a day before today.");
+            return;
+        }
+
+        List<FoodEntry> sourceEntries = diary.getEntriesForDate(sourceDate);
+        if (sourceEntries.isEmpty()) {
+            toast("No foods logged on " + formatRelogDate(sourceDate));
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Relog " + formatRelogDate(sourceDate) + "?")
+                .setMessage("Copy " + sourceEntries.size() +
+                        (sourceEntries.size() == 1 ? " food" : " foods") +
+                        " into today? Existing foods today will not be removed.")
+                .setPositiveButton("Relog", (dialog, which) -> relogDateIntoToday(sourceDate))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void relogDateIntoToday(LocalDate sourceDate) {
+        try {
+            int copied = diary.copyDateToDate(sourceDate, LocalDate.now());
+            if (copied <= 0) {
+                toast("Nothing to relog from " + formatRelogDate(sourceDate));
+                return;
+            }
+            selectedDate = LocalDate.now();
+            renderWeekStrip();
+            refreshHome();
+            AppLogger.i("Relog copied entries=" + copied + " sourceDate=" + sourceDate);
+            toast("Relogged " + copied + (copied == 1 ? " food" : " foods") +
+                    " from " + formatRelogDate(sourceDate));
+        } catch (Exception e) {
+            AppLogger.e("Relog failed sourceDate=" + sourceDate, e);
+            toast("Unable to relog that day");
+        }
+    }
+
+    private String formatRelogDate(LocalDate date) {
+        return date.format(DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault()));
     }
 
     private void renderDiaryEntries(List<FoodEntry> entries) {
