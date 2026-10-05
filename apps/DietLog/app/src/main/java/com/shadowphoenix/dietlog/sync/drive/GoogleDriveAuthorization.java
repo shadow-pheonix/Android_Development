@@ -14,9 +14,13 @@ import com.google.android.gms.auth.api.identity.Identity;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.tasks.Tasks;
 import com.shadowphoenix.dietlog.diagnostics.AppLogger;
 
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Requests the narrow Drive AppData OAuth scope without persisting access tokens.
@@ -46,13 +50,43 @@ public final class GoogleDriveAuthorization {
             callback.onFailure(Failure.NOT_CONNECTED, "Google Drive is not connected.", null);
             return;
         }
+        requestAuthorization(context, silentRequest(state), callback, false);
+    }
 
+    /** Background-only token acquisition. Never launches user interface. */
+    public static TokenResult requestSilentTokenBlocking(Context context)
+            throws AuthorizationException {
+        DriveConnectionStore.State state = new DriveConnectionStore(context).getState();
+        if (!state.connected) {
+            throw new AuthorizationException(
+                    Failure.NOT_CONNECTED, "Google Drive is not connected.", null);
+        }
+        try {
+            AuthorizationResult result = Tasks.await(
+                    Identity.getAuthorizationClient(context).authorize(silentRequest(state)),
+                    20, TimeUnit.SECONDS);
+            if (result.hasResolution()) {
+                throw new AuthorizationException(
+                        Failure.REAUTH_REQUIRED, "Google Drive needs user authorization.", null);
+            }
+            return tokenResult(context, result);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AuthorizationException(
+                    Failure.AUTHORIZATION_FAILED, "Google Drive authorization was interrupted.", e);
+        } catch (ExecutionException | TimeoutException e) {
+            throw new AuthorizationException(
+                    Failure.AUTHORIZATION_FAILED, "Could not authorize Google Drive.", e);
+        }
+    }
+
+    private static AuthorizationRequest silentRequest(DriveConnectionStore.State state) {
         AuthorizationRequest.Builder builder = AuthorizationRequest.builder()
                 .setRequestedScopes(Collections.singletonList(new Scope(DRIVE_APPDATA_SCOPE)));
         if (!state.accountName.isEmpty()) {
             builder.setAccount(new Account(state.accountName, "com.google"));
         }
-        requestAuthorization(context, builder.build(), callback, false);
+        return builder.build();
     }
 
     public static boolean handleActivityResult(
@@ -115,14 +149,23 @@ public final class GoogleDriveAuthorization {
         }
     }
 
-    @SuppressWarnings("deprecation")
     private static void deliverAuthorizedResult(
             Context context, AuthorizationResult result, Callback callback) {
+        try {
+            TokenResult token = tokenResult(context, result);
+            callback.onAuthorized(token.accessToken, token.accountName);
+        } catch (AuthorizationException e) {
+            callback.onFailure(e.failure, e.getMessage(), e.getCause());
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private static TokenResult tokenResult(Context context, AuthorizationResult result)
+            throws AuthorizationException {
         String accessToken = result == null ? null : result.getAccessToken();
         if (accessToken == null || accessToken.trim().isEmpty()) {
-            callback.onFailure(Failure.AUTHORIZATION_FAILED,
+            throw new AuthorizationException(Failure.AUTHORIZATION_FAILED,
                     "Google Drive did not return an access token.", null);
-            return;
         }
 
         String accountName = "";
@@ -133,12 +176,9 @@ public final class GoogleDriveAuthorization {
         }
 
         DriveConnectionStore store = new DriveConnectionStore(context);
-        if (!store.getState().connected) store.markConnected(accountName);
-        else {
-            if (!accountName.isEmpty()) store.markConnected(accountName);
-            else store.markAuthorizationRefreshed();
-        }
-        callback.onAuthorized(accessToken, accountName);
+        if (!accountName.isEmpty() || !store.getState().connected) store.markConnected(accountName);
+        else store.markAuthorizationRefreshed();
+        return new TokenResult(accessToken, accountName);
     }
 
     public enum Failure {
@@ -146,6 +186,25 @@ public final class GoogleDriveAuthorization {
         REAUTH_REQUIRED,
         CANCELLED,
         AUTHORIZATION_FAILED
+    }
+
+    public static final class TokenResult {
+        public final String accessToken;
+        public final String accountName;
+
+        TokenResult(String accessToken, String accountName) {
+            this.accessToken = accessToken;
+            this.accountName = accountName == null ? "" : accountName;
+        }
+    }
+
+    public static final class AuthorizationException extends Exception {
+        public final Failure failure;
+
+        AuthorizationException(Failure failure, String message, Throwable cause) {
+            super(message, cause);
+            this.failure = failure;
+        }
     }
 
     public interface Callback {

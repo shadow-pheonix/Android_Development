@@ -6,6 +6,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.shadowphoenix.dietlog.progress.ProgressData.DailyNutrition;
 import com.shadowphoenix.dietlog.progress.ProgressData.WeightPoint;
 import com.shadowphoenix.dietlog.nutrition.MicronutrientValues;
@@ -353,6 +357,47 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         try (Cursor c = getReadableDatabase().rawQuery("SELECT COUNT(*) FROM food_entries", null)) {
             return c.moveToFirst() ? c.getLong(0) : 0;
         }
+    }
+
+    /** Returns a complete, source-data-only snapshot of the user-owned SQLite tables. */
+    public JSONObject exportBackupData() throws JSONException {
+        JSONObject root = new JSONObject();
+        root.put("foodEntries", exportTable("food_entries", "id ASC"));
+        root.put("favorites", exportTable("food_favorites", "food_key ASC"));
+        root.put("weightLogs", exportTable("weight_logs", "log_date ASC"));
+        return root;
+    }
+
+    private JSONArray exportTable(String table, String orderBy) throws JSONException {
+        JSONArray rows = new JSONArray();
+        try (Cursor cursor = getReadableDatabase().query(
+                table, null, null, null, null, null, orderBy)) {
+            String[] columns = cursor.getColumnNames();
+            while (cursor.moveToNext()) {
+                JSONObject row = new JSONObject();
+                for (int i = 0; i < columns.length; i++) {
+                    switch (cursor.getType(i)) {
+                        case Cursor.FIELD_TYPE_NULL:
+                            row.put(columns[i], JSONObject.NULL);
+                            break;
+                        case Cursor.FIELD_TYPE_INTEGER:
+                            row.put(columns[i], cursor.getLong(i));
+                            break;
+                        case Cursor.FIELD_TYPE_FLOAT:
+                            row.put(columns[i], cursor.getDouble(i));
+                            break;
+                        case Cursor.FIELD_TYPE_STRING:
+                            row.put(columns[i], cursor.getString(i));
+                            break;
+                        default:
+                            throw new JSONException("Unsupported backup column type for "
+                                    + table + "." + columns[i]);
+                    }
+                }
+                rows.put(row);
+            }
+        }
+        return rows;
     }
 
     private List<FoodEntry> getHistoryEntries() {

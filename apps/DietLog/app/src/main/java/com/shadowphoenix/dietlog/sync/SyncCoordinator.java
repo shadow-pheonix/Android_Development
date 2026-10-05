@@ -47,6 +47,7 @@ public final class SyncCoordinator {
                 .putString(KEY_LAST_CHANGE_REASON, sanitizeReason(reason))
                 .apply();
         AppLogger.i("Backup state dirty revision=" + nextRevision + " reason=" + sanitizeReason(reason));
+        DriveBackupScheduler.scheduleDebounced(context);
         return nextRevision;
     }
 
@@ -72,6 +73,7 @@ public final class SyncCoordinator {
                 .putLong(KEY_LAST_CHANGE_AT, System.currentTimeMillis())
                 .putString(KEY_LAST_CHANGE_REASON, sanitizeReason(reason))
                 .apply();
+        DriveBackupScheduler.scheduleDebounced(context);
     }
 
     private static SharedPreferences prefs(Context context) {
