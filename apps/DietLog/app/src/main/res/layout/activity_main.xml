@@ -14,6 +14,7 @@
         <include android:id="@+id/searchScreen" layout="@layout/screen_search" android:visibility="gone" />
         <include android:id="@+id/detailScreen" layout="@layout/screen_detail" android:visibility="gone" />
         <include android:id="@+id/manualScreen" layout="@layout/screen_manual" android:visibility="gone" />
+        <include android:id="@+id/nutritionScreen" layout="@layout/screen_nutrition_details" android:visibility="gone" />
         <include android:id="@+id/progressScreen" layout="@layout/screen_progress" android:visibility="gone" />
         <include android:id="@+id/profileScreen" layout="@layout/screen_profile" android:visibility="gone" />
     </FrameLayout>

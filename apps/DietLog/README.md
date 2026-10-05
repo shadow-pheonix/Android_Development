@@ -23,12 +23,13 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 ## Current functionality
 
 - Today's calories, protein, carbs and fat.
+- Tap the Home nutrition progress card for the selected day's vitamins and minerals, with profile-adjusted Indian targets and explicit source-data coverage.
 - Manual logging by grams and per-100 g nutrition.
 - Fully offline food search after installation; no runtime food API and no API keys.
 - Camera barcode scanning for EAN-13, EAN-8, UPC-A and UPC-E with exact offline catalogue lookup.
 - Numeric barcode lookup remains available through normal search.
 - Tap a search result to populate the logger and view product/nutrition details.
-- SQLite meal history.
+- SQLite meal history with micronutrient snapshots for new logs and offline-catalog enrichment for older compatible entries.
 - Mandatory bounded logs, crash capture and `Export diagnostics`.
 
 Barcode decoding uses ZXing Core under the Apache License 2.0; camera capture uses Android Camera2 directly so scanning has no runtime network/service dependency.

@@ -3,6 +3,7 @@ package com.shadowphoenix.dietlog;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.res.ColorStateList;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
@@ -13,6 +14,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,7 +27,13 @@ import com.shadowphoenix.dietlog.diagnostics.DiagnosticsExporter;
 import com.shadowphoenix.dietlog.food.CatalogFood;
 import com.shadowphoenix.dietlog.food.FoodCatalogDb;
 import com.shadowphoenix.dietlog.food.ServingOption;
+import com.shadowphoenix.dietlog.nutrition.DailyMicronutrientSummary;
+import com.shadowphoenix.dietlog.nutrition.Micronutrient;
+import com.shadowphoenix.dietlog.nutrition.MicronutrientTarget;
+import com.shadowphoenix.dietlog.nutrition.MicronutrientTargets;
+import com.shadowphoenix.dietlog.nutrition.MicronutrientValues;
 import com.shadowphoenix.dietlog.profile.ProfileController;
+import com.shadowphoenix.dietlog.profile.ProfileSettings;
 import com.shadowphoenix.dietlog.progress.ProgressController;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
 
@@ -37,6 +45,7 @@ import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
 
@@ -53,7 +62,7 @@ public final class MainActivity extends Activity {
     private ProfileController profileController;
     private ProgressController progressController;
 
-    private View homeScreen, searchScreen, detailScreen, manualScreen, progressScreen, profileScreen, bottomNav;
+    private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
     private TextView navHomeIcon, navHomeLabel, navSearchIcon, navSearchLabel;
     private TextView navProgressIcon, navProgressLabel, navProfileIcon, navProfileLabel;
@@ -62,6 +71,8 @@ public final class MainActivity extends Activity {
     private TextView calorieValue, calorieGoalText, calorieLeft, proteinValue, carbsValue, fatValue;
     private TextView dateText, foodLogTitle, relogButton;
     private LinearLayout entriesContainer;
+    private TextView nutritionDateText, nutritionMacroSummary, nutritionTargetNote;
+    private LinearLayout nutritionMineralsContainer, nutritionVitaminsContainer;
 
     private EditText searchInput;
     private TextView databaseStatusText, profileDatabaseStatus, searchSectionTitle;
@@ -83,6 +94,7 @@ public final class MainActivity extends Activity {
 
     private EditText nameInput, gramsInput, caloriesInput, proteinInput, carbsInput, fatInput;
     private TextView detailAddButton, manualAddButton, manualContextText;
+    private CatalogFood manualSourceFood;
     private String activeMealType = FoodEntry.mealForHour(LocalTime.now().getHour());
     private LocalDate selectedDate = LocalDate.now();
 
@@ -140,6 +152,7 @@ public final class MainActivity extends Activity {
         searchScreen = findViewById(R.id.searchScreen);
         detailScreen = findViewById(R.id.detailScreen);
         manualScreen = findViewById(R.id.manualScreen);
+        nutritionScreen = findViewById(R.id.nutritionScreen);
         progressScreen = findViewById(R.id.progressScreen);
         profileScreen = findViewById(R.id.profileScreen);
         bottomNav = findViewById(R.id.bottomNav);
@@ -172,6 +185,11 @@ public final class MainActivity extends Activity {
         foodLogTitle = findViewById(R.id.foodLogTitle);
         relogButton = findViewById(R.id.relogButton);
         entriesContainer = findViewById(R.id.entriesContainer);
+        nutritionDateText = findViewById(R.id.nutritionDate);
+        nutritionMacroSummary = findViewById(R.id.nutritionMacroSummary);
+        nutritionTargetNote = findViewById(R.id.nutritionTargetNote);
+        nutritionMineralsContainer = findViewById(R.id.nutritionMineralsContainer);
+        nutritionVitaminsContainer = findViewById(R.id.nutritionVitaminsContainer);
 
         searchInput = findViewById(R.id.searchInput);
         databaseStatusText = findViewById(R.id.databaseStatusText);
@@ -252,6 +270,8 @@ public final class MainActivity extends Activity {
             showScreen(searchScreen, 1);
         });
         relogButton.setOnClickListener(v -> showRelogDialog());
+        findViewById(R.id.homeNutritionCard).setOnClickListener(v -> openNutritionDetails());
+        findViewById(R.id.nutritionBack).setOnClickListener(v -> showScreen(homeScreen, 0));
     }
 
     private void configureSearch() {
@@ -405,9 +425,10 @@ public final class MainActivity extends Activity {
         searchScreen.setVisibility(target == searchScreen ? View.VISIBLE : View.GONE);
         detailScreen.setVisibility(target == detailScreen ? View.VISIBLE : View.GONE);
         manualScreen.setVisibility(target == manualScreen ? View.VISIBLE : View.GONE);
+        nutritionScreen.setVisibility(target == nutritionScreen ? View.VISIBLE : View.GONE);
         progressScreen.setVisibility(target == progressScreen ? View.VISIBLE : View.GONE);
         profileScreen.setVisibility(target == profileScreen ? View.VISIBLE : View.GONE);
-        boolean immersive = target == detailScreen || target == manualScreen;
+        boolean immersive = target == detailScreen || target == manualScreen || target == nutritionScreen;
         bottomNav.setVisibility(immersive ? View.GONE : View.VISIBLE);
         if (!immersive) updateNavColors(navIndex);
     }
@@ -425,6 +446,7 @@ public final class MainActivity extends Activity {
 
     private void refreshTargetsAndProgress() {
         refreshHome();
+        if (nutritionScreen != null && nutritionScreen.getVisibility() == View.VISIBLE) refreshNutritionDetails();
         if (progressController != null) progressController.refresh();
     }
 
@@ -450,6 +472,160 @@ public final class MainActivity extends Activity {
                 "Food Log • " + selectedDate.format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())));
         relogButton.setVisibility(viewingToday ? View.VISIBLE : View.GONE);
         renderDiaryEntries(diary.getEntriesForDate(selectedDate));
+    }
+
+    private void openNutritionDetails() {
+        refreshNutritionDetails();
+        showScreen(nutritionScreen, -1);
+        AppLogger.i("Daily nutrition opened date=" + selectedDate);
+    }
+
+    private void refreshNutritionDetails() {
+        double[] totals = diary.getTotalsForDate(selectedDate);
+        double calorieGoal = profileController == null ? CALORIE_GOAL : profileController.getCalorieGoal();
+        double proteinGoal = profileController == null ? PROTEIN_GOAL : profileController.getProteinGoal();
+        double carbsGoal = profileController == null ? CARBS_GOAL : profileController.getCarbsGoal();
+        double fatGoal = profileController == null ? FAT_GOAL : profileController.getFatGoal();
+        nutritionDateText.setText(selectedDate.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale.getDefault())));
+        nutritionMacroSummary.setText(String.format(Locale.getDefault(),
+                "Calories  %,.0f / %,.0f kcal\nProtein  %.0f / %.0f g\nCarbs  %.0f / %.0f g\nFat  %.0f / %.0f g",
+                totals[0], calorieGoal, totals[1], proteinGoal, totals[2], carbsGoal, totals[3], fatGoal));
+
+        List<FoodEntry> entries = diary.getEntriesForDate(selectedDate);
+        DailyMicronutrientSummary summary = new DailyMicronutrientSummary();
+        for (FoodEntry entry : entries) summary.addFood(resolveMicronutrients(entry));
+
+        Map<Micronutrient, MicronutrientTarget> targets;
+        if (profileController != null && profileController.hasSavedProfile()) {
+            ProfileSettings settings = profileController.getSettings();
+            targets = MicronutrientTargets.forProfile(settings, selectedDate);
+            nutritionTargetNote.setText("Personalized Indian reference targets use your age, sex and energy needs where supported by ICMR-NIN guidance. Sodium is a ceiling, not a goal to fill.");
+        } else {
+            targets = java.util.Collections.emptyMap();
+            nutritionTargetNote.setText("Save your Profile to calculate individualized vitamin and mineral targets. Intake amounts still use available offline food data.");
+        }
+        renderNutrientSection(nutritionMineralsContainer, Micronutrient.Group.MINERAL, summary, targets);
+        renderNutrientSection(nutritionVitaminsContainer, Micronutrient.Group.VITAMIN, summary, targets);
+    }
+
+    private MicronutrientValues resolveMicronutrients(FoodEntry entry) {
+        if (entry != null && !entry.micronutrients.isEmpty()) return entry.micronutrients;
+        if (entry == null || catalog == null || entry.sourceFoodId == null || entry.grams <= 0.0) {
+            return MicronutrientValues.empty();
+        }
+        CatalogFood source = catalog.findByCode(entry.sourceFoodId);
+        if (source == null || source.micronutrients.isEmpty()) return MicronutrientValues.empty();
+        return source.micronutrients.scaled(entry.grams / 100.0);
+    }
+
+    private void renderNutrientSection(LinearLayout container, Micronutrient.Group group,
+                                       DailyMicronutrientSummary summary,
+                                       Map<Micronutrient, MicronutrientTarget> targets) {
+        container.removeAllViews();
+        for (Micronutrient nutrient : Micronutrient.values()) {
+            if (nutrient.group != group) continue;
+            container.addView(nutrientRow(nutrient, summary, targets.get(nutrient)));
+        }
+    }
+
+    private View nutrientRow(Micronutrient nutrient, DailyMicronutrientSummary summary, MicronutrientTarget target) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(dp(13), dp(12), dp(13), dp(12));
+        row.setBackgroundResource(R.drawable.bg_card);
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        rowParams.bottomMargin = dp(8);
+        row.setLayoutParams(rowParams);
+
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        top.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        TextView name = new TextView(this);
+        name.setText(nutrient.label);
+        name.setTextColor(getColor(R.color.text_primary));
+        name.setTextSize(14f);
+        name.setTypeface(name.getTypeface(), android.graphics.Typeface.BOLD);
+        top.addView(name, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        int known = summary.knownFoods(nutrient);
+        int foods = summary.totalFoods();
+        Double amount = summary.total(nutrient);
+        boolean fullCoverage = summary.hasFullCoverage(nutrient);
+        TextView value = new TextView(this);
+        value.setTextColor(getColor(R.color.text_primary));
+        value.setTextSize(13f);
+        value.setGravity(android.view.Gravity.END);
+        if (known == 0 || amount == null) {
+            value.setText(target == null ? "No data" : "No data  •  target " + formatMicronutrient(target.amount, nutrient.unit));
+        } else if (target == null) {
+            value.setText((fullCoverage ? "" : "≥ ") + formatMicronutrient(amount, nutrient.unit));
+        } else {
+            String targetMark = target.upperLimit ? "≤ " : "";
+            value.setText((fullCoverage ? "" : "≥ ") + formatMicronutrient(amount, nutrient.unit)
+                    + "  /  " + targetMark + formatMicronutrient(target.amount, nutrient.unit));
+        }
+        top.addView(value);
+        row.addView(top);
+
+        ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        bar.setMax(1000);
+        bar.setIndeterminate(false);
+        LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(7));
+        barParams.topMargin = dp(9);
+        row.addView(bar, barParams);
+
+        TextView meta = new TextView(this);
+        meta.setTextSize(11f);
+        meta.setTextColor(getColor(R.color.text_secondary));
+        LinearLayout.LayoutParams metaParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        metaParams.topMargin = dp(6);
+        row.addView(meta, metaParams);
+
+        if (known == 0 || amount == null) {
+            bar.setVisibility(View.GONE);
+            meta.setText(foods == 0 ? "No foods logged" : "No micronutrient data in " + foods + " logged food" + (foods == 1 ? "" : "s"));
+            return row;
+        }
+
+        String coverage = fullCoverage ? "Data: all " + foods + " food" + (foods == 1 ? "" : "s")
+                : "Partial data: " + known + "/" + foods + " foods";
+        if (target == null || target.amount <= 0.0) {
+            bar.setVisibility(View.GONE);
+            meta.setText(coverage + "  •  no age-specific target available");
+            return row;
+        }
+
+        double ratio = amount / target.amount;
+        bar.setProgress((int) Math.round(Math.min(1.0, Math.max(0.0, ratio)) * 1000.0));
+        boolean overCeiling = target.upperLimit && amount > target.amount;
+        bar.setProgressTintList(ColorStateList.valueOf(getColor(overCeiling ? R.color.calories : R.color.accent)));
+        bar.setProgressBackgroundTintList(ColorStateList.valueOf(getColor(R.color.outline)));
+        double percent = ratio * 100.0;
+        String status;
+        if (target.upperLimit) {
+            if (overCeiling) status = fullCoverage ? "Over ceiling" : "Over ceiling from known foods";
+            else status = (fullCoverage ? "" : "At least ") + String.format(Locale.getDefault(), "%.0f%% of ceiling used", percent);
+        } else {
+            status = (fullCoverage ? "" : "At least ") + String.format(Locale.getDefault(), "%.0f%% of target", percent);
+        }
+        meta.setText(status + "  •  " + coverage);
+        if (overCeiling) meta.setTextColor(getColor(R.color.calories));
+        return row;
+    }
+
+    private String formatMicronutrient(double value, String unit) {
+        String number;
+        if (value >= 100.0 || Math.abs(value - Math.rint(value)) < 0.005) {
+            number = String.format(Locale.getDefault(), "%.0f", value);
+        } else if (value >= 10.0) {
+            number = String.format(Locale.getDefault(), "%.1f", value);
+        } else {
+            number = String.format(Locale.getDefault(), "%.2f", value);
+        }
+        return number + " " + unit;
     }
 
     private void showRelogDialog() {
@@ -1162,7 +1338,7 @@ public final class MainActivity extends Activity {
         double grams = positive(detailGramsInput, "amount");
         return FoodEntry.fromPer100g(selectedFood.name, grams, selectedFood.calories,
                 selectedFood.protein, selectedFood.carbs, selectedFood.fat,
-                loggedAt, activeMealType, selectedFood.source, selectedFood.code);
+                loggedAt, activeMealType, selectedFood.source, selectedFood.code, selectedFood.micronutrients);
     }
 
     private void toggleSelectedFavorite() {
@@ -1203,6 +1379,7 @@ public final class MainActivity extends Activity {
 
     private void showManualEntry(String prefillName, CatalogFood sourceFood) {
         clearManualInputs();
+        manualSourceFood = sourceFood;
         manualContextText.setVisibility(View.GONE);
         manualContextText.setText("");
         if (prefillName != null) nameInput.setText(prefillName);
@@ -1226,11 +1403,18 @@ public final class MainActivity extends Activity {
             double protein = nonNegative(proteinInput, "protein");
             double carbs = nonNegative(carbsInput, "carbs");
             double fat = nonNegative(fatInput, "fat");
-            FoodEntry entry = FoodEntry.fromPer100g(name, grams, calories, protein, carbs, fat, selectedDateTimestamp(), activeMealType);
+            FoodEntry entry;
+            if (manualSourceFood != null) {
+                entry = FoodEntry.fromPer100g(name, grams, calories, protein, carbs, fat, selectedDateTimestamp(),
+                        activeMealType, manualSourceFood.source, manualSourceFood.code, manualSourceFood.micronutrients);
+            } else {
+                entry = FoodEntry.fromPer100g(name, grams, calories, protein, carbs, fat, selectedDateTimestamp(), activeMealType);
+            }
             long id = diary.insert(entry);
             syncFavoriteSnapshot(entry);
             AppLogger.i("Food entry added id=" + id + " source=manual meal=" + activeMealType);
             clearManualInputs();
+            manualSourceFood = null;
             refreshHome();
             toast(addConfirmationText());
             showScreen(homeScreen, 0);
@@ -1411,7 +1595,9 @@ public final class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (detailScreen.getVisibility() == View.VISIBLE || manualScreen.getVisibility() == View.VISIBLE) {
+        if (nutritionScreen.getVisibility() == View.VISIBLE) {
+            showScreen(homeScreen, 0);
+        } else if (detailScreen.getVisibility() == View.VISIBLE || manualScreen.getVisibility() == View.VISIBLE) {
             showScreen(searchScreen, 1);
         } else if (homeScreen.getVisibility() != View.VISIBLE) {
             showScreen(homeScreen, 0);

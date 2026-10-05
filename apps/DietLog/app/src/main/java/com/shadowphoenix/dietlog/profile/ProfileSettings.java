@@ -80,7 +80,7 @@ public final class ProfileSettings {
     public double fatPercent = 30.0;
     public double fibreGoalG = 30.0;
     public double sugarLimitG = 50.0;
-    public double sodiumLimitMg = 2300.0;
+    public double sodiumLimitMg = 2000.0;
 
     public int effectiveAge(LocalDate today) {
         if (dateOfBirthIso != null && !dateOfBirthIso.trim().isEmpty()) {

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="18dp"
+        android:paddingTop="14dp"
+        android:paddingRight="18dp"
+        android:paddingBottom="28dp">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center_vertical">
+            <TextView android:id="@+id/nutritionBack" android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="‹" android:textColor="@color/text_primary" android:textSize="34sp" />
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="Daily nutrition" android:textColor="@color/text_primary" android:textSize="20sp" android:textStyle="bold" />
+            <View android:layout_width="42dp" android:layout_height="42dp" />
+        </LinearLayout>
+
+        <TextView android:id="@+id/nutritionDate" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:gravity="center" android:textColor="@color/text_secondary" android:textSize="13sp" />
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:orientation="vertical" android:padding="15dp" android:background="@drawable/bg_card_alt">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Macros" android:textColor="@color/text_primary" android:textSize="18sp" android:textStyle="bold" />
+            <TextView android:id="@+id/nutritionMacroSummary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/text_secondary" android:textSize="13sp" android:lineSpacingExtra="4dp" />
+        </LinearLayout>
+
+        <TextView android:id="@+id/nutritionTargetNote" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:background="@drawable/bg_card" android:padding="12dp" android:textColor="@color/text_secondary" android:textSize="12sp" android:lineSpacingExtra="3dp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:text="Minerals" android:textColor="@color/text_primary" android:textSize="19sp" android:textStyle="bold" />
+        <LinearLayout android:id="@+id/nutritionMineralsContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="vertical" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:text="Vitamins" android:textColor="@color/text_primary" android:textSize="19sp" android:textStyle="bold" />
+        <LinearLayout android:id="@+id/nutritionVitaminsContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="vertical" />
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="Micronutrient totals use only values present in the offline food sources. Missing values are not counted as zero." android:textColor="@color/text_tertiary" android:textSize="11sp" android:lineSpacingExtra="3dp" />
+    </LinearLayout>
+</ScrollView>

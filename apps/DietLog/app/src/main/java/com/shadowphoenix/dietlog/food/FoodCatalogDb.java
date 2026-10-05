@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.shadowphoenix.dietlog.BuildConfig;
 import com.shadowphoenix.dietlog.diagnostics.AppLogger;
+import com.shadowphoenix.dietlog.nutrition.Micronutrient;
+import com.shadowphoenix.dietlog.nutrition.MicronutrientValues;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -101,7 +103,39 @@ public final class FoodCatalogDb implements AutoCloseable {
         return new CatalogFood(s(c,"code"),s(c,"barcode"),s(c,"name"),s(c,"brand"),s(c,"quantity"),s(c,"category"),s(c,"source"),
                 d(c,"calories_100g"),d(c,"protein_100g"),d(c,"carbs_100g"),d(c,"fat_100g"),d(c,"sugars_100g"),d(c,"fiber_100g"),
                 d(c,"saturated_fat_100g"),d(c,"salt_100g"),d(c,"sodium_100g"),s(c,"serving_size"),d(c,"serving_g"),s(c,"ingredients"),
-                s(c,"allergens"),s(c,"labels"),s(c,"nutriscore"),i(c,"nova"),s(c,"product_url"),s(c,"extra_json"));
+                s(c,"allergens"),s(c,"labels"),s(c,"nutriscore"),i(c,"nova"),s(c,"product_url"),s(c,"extra_json"),micros(c));
+    }
+
+    private static MicronutrientValues micros(Cursor c) {
+        MicronutrientValues values = MicronutrientValues.empty();
+        values = add(values, Micronutrient.CALCIUM, c, "calcium_mg_100g");
+        values = add(values, Micronutrient.PHOSPHORUS, c, "phosphorus_mg_100g");
+        values = add(values, Micronutrient.MAGNESIUM, c, "magnesium_mg_100g");
+        values = add(values, Micronutrient.SODIUM, c, "sodium_mg_100g");
+        values = add(values, Micronutrient.POTASSIUM, c, "potassium_mg_100g");
+        values = add(values, Micronutrient.IRON, c, "iron_mg_100g");
+        values = add(values, Micronutrient.COPPER, c, "copper_mg_100g");
+        values = add(values, Micronutrient.SELENIUM, c, "selenium_ug_100g");
+        values = add(values, Micronutrient.CHROMIUM, c, "chromium_ug_100g");
+        values = add(values, Micronutrient.MANGANESE, c, "manganese_mg_100g");
+        values = add(values, Micronutrient.ZINC, c, "zinc_mg_100g");
+        values = add(values, Micronutrient.VITAMIN_A, c, "vitamin_a_ug_100g");
+        values = add(values, Micronutrient.VITAMIN_E, c, "vitamin_e_mg_100g");
+        values = add(values, Micronutrient.VITAMIN_D, c, "vitamin_d_ug_100g");
+        values = add(values, Micronutrient.VITAMIN_K, c, "vitamin_k_ug_100g");
+        values = add(values, Micronutrient.THIAMINE, c, "thiamine_mg_100g");
+        values = add(values, Micronutrient.RIBOFLAVIN, c, "riboflavin_mg_100g");
+        values = add(values, Micronutrient.NIACIN, c, "niacin_mg_100g");
+        values = add(values, Micronutrient.PANTOTHENIC_ACID, c, "pantothenic_acid_mg_100g");
+        values = add(values, Micronutrient.VITAMIN_B6, c, "vitamin_b6_mg_100g");
+        values = add(values, Micronutrient.BIOTIN, c, "biotin_ug_100g");
+        values = add(values, Micronutrient.FOLATE, c, "folate_ug_100g");
+        return add(values, Micronutrient.VITAMIN_C, c, "vitamin_c_mg_100g");
+    }
+
+    private static MicronutrientValues add(MicronutrientValues values, Micronutrient nutrient, Cursor c, String column) {
+        int index = c.getColumnIndexOrThrow(column);
+        return c.isNull(index) ? values : values.with(nutrient, c.getDouble(index));
     }
     private static String s(Cursor c,String n){int i=c.getColumnIndexOrThrow(n);return c.isNull(i)?null:c.getString(i);}
     private static Double d(Cursor c,String n){int i=c.getColumnIndexOrThrow(n);return c.isNull(i)?null:c.getDouble(i);}
