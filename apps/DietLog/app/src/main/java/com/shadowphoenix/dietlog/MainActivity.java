@@ -1427,6 +1427,7 @@ public final class MainActivity extends Activity {
     }
 
     private void clearManualInputs() {
+        manualSourceFood = null;
         nameInput.setText("");
         gramsInput.setText("");
         caloriesInput.setText("");
