@@ -20,6 +20,7 @@ import com.shadowphoenix.dietlog.diagnostics.DiagnosticsExporter;
 import com.shadowphoenix.dietlog.food.CatalogFood;
 import com.shadowphoenix.dietlog.food.FoodCatalogDb;
 import com.shadowphoenix.dietlog.profile.ProfileController;
+import com.shadowphoenix.dietlog.ui.RefreshRateController;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
 
 import java.text.DateFormat;
@@ -72,6 +73,8 @@ public final class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         AppLogger.init(this);
         CrashHandler.install(this);
+        float preferredRefreshRate = RefreshRateController.applyPreferredRefreshRate(this);
+        AppLogger.i(String.format(Locale.US, "Preferred refresh rate %.0f Hz", preferredRefreshRate));
         AppLogger.i("MainActivity created - dark UI baseline");
         getWindow().setStatusBarColor(getColor(R.color.background));
         getWindow().setNavigationBarColor(getColor(R.color.background));
@@ -107,6 +110,12 @@ public final class MainActivity extends Activity {
 
         refreshHome();
         showScreen(homeScreen, 0);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        RefreshRateController.applyPreferredRefreshRate(this);
     }
 
     private void bindViews() {
