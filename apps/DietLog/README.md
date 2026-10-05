@@ -25,10 +25,13 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 - Today's calories, protein, carbs and fat.
 - Manual logging by grams and per-100 g nutrition.
 - Fully offline food search after installation; no runtime food API and no API keys.
-- Numeric barcode lookup against the bundled India packaged-food catalogue.
+- Camera barcode scanning for EAN-13, EAN-8, UPC-A and UPC-E with exact offline catalogue lookup.
+- Numeric barcode lookup remains available through normal search.
 - Tap a search result to populate the logger and view product/nutrition details.
 - SQLite meal history.
 - Mandatory bounded logs, crash capture and `Export diagnostics`.
+
+Barcode decoding uses ZXing Core under the Apache License 2.0; camera capture uses Android Camera2 directly so scanning has no runtime network/service dependency.
 
 ## Bundled food catalogue
 

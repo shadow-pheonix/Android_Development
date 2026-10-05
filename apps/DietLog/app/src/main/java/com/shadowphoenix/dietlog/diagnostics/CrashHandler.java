@@ -21,6 +21,7 @@ public final class CrashHandler implements Thread.UncaughtExceptionHandler {
     }
 
     public static void install(Context context) {
+        if (Thread.getDefaultUncaughtExceptionHandler() instanceof CrashHandler) return;
         Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(context));
     }
 

@@ -36,6 +36,8 @@
             </LinearLayout>
         </HorizontalScrollView>
 
+        <TextView android:id="@+id/detailNutritionStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:background="@drawable/bg_card_alt" android:padding="11dp" android:text="Incomplete nutrition • Some per-100 g values are unavailable in this offline record." android:textColor="@color/fat" android:textSize="12sp" android:textStyle="bold" android:visibility="gone" />
+
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal" android:padding="10dp" android:background="@drawable/bg_card" android:weightSum="4">
             <LinearLayout android:layout_width="0dp" android:layout_height="82dp" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔥" android:textSize="20sp" />

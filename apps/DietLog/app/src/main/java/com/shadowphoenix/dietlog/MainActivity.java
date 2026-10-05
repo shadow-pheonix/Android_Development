@@ -46,6 +46,7 @@ public final class MainActivity extends Activity {
     private static final double CARBS_GOAL = 250.0;
     private static final double FAT_GOAL = 70.0;
     private static final String SERVING_PREFS = "serving_memory";
+    private static final int BARCODE_SCAN_REQUEST = 2001;
 
     private DiaryDbHelper diary;
     private FoodCatalogDb catalog;
@@ -71,7 +72,7 @@ public final class MainActivity extends Activity {
     private TextView detailCalories100, detailProtein100, detailCarbs100, detailFat100, detailServingLabel;
     private TextView detailTotalCalories, detailTotalProtein, detailTotalCarbs, detailTotalFat;
     private TextView detailTotalFiber, detailTotalSugar, detailTotalSodium, detailExtra, servingCountText;
-    private TextView detailFavorite;
+    private TextView detailFavorite, detailNutritionStatus;
     private EditText detailGramsInput;
     private CatalogFood selectedFood;
     private double servingMultiplier = 1.0;
@@ -81,7 +82,7 @@ public final class MainActivity extends Activity {
     private boolean internalGramsChange;
 
     private EditText nameInput, gramsInput, caloriesInput, proteinInput, carbsInput, fatInput;
-    private TextView detailAddButton, manualAddButton;
+    private TextView detailAddButton, manualAddButton, manualContextText;
     private String activeMealType = FoodEntry.mealForHour(LocalTime.now().getHour());
     private LocalDate selectedDate = LocalDate.now();
 
@@ -205,6 +206,7 @@ public final class MainActivity extends Activity {
         detailGramsInput = findViewById(R.id.detailGramsInput);
         detailAddButton = findViewById(R.id.detailAddButton);
         detailFavorite = findViewById(R.id.detailFavorite);
+        detailNutritionStatus = findViewById(R.id.detailNutritionStatus);
 
         nameInput = findViewById(R.id.nameInput);
         gramsInput = findViewById(R.id.gramsInput);
@@ -212,6 +214,7 @@ public final class MainActivity extends Activity {
         proteinInput = findViewById(R.id.proteinInput);
         carbsInput = findViewById(R.id.carbsInput);
         fatInput = findViewById(R.id.fatInput);
+        manualContextText = findViewById(R.id.manualContextText);
         manualAddButton = findViewById(R.id.addButton);
         updateMealTargetLabels();
     }
@@ -278,7 +281,7 @@ public final class MainActivity extends Activity {
             loadFavoriteFoods();
         });
         findViewById(R.id.manualEntryButton).setOnClickListener(v -> showManualEntry(null, null));
-        findViewById(R.id.barcodeTile).setOnClickListener(v -> toast("Barcode scanner will be added next."));
+        findViewById(R.id.barcodeTile).setOnClickListener(v -> startBarcodeScan());
         findViewById(R.id.voiceTile).setOnClickListener(v -> toast("Voice search will be added later."));
     }
 
@@ -746,6 +749,44 @@ public final class MainActivity extends Activity {
         renderFoodResults(results);
     }
 
+    private void startBarcodeScan() {
+        AppLogger.i("Barcode scan requested meal=" + activeMealType + " selectedDate=" + selectedDate);
+        android.content.Intent intent = new android.content.Intent(this, BarcodeScannerActivity.class);
+        startActivityForResult(intent, BARCODE_SCAN_REQUEST);
+    }
+
+    private void handleBarcodeResult(String barcode, String format) {
+        if (barcode == null || barcode.trim().isEmpty()) return;
+        if (catalog == null) {
+            toast("Offline database unavailable in this build");
+            return;
+        }
+        CatalogFood food = catalog.findByBarcode(barcode, format);
+        if (food != null) {
+            AppLogger.i("Barcode matched source=" + food.source + " code=" + food.code);
+            openDetail(food);
+            return;
+        }
+        AppLogger.i("Barcode not found digits=" + barcode.length());
+        showBarcodeNotFound(barcode);
+    }
+
+    private void showBarcodeNotFound(String barcode) {
+        new AlertDialog.Builder(this)
+                .setTitle("Barcode not found")
+                .setMessage(barcode + " is not in DietLog's offline database.")
+                .setPositiveButton("Manual food", (dialog, which) -> showManualEntryForBarcode(barcode))
+                .setNegativeButton("Scan again", (dialog, which) -> startBarcodeScan())
+                .setNeutralButton("Cancel", null)
+                .show();
+    }
+
+    private void showManualEntryForBarcode(String barcode) {
+        showManualEntry(null, null);
+        manualContextText.setText("Scanned barcode: " + barcode + " • Enter nutrition from the product label.");
+        manualContextText.setVisibility(View.VISIBLE);
+    }
+
     private void loadPopularFoods() {
         if (catalog == null) return;
         selectShortcutTab(shortcutAll);
@@ -926,6 +967,7 @@ public final class MainActivity extends Activity {
         detailProtein100.setText(numberOrDash(food.protein));
         detailCarbs100.setText(numberOrDash(food.carbs));
         detailFat100.setText(numberOrDash(food.fat));
+        detailNutritionStatus.setVisibility(food.hasCompleteCoreMacros() ? View.GONE : View.VISIBLE);
         updateServingControls();
         detailExtra.setText(detailExtra(food));
         updateDetailTotals();
@@ -1161,6 +1203,8 @@ public final class MainActivity extends Activity {
 
     private void showManualEntry(String prefillName, CatalogFood sourceFood) {
         clearManualInputs();
+        manualContextText.setVisibility(View.GONE);
+        manualContextText.setText("");
         if (prefillName != null) nameInput.setText(prefillName);
         if (sourceFood != null) {
             if (sourceFood.servingG != null) gramsInput.setText(formatAmount(sourceFood.servingG));
@@ -1353,6 +1397,14 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        if (requestCode == BARCODE_SCAN_REQUEST) {
+            if (resultCode == RESULT_OK && data != null) {
+                handleBarcodeResult(
+                        data.getStringExtra(BarcodeScannerActivity.EXTRA_BARCODE),
+                        data.getStringExtra(BarcodeScannerActivity.EXTRA_FORMAT));
+            }
+            return;
+        }
         if (profileController != null && profileController.onActivityResult(requestCode, resultCode, data)) return;
         super.onActivityResult(requestCode, resultCode, data);
     }

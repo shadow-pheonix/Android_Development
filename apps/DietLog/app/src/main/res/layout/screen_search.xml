@@ -34,7 +34,7 @@
             <LinearLayout android:id="@+id/barcodeTile" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="6dp" android:orientation="vertical" android:gravity="center" android:background="@drawable/bg_card_alt">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="▥" android:textColor="@color/accent" android:textSize="30sp" android:textStyle="bold" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Scan Barcode" android:textColor="@color/text_primary" android:textSize="14sp" android:textStyle="bold" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Feature coming next" android:textColor="@color/text_secondary" android:textSize="11sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="EAN / UPC • Offline" android:textColor="@color/text_secondary" android:textSize="11sp" />
             </LinearLayout>
             <LinearLayout android:id="@+id/voiceTile" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginStart="6dp" android:orientation="vertical" android:gravity="center" android:background="@drawable/bg_card">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textColor="@color/text_primary" android:textSize="24sp" />

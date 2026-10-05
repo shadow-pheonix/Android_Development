@@ -84,6 +84,19 @@ public final class FoodCatalogDb implements AutoCloseable {
         }
     }
 
+    public CatalogFood findByBarcode(String barcode) {
+        return findByBarcode(barcode, null);
+    }
+
+    public CatalogFood findByBarcode(String barcode, String format) {
+        for (String candidate : BarcodeValue.lookupCandidates(barcode, format)) {
+            try (Cursor c = db.rawQuery("SELECT * FROM foods WHERE barcode=? LIMIT 1", new String[]{candidate})) {
+                if (c.moveToFirst()) return read(c);
+            }
+        }
+        return null;
+    }
+
     private static CatalogFood read(Cursor c) {
         return new CatalogFood(s(c,"code"),s(c,"barcode"),s(c,"name"),s(c,"brand"),s(c,"quantity"),s(c,"category"),s(c,"source"),
                 d(c,"calories_100g"),d(c,"protein_100g"),d(c,"carbs_100g"),d(c,"fat_100g"),d(c,"sugars_100g"),d(c,"fiber_100g"),
