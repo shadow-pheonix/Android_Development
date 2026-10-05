@@ -73,12 +73,11 @@ public final class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         AppLogger.init(this);
         CrashHandler.install(this);
-        float preferredRefreshRate = RefreshRateController.applyPreferredRefreshRate(this);
-        AppLogger.i(String.format(Locale.US, "Preferred refresh rate %.0f Hz", preferredRefreshRate));
         AppLogger.i("MainActivity created - dark UI baseline");
         getWindow().setStatusBarColor(getColor(R.color.background));
         getWindow().setNavigationBarColor(getColor(R.color.background));
         setContentView(R.layout.activity_main);
+        RefreshRateController.apply(this, "create");
 
         diary = new DiaryDbHelper(this);
         bindViews();
@@ -115,7 +114,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        RefreshRateController.applyPreferredRefreshRate(this);
+        RefreshRateController.apply(this, "resume");
     }
 
     private void bindViews() {
