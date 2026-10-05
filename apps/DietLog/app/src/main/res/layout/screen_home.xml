@@ -48,14 +48,20 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/homeNutritionCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:orientation="vertical"
             android:padding="14dp"
+            android:clickable="true"
+            android:focusable="true"
             android:background="@drawable/bg_card_alt">
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Calories" android:textColor="@color/text_primary" android:textSize="15sp" android:textStyle="bold" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Calories" android:textColor="@color/text_primary" android:textSize="15sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nutrition details  ›" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" />
+            </LinearLayout>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:gravity="center_vertical">
                 <FrameLayout android:layout_width="0dp" android:layout_height="180dp" android:layout_weight="1">

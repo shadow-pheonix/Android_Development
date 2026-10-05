@@ -36,7 +36,7 @@ public final class NutritionGoalCalculator {
         double carbs = round(Math.max(50.0, remainingKcal / 4.0));
         double fibre = round(Math.max(25.0, calorieTarget / 1000.0 * 14.0));
         double sugar = round(calorieTarget * 0.10 / 4.0);
-        return new Goals(protein, carbs, fat, fibre, sugar, 2300.0);
+        return new Goals(protein, carbs, fat, fibre, sugar, 2000.0);
     }
 
     public static double macroCalories(double proteinG, double carbsG, double fatG) {

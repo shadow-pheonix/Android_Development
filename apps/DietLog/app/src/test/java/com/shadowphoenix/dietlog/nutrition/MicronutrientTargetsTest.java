@@ -41,4 +41,16 @@ public final class MicronutrientTargetsTest {
         assertEquals(26.0, targets.get(Micronutrient.IRON).amount, 0.0001);
         assertEquals(1000.0, targets.get(Micronutrient.VITAMIN_A).amount, 0.0001);
     }
+    @Test public void stricterUserSodiumLimitIsRespectedButLegacyHigherLimitIsCapped() {
+        ProfileSettings s = new ProfileSettings();
+        s.sex = ProfileSettings.Sex.MALE;
+        s.ageYears = 30;
+        s.sodiumLimitMg = 1500.0;
+        Map<Micronutrient, MicronutrientTarget> targets = MicronutrientTargets.forProfile(s, LocalDate.of(2026, 1, 1));
+        assertEquals(1500.0, targets.get(Micronutrient.SODIUM).amount, 0.0001);
+        s.sodiumLimitMg = 2300.0;
+        targets = MicronutrientTargets.forProfile(s, LocalDate.of(2026, 1, 1));
+        assertEquals(2000.0, targets.get(Micronutrient.SODIUM).amount, 0.0001);
+    }
+
 }

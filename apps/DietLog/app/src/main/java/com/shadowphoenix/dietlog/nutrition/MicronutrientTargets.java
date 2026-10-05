@@ -26,7 +26,7 @@ public final class MicronutrientTargets {
             } else {
                 core(out, 1000, 340, 30, 12.8, 1.6, 2.2, 16, 2.2, 245, 65, 890, 15);
             }
-            adolescentExtras(out);
+            adolescentExtras(out, settings);
             return out;
         }
         if (age <= 18) {
@@ -35,7 +35,7 @@ public final class MicronutrientTargets {
             } else {
                 core(out, 1050, 380, 32, 14.2, 1.7, 2.3, 17, 2.3, 270, 70, 860, 15);
             }
-            adolescentExtras(out);
+            adolescentExtras(out, settings);
             return out;
         }
 
@@ -69,7 +69,7 @@ public final class MicronutrientTargets {
                     male ? 1000 : 840,
                     15);
         }
-        adultExtras(out);
+        adultExtras(out, settings);
         return out;
     }
 
@@ -91,9 +91,9 @@ public final class MicronutrientTargets {
         target(out, Micronutrient.VITAMIN_D, vitaminD, false, ICMR_2020);
     }
 
-    private static void adultExtras(Map<Micronutrient, MicronutrientTarget> out) {
+    private static void adultExtras(Map<Micronutrient, MicronutrientTarget> out, ProfileSettings settings) {
         target(out, Micronutrient.PHOSPHORUS, 1000, false, ICMR_AI);
-        target(out, Micronutrient.SODIUM, 2000, true, "ICMR-NIN upper daily intake goal");
+        target(out, Micronutrient.SODIUM, sodiumCeiling(settings), true, "ICMR-NIN upper daily intake goal");
         target(out, Micronutrient.POTASSIUM, 3500, false, ICMR_AI);
         target(out, Micronutrient.COPPER, 2.0, false, ICMR_AI);
         target(out, Micronutrient.SELENIUM, 40, false, ICMR_AI);
@@ -105,9 +105,9 @@ public final class MicronutrientTargets {
         target(out, Micronutrient.BIOTIN, 30, false, ICMR_AI);
     }
 
-    private static void adolescentExtras(Map<Micronutrient, MicronutrientTarget> out) {
+    private static void adolescentExtras(Map<Micronutrient, MicronutrientTarget> out, ProfileSettings settings) {
         target(out, Micronutrient.PHOSPHORUS, 800, false, "Indian age-specific reference intake");
-        target(out, Micronutrient.SODIUM, 2000, true, "ICMR-NIN adult ceiling applied conservatively");
+        target(out, Micronutrient.SODIUM, sodiumCeiling(settings), true, "ICMR-NIN adult ceiling applied conservatively");
         target(out, Micronutrient.SELENIUM, 40, false, ICMR_AI);
         target(out, Micronutrient.CHROMIUM, 50, false, ICMR_AI);
         target(out, Micronutrient.MANGANESE, 4.0, false, ICMR_AI);
@@ -117,6 +117,13 @@ public final class MicronutrientTargets {
         target(out, Micronutrient.BIOTIN, 30, false, ICMR_AI);
         // Potassium and copper are intentionally omitted here because the available Indian
         // age-specific source does not provide a defensible 13-18 year target.
+    }
+
+    private static double sodiumCeiling(ProfileSettings settings) {
+        if (settings != null && Double.isFinite(settings.sodiumLimitMg) && settings.sodiumLimitMg > 0.0) {
+            return Math.min(2000.0, settings.sodiumLimitMg);
+        }
+        return 2000.0;
     }
 
     private static double estimateTdee(ProfileSettings settings, LocalDate today) {
