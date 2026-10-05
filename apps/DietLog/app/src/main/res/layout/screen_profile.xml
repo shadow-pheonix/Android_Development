@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp">
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:fillViewport="true" android:clipToPadding="false">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingLeft="18dp" android:paddingTop="18dp"
+        android:paddingRight="18dp" android:paddingBottom="28dp">
         <TextView style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Profile" />
-        <TextView style="@style/Text.Body" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="App settings and diagnostics" />
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:orientation="vertical" android:padding="16dp" android:background="@drawable/bg_card">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DietLog" android:textColor="@color/text_primary" android:textSize="20sp" android:textStyle="bold" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Offline-first Indian food tracking" android:textColor="@color/text_secondary" android:textSize="13sp" />
-            <TextView android:id="@+id/profileDatabaseStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Offline database" android:textColor="@color/accent" android:textSize="13sp" />
-        </LinearLayout>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="vertical" android:padding="16dp" android:background="@drawable/bg_card_alt">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Diagnostics" android:textColor="@color/text_primary" android:textSize="17sp" android:textStyle="bold" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Export bounded logs, crash, device, app and build information for debugging." android:textColor="@color/text_secondary" android:textSize="12sp" />
-            <TextView android:id="@+id/exportButton" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="14dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="Export diagnostics" android:textColor="@color/accent" android:textSize="14sp" android:textStyle="bold" />
-        </LinearLayout>
+        <TextView style="@style/Text.Body" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="Personalize calories and nutrition targets" />
+        <include layout="@layout/section_profile_personal" />
+        <include layout="@layout/section_profile_goal" />
+        <include layout="@layout/section_profile_nutrition" />
+        <include layout="@layout/section_profile_diagnostics" />
     </LinearLayout>
 </ScrollView>

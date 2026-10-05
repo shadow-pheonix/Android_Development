@@ -19,6 +19,7 @@ import com.shadowphoenix.dietlog.diagnostics.CrashHandler;
 import com.shadowphoenix.dietlog.diagnostics.DiagnosticsExporter;
 import com.shadowphoenix.dietlog.food.CatalogFood;
 import com.shadowphoenix.dietlog.food.FoodCatalogDb;
+import com.shadowphoenix.dietlog.profile.ProfileController;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
 
 import java.text.DateFormat;
@@ -39,6 +40,7 @@ public final class MainActivity extends Activity {
 
     private DiaryDbHelper diary;
     private FoodCatalogDb catalog;
+    private ProfileController profileController;
 
     private View homeScreen, searchScreen, detailScreen, manualScreen, progressScreen, profileScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
@@ -77,6 +79,8 @@ public final class MainActivity extends Activity {
 
         diary = new DiaryDbHelper(this);
         bindViews();
+        profileController = new ProfileController(this, this::refreshHome);
+        profileController.bind();
         configureRings();
         configureNavigation();
         configureSearch();
@@ -279,16 +283,20 @@ public final class MainActivity extends Activity {
 
     private void refreshHome() {
         double[] totals = diary.getTodayTotals();
+        double calorieGoal = profileController == null ? CALORIE_GOAL : profileController.getCalorieGoal();
+        double proteinGoal = profileController == null ? PROTEIN_GOAL : profileController.getProteinGoal();
+        double carbsGoal = profileController == null ? CARBS_GOAL : profileController.getCarbsGoal();
+        double fatGoal = profileController == null ? FAT_GOAL : profileController.getFatGoal();
         calorieValue.setText(String.format(Locale.getDefault(), "%.0f", totals[0]));
-        calorieGoalText.setText(String.format(Locale.getDefault(), "of %,.0f kcal", CALORIE_GOAL));
-        calorieLeft.setText(String.format(Locale.getDefault(), "%.0f", Math.max(0, CALORIE_GOAL - totals[0])));
-        proteinValue.setText(String.format(Locale.getDefault(), "%.0f / %.0fg", totals[1], PROTEIN_GOAL));
-        carbsValue.setText(String.format(Locale.getDefault(), "%.0f / %.0fg", totals[2], CARBS_GOAL));
-        fatValue.setText(String.format(Locale.getDefault(), "%.0f / %.0fg", totals[3], FAT_GOAL));
-        caloriesRing.setProgress((float) (totals[0] / CALORIE_GOAL));
-        proteinRing.setProgress((float) (totals[1] / PROTEIN_GOAL));
-        carbsRing.setProgress((float) (totals[2] / CARBS_GOAL));
-        fatRing.setProgress((float) (totals[3] / FAT_GOAL));
+        calorieGoalText.setText(String.format(Locale.getDefault(), "of %,.0f kcal", calorieGoal));
+        calorieLeft.setText(String.format(Locale.getDefault(), "%.0f", Math.max(0, calorieGoal - totals[0])));
+        proteinValue.setText(String.format(Locale.getDefault(), "%.0f / %.0fg", totals[1], proteinGoal));
+        carbsValue.setText(String.format(Locale.getDefault(), "%.0f / %.0fg", totals[2], carbsGoal));
+        fatValue.setText(String.format(Locale.getDefault(), "%.0f / %.0fg", totals[3], fatGoal));
+        caloriesRing.setProgress((float) (totals[0] / calorieGoal));
+        proteinRing.setProgress((float) (totals[1] / proteinGoal));
+        carbsRing.setProgress(carbsGoal <= 0.0 ? 0f : (float) (totals[2] / carbsGoal));
+        fatRing.setProgress((float) (totals[3] / fatGoal));
         renderDiaryEntries(diary.getTodayEntries());
     }
 
@@ -633,6 +641,12 @@ public final class MainActivity extends Activity {
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        if (profileController != null && profileController.onActivityResult(requestCode, resultCode, data)) return;
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
