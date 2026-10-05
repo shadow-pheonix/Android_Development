@@ -1,5 +1,6 @@
 package com.shadowphoenix.dietlog.ui;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.os.Build;
 import android.os.PowerManager;
@@ -80,6 +81,7 @@ public final class RefreshRateController {
         return bestModeId;
     }
 
+    @TargetApi(35)
     private static void requestFrameRateRecursively(View view, float frameRate) {
         view.setRequestedFrameRate(frameRate);
         if (!(view instanceof ViewGroup)) return;
