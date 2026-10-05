@@ -35,6 +35,7 @@ import com.shadowphoenix.dietlog.nutrition.MicronutrientValues;
 import com.shadowphoenix.dietlog.profile.ProfileController;
 import com.shadowphoenix.dietlog.profile.ProfileSettings;
 import com.shadowphoenix.dietlog.progress.ProgressController;
+import com.shadowphoenix.dietlog.sync.SyncCoordinator;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
 
 import java.time.LocalDate;
@@ -1247,6 +1248,7 @@ public final class MainActivity extends Activity {
                 .putFloat(servingMemoryKey(selectedFood) + ".multiplier", (float) servingMultiplier)
                 .putString(servingMemoryKey(selectedFood) + ".label", selectedServingLabel)
                 .apply();
+        SyncCoordinator.markUserDataChanged(this, "serving-memory");
     }
 
     private String servingMemoryKey(CatalogFood food) {

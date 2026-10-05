@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import com.shadowphoenix.dietlog.progress.ProgressData.DailyNutrition;
 import com.shadowphoenix.dietlog.progress.ProgressData.WeightPoint;
 import com.shadowphoenix.dietlog.nutrition.MicronutrientValues;
+import com.shadowphoenix.dietlog.sync.SyncCoordinator;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -22,9 +23,11 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "dietlog.db";
     private static final int DB_VERSION = 5;
     private static final int HISTORY_SCAN_LIMIT = 2000;
+    private final Context appContext;
 
     public DiaryDbHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
+        appContext = context.getApplicationContext();
     }
 
     @Override
@@ -92,7 +95,9 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         values.put("source_food_id", entry.sourceFoodId);
         values.put("source_serving_id", entry.sourceServingId);
         values.put("micronutrients", entry.micronutrients.encode());
-        return getWritableDatabase().insertOrThrow("food_entries", null, values);
+        long id = getWritableDatabase().insertOrThrow("food_entries", null, values);
+        SyncCoordinator.markUserDataChanged(appContext, "diary-insert");
+        return id;
     }
 
     public List<FoodEntry> getTodayEntries() {
@@ -188,8 +193,9 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         values.put("log_date", date.toString());
         values.put("weight_kg", weightKg);
         values.put("logged_at", System.currentTimeMillis());
-        getWritableDatabase().insertWithOnConflict(
+        long result = getWritableDatabase().insertWithOnConflict(
                 "weight_logs", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        if (result != -1L) SyncCoordinator.markUserDataChanged(appContext, "weight-upsert");
     }
 
     public List<WeightPoint> getWeightRange(LocalDate startDate, LocalDate endDate) {
@@ -262,12 +268,16 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         values.put("source_food_id", entry.sourceFoodId);
         values.put("source_serving_id", entry.sourceServingId);
         values.put("micronutrients", entry.micronutrients.encode());
-        return getWritableDatabase().update("food_entries", values, "id = ?",
+        int count = getWritableDatabase().update("food_entries", values, "id = ?",
                 new String[]{Long.toString(entry.id)});
+        if (count > 0) SyncCoordinator.markUserDataChanged(appContext, "diary-update");
+        return count;
     }
 
     public int delete(long id) {
-        return getWritableDatabase().delete("food_entries", "id = ?", new String[]{Long.toString(id)});
+        int count = getWritableDatabase().delete("food_entries", "id = ?", new String[]{Long.toString(id)});
+        if (count > 0) SyncCoordinator.markUserDataChanged(appContext, "diary-delete");
+        return count;
     }
 
     public List<FoodHistory.Item> getRecentFoods(int limit) {
@@ -323,8 +333,9 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         values.put("source_serving_id", entry.sourceServingId);
         values.put("micronutrients", entry.micronutrients.encode());
         values.put("updated_at", System.currentTimeMillis());
-        getWritableDatabase().insertWithOnConflict(
+        long result = getWritableDatabase().insertWithOnConflict(
                 "food_favorites", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        if (result != -1L) SyncCoordinator.markUserDataChanged(appContext, "favorite-upsert");
     }
 
     public int removeFavorite(FoodEntry entry) {
@@ -332,8 +343,10 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
     }
 
     public int removeFavoriteKey(String foodKey) {
-        return getWritableDatabase().delete(
+        int count = getWritableDatabase().delete(
                 "food_favorites", "food_key=?", new String[]{foodKey});
+        if (count > 0) SyncCoordinator.markUserDataChanged(appContext, "favorite-delete");
+        return count;
     }
 
     public long getEntryCount() {

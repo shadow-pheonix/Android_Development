@@ -3,12 +3,16 @@ package com.shadowphoenix.dietlog.profile;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.shadowphoenix.dietlog.sync.SyncCoordinator;
+
 public final class ProfilePreferences {
     private static final String FILE = "dietlog_profile";
     private final SharedPreferences prefs;
+    private final Context appContext;
 
     public ProfilePreferences(Context context) {
-        prefs = context.getSharedPreferences(FILE, Context.MODE_PRIVATE);
+        appContext = context.getApplicationContext();
+        prefs = appContext.getSharedPreferences(FILE, Context.MODE_PRIVATE);
     }
 
     public boolean hasSavedProfile() { return prefs.getBoolean("profileSaved", false); }
@@ -70,6 +74,7 @@ public final class ProfilePreferences {
         putDouble(e, "sugarLimitG", s.sugarLimitG);
         putDouble(e, "sodiumLimitMg", s.sodiumLimitMg);
         e.apply();
+        SyncCoordinator.markUserDataChanged(appContext, "profile-save");
     }
 
     private double getDouble(String key, double fallback) {
