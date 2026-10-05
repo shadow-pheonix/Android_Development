@@ -4,15 +4,27 @@ A multi-app Android development monorepo for building, testing, debugging, and p
 
 ## Mandatory for AI/agent development
 
-Before making any change, read **[AGENTS.md](./AGENTS.md)** completely. Its routing, diagnostics, and chat-local-first rules are mandatory.
+Before making any change, read **[AGENTS.md](./AGENTS.md)** completely. Its routing, diagnostics, source-handoff, and chat-local-first rules are mandatory.
 
 For work performed from ChatGPT, **chat-local workspace** means the filesystem/runtime attached directly to the current chat/agent session (sandbox/container). It does **not** mean the user's Windows PC and it does **not** authorize use of `windows-bridge`. `windows-bridge` is used only when the user explicitly requests it or explicitly asks to perform the task on their Windows machine.
 
-The core rule is simple:
+The core workflow is:
 
-> **Develop and verify in the chat-local workspace first. Commit only a coherent, checked batch. Use GitHub Actions afterward for authoritative Android build/test validation and APK generation.**
+> **The user uploads a ZIP of the latest GitHub commit. Extract and develop from that exact snapshot in the chat-local workspace. Validate and review locally. Publish one coherent commit to GitHub only after the batch is ready, then use GitHub Actions for authoritative Android build/test validation and APK generation.**
 
-For an app that already exists, a fresh chat must first synchronize the current repository into the chat-local workspace and continue from that existing source. Prefer `git clone`/fetch when available; when direct clone of the private repository is unavailable in the chat runtime, use the authorized GitHub connector/materialization path to obtain the current source in the chat-local workspace.
+### ChatGPT source handoff
+
+For an existing app or any change to this monorepo:
+
+1. The user uploads a ZIP corresponding to the latest intended GitHub commit.
+2. The agent records the base commit SHA and extracts the ZIP into the chat-local workspace.
+3. The agent verifies the intended GitHub branch still points to that base commit.
+4. Development, validation, and diff review happen in the extracted chat-local working tree.
+5. The GitHub connector/API may then publish the finalized local diff and inspect CI/build artifacts.
+
+If the GitHub branch has advanced since the ZIP was created, the agent should request a fresh latest-commit ZIP rather than silently cloning, merging, or reconstructing the repository through GitHub file APIs.
+
+**Do not use `git clone` as the normal ChatGPT source-ingest workflow. Do not use `windows-bridge` unless explicitly requested. Do not reconstruct the repository file-by-file from GitHub when the user can provide the source ZIP.**
 
 Every app developed here must also provide an **Export diagnostics** feature that saves a debugging ZIP under `Internal storage/AppDebug/<AppName>/`. See [docs/DIAGNOSTICS.md](docs/DIAGNOSTICS.md).
 

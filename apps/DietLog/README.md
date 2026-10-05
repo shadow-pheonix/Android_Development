@@ -2,6 +2,24 @@
 
 Offline-first Android diet logger focused on Indian foods.
 
+## ChatGPT development handoff
+
+DietLog follows the root monorepo rules in `AGENTS.md`, `docs/ROUTING.md`, and `docs/WORKFLOW.md`.
+
+For DietLog development in a fresh chat, or whenever the current chat-local snapshot is stale or missing:
+
+1. **The user uploads a ZIP of the latest `Android_Development` GitHub commit.**
+2. The agent extracts that ZIP into the chat-local workspace and works from `apps/DietLog/` inside the extracted tree.
+3. The exact base commit SHA for the ZIP is recorded and verified against the intended GitHub branch before editing/publishing.
+4. All DietLog implementation, local validation, and diff review happen in that extracted chat-local workspace.
+5. The GitHub connector/API is used only to verify repository state, publish the finalized local diff, inspect CI, and retrieve artifacts.
+
+**Do not `git clone` the repository as the normal ChatGPT source-ingest path. Do not reconstruct DietLog from GitHub file-by-file. Do not use the user's Windows checkout or `windows-bridge` unless the user explicitly requests it for the current task.**
+
+If GitHub has advanced beyond the ZIP's base commit, request a fresh latest-commit ZIP from the user before continuing development.
+
+See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
+
 ## Current functionality
 
 - Today's calories, protein, carbs and fat.

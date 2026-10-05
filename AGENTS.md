@@ -23,8 +23,11 @@ Rules:
 1. **MUST use the chat-local workspace for the repository's local-first development and validation steps.**
 2. **MUST NOT search for, connect to, invoke, or modify `windows-bridge` merely to satisfy a requirement to work “locally”.**
 3. `windows-bridge` is **opt-in only**. Use it only when the user explicitly asks to use their Windows machine or explicitly asks to use `windows-bridge` for the current task.
-4. If the chat-local workspace cannot directly `git clone` the private repository, **MUST sync/materialize the current repository state into the chat-local workspace through an authorized GitHub connector or equivalent repository access**, then develop and validate in that chat-local workspace. The connector may be used to publish the finalized commit afterward; it is not a substitute for doing development in the chat-local workspace.
-5. A phrase such as “current local checkout” below therefore means the repository checkout/snapshot/worktree in the **chat-local workspace**, not a checkout on the user's computer.
+4. For an existing repository/app task, the normal source handoff is a **ZIP uploaded by the user containing the latest GitHub commit**. If no current trusted chat-local snapshot exists, **MUST ask the user to upload that latest-commit ZIP before editing**.
+5. After upload, **MUST extract the ZIP into the chat-local workspace and develop from those extracted files**. Do not use `git clone`, the user's Windows checkout, or GitHub-file-by-file reconstruction as the normal source-ingest path.
+6. **MUST record the base commit SHA associated with the uploaded ZIP and verify the target GitHub branch still points to that commit before publishing changes.** If the branch has advanced, request a fresh ZIP of the new latest commit rather than silently merging or rebuilding the source snapshot from GitHub.
+7. The GitHub connector/API may be used to verify repository/commit state and to publish the finalized, locally developed change. It is **not** the normal development workspace and is **not** a substitute for the user-uploaded source ZIP.
+8. A phrase such as “current local checkout” below therefore means the repository snapshot/worktree extracted into the **chat-local workspace**, not a checkout on the user's computer.
 
 These definitions apply in fresh chats as well as continuing chats unless the user explicitly overrides them.
 
@@ -60,15 +63,16 @@ Use this route when the requested app does not yet exist in the repository.
 
 **Required order:**
 
-**prepare in chat-local workspace → create `apps/<AppName>/` in chat-local workspace → complete development in chat-local workspace (including mandatory diagnostics) → validate in chat-local workspace → review final diff → commit/push finalized batch → GitHub Actions build/test → APK/artifact**
+**read root `AGENTS.md` → obtain the latest-commit ZIP from the user → extract it into the chat-local workspace → create `apps/<AppName>/` in that workspace → complete development there (including mandatory diagnostics) → validate locally → review final diff → publish one coherent commit → GitHub Actions build/test → APK/artifact**
 
 Rules:
 
-1. **MUST develop the app in the chat-local workspace first.**
-2. **MUST complete and verify the intended development batch in the chat-local workspace before committing app files to GitHub.**
-3. **MUST implement the mandatory diagnostics baseline before the first APK handoff.**
-4. **MUST NOT use direct GitHub file creation/editing as the normal development environment.**
-5. GitHub Actions is used after the chat-local batch is ready for authoritative Android-specific build/test validation and APK generation.
+1. **MUST start from the user's ZIP of the latest repository commit when modifying this existing monorepo.**
+2. **MUST develop the app in the chat-local workspace first.**
+3. **MUST complete and verify the intended development batch in the chat-local workspace before committing app files to GitHub.**
+4. **MUST implement the mandatory diagnostics baseline before the first APK handoff.**
+5. **MUST NOT use direct GitHub file creation/editing as the normal development environment.**
+6. GitHub Actions is used after the chat-local batch is ready for authoritative Android-specific build/test validation and APK generation.
 
 ### Route B — existing app, including a fresh chat
 
@@ -76,27 +80,29 @@ Use this route when the app already exists in `apps/<AppName>/` or as an explici
 
 **Required order:**
 
-**read root `AGENTS.md` → sync current GitHub repository into chat-local workspace → identify exact target app → read app-level instructions → verify diagnostics baseline exists → develop in chat-local workspace → validate in chat-local workspace → review final diff → commit/push coherent changes → GitHub Actions build/test → APK/artifact**
+**read root `AGENTS.md` → obtain the user-uploaded ZIP of the latest GitHub commit → extract it into the chat-local workspace → verify the ZIP's base commit is still current → identify exact target app → read app-level instructions → verify diagnostics baseline exists → develop locally → validate locally → review final diff → publish one coherent commit → GitHub Actions build/test → APK/artifact**
 
 Rules:
 
-1. **MUST obtain the current repository state in the chat-local workspace if no current chat-local checkout/snapshot exists.** Prefer `git clone` when available; otherwise use the authorized GitHub connector/materialization path described above.
-2. If a chat-local checkout/snapshot already exists, **MUST fetch/sync the relevant branch/commit before editing**.
-3. **MUST inspect the existing app, its build files, README, app-level `AGENTS.md` if present, and diagnostics implementation before modifying it.**
-4. If the app lacks the mandatory diagnostics baseline, **MUST add it as part of active development unless the user explicitly requests otherwise.**
-5. **MUST continue from the existing source.** Do not recreate the app from memory or start a disconnected replacement project.
-6. **MUST complete and verify changes in the chat-local workspace before committing/pushing them.**
-7. Direct GitHub editing is not a substitute for the required chat-local workflow.
-8. **MUST NOT use `windows-bridge` to obtain a checkout or run validation unless the user explicitly requested `windows-bridge` or their Windows machine for this task.**
+1. If no current trusted chat-local snapshot exists, **MUST request the latest-commit repository ZIP from the user before editing**.
+2. **MUST extract and use that ZIP as the source working tree.** Do not `git clone` or reconstruct the repository through the GitHub connector as the normal workflow.
+3. If a chat-local snapshot already exists, **MUST verify its recorded base commit still matches the intended GitHub branch before editing**. If it does not, request a fresh latest-commit ZIP.
+4. **MUST inspect the existing app, its build files, README, app-level `AGENTS.md` if present, and diagnostics implementation before modifying it.**
+5. If the app lacks the mandatory diagnostics baseline, **MUST add it as part of active development unless the user explicitly requests otherwise.**
+6. **MUST continue from the extracted existing source.** Do not recreate the app from memory or start a disconnected replacement project.
+7. **MUST complete and verify changes in the chat-local workspace before publishing them.**
+8. Direct GitHub editing is not a substitute for the required chat-local workflow.
+9. **MUST NOT use `windows-bridge` to obtain a checkout or run validation unless the user explicitly requested `windows-bridge` or their Windows machine for this task.**
 
 ### Route C — shared code, CI, docs, or repository infrastructure
 
 Use this route when the task targets `shared/`, `.github/`, root documentation, or repository-wide infrastructure rather than one app.
 
-1. **MUST work in the chat-local workspace first and inspect the current repository state before editing.**
-2. Determine which apps are affected before running validation.
-3. Validate only affected apps unless a shared change legitimately requires broader testing.
-4. Do not restructure unrelated apps as a side effect.
+1. **MUST start from the user-uploaded ZIP of the latest GitHub commit when no current trusted chat-local snapshot exists.**
+2. **MUST work in the extracted chat-local workspace first and inspect the current repository state before editing.**
+3. Determine which apps are affected before running validation.
+4. Validate only affected apps unless a shared change legitimately requires broader testing.
+5. Do not restructure unrelated apps as a side effect.
 
 ## Chat-local-first rules
 
@@ -104,7 +110,7 @@ These rules apply to every route:
 
 1. **Develop in the chat-local workspace first.**
 2. **Run all relevant checks available in the chat-local workspace first**: syntax/structure checks, targeted tests, static inspection, patch verification, and diff review.
-3. **Inspect the final diff before pushing.** Ensure the change is intentional, scoped, and free of secrets, temporary files, and unrelated edits.
+3. **Inspect the final diff before publishing.** Ensure the change is intentional, scoped, and free of secrets, temporary files, and unrelated edits.
 4. **Do not push knowingly broken, partial, placeholder, or trial-and-error implementations merely to discover basic errors in CI.**
 5. **Use short, bounded, resumable validation cycles.** Preserve successful intermediate work and do not repeat expensive steps without reason.
 6. For substantial work, establish a known-good baseline and then change incrementally.
@@ -112,6 +118,14 @@ These rules apply to every route:
 ## GitHub and CI role
 
 GitHub is the repository of record for finalized changes. GitHub Actions is the authoritative environment for Android SDK/NDK-dependent compilation, lint, tests, and APK generation when those checks are not available in the chat-local workspace.
+
+The GitHub connector/API may be used to:
+
+- verify the target branch and base commit before development/publishing;
+- publish the finalized local diff as a coherent commit;
+- inspect GitHub Actions status/logs and retrieve build artifacts.
+
+It should **not** be used to reconstruct the repository file-by-file as the normal development source when the user can provide the latest-commit ZIP.
 
 CI must be routed to the affected app only whenever practical:
 
@@ -121,7 +135,7 @@ CI must be routed to the affected app only whenever practical:
 - shared changes may trigger multiple affected apps when justified;
 - APK/artifact names must clearly identify the app and build type.
 
-If CI exposes an Android/environment-specific failure, make the fix in the chat-local working copy, validate there as far as possible, then push a focused correction.
+If CI exposes an Android/environment-specific failure, make the fix in the chat-local working copy, validate there as far as possible, then publish a focused correction.
 
 ## App-level instructions
 
@@ -137,10 +151,11 @@ Never commit private signing keys, passwords, tokens, credentials, or secrets in
 
 ## Ready-to-push gate
 
-A change may be pushed only when all applicable items are true:
+A change may be published only when all applicable items are true:
 
 - intended work for the current batch is complete;
-- current repository/app source was synced into the chat-local workspace before development;
+- the source working tree came from the user's latest-commit ZIP (or from a still-current trusted ZIP snapshot already present in this chat);
+- the recorded base commit was verified against the intended GitHub branch before publishing;
 - mandatory diagnostics support is present for app-development work;
 - checks available in the chat-local workspace passed;
 - final diff was reviewed;
@@ -148,4 +163,4 @@ A change may be pushed only when all applicable items are true:
 - no accidental files, secrets, or unrelated changes are present;
 - the batch is ready for authoritative CI validation.
 
-If any applicable item is false, continue in the chat-local workspace instead of pushing.
+If any applicable item is false, continue in the chat-local workspace instead of publishing.

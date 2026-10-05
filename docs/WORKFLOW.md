@@ -10,14 +10,23 @@ Throughout this document, words such as **local**, **locally**, **local checkout
 
 **Do not search for or invoke `windows-bridge` merely because this workflow requires local development.** `windows-bridge` may be used only when the user explicitly asks to use their Windows machine or explicitly requests `windows-bridge` for the current task.
 
-## 1. Sync into the chat-local workspace first
+## 1. Start from the user-uploaded latest-commit ZIP
 
-Before modifying an existing project, work from the current repository state in the chat-local workspace.
+For an existing repository/app, the normal source handoff is a **ZIP uploaded by the user containing the latest GitHub commit**.
 
-- No chat-local checkout/snapshot: clone the repository into the chat-local workspace when possible.
-- If direct cloning of the private repository is unavailable in the chat runtime, use the authorized GitHub connector or repository materialization path to synchronize the current repository source into the chat-local workspace.
-- Existing chat-local checkout/snapshot: fetch/sync the intended branch or commit before editing.
-- Confirm the target app path before editing.
+When no current trusted chat-local snapshot exists:
+
+1. Ask the user to upload the ZIP for the latest intended GitHub commit.
+2. Record the exact base commit SHA supplied in the handoff or otherwise established for that ZIP.
+3. Extract the ZIP into the chat-local workspace.
+4. Confirm the target app/path before editing.
+5. Verify through GitHub that the intended branch still points to the recorded base commit.
+
+If the GitHub branch has advanced since the ZIP was created, **do not silently merge, clone, or reconstruct the newer repository state**. Ask the user to upload a fresh ZIP of the new latest commit.
+
+If a trusted ZIP-derived chat-local snapshot already exists in the current conversation, it may be reused only after verifying its recorded base commit is still current for the intended branch.
+
+**Do not use `git clone` as the normal ChatGPT source-ingest workflow. Do not reconstruct the working tree file-by-file through the GitHub connector when the user can provide the ZIP.** The GitHub connector is for verification and final publication, not the primary development filesystem.
 
 Do not substitute a checkout on the user's Windows machine for this step unless the user explicitly requested Windows-machine access.
 
@@ -31,7 +40,7 @@ For app development, verify that the mandatory diagnostics baseline from [DIAGNO
 
 ## 3. Develop in the chat-local workspace
 
-Make source, resource, script, workflow, and configuration changes in the chat-local working copy.
+Make source, resource, script, workflow, and configuration changes in the ZIP-derived chat-local working copy.
 
 Prefer a small number of coherent changes over a large matrix of speculative experiments.
 
@@ -56,7 +65,7 @@ Lack of an Android SDK in the chat-local workspace is **not** a reason to invoke
 
 ## 5. Review the final diff
 
-Before pushing, verify:
+Before publishing, verify:
 
 - only intended files changed;
 - mandatory diagnostics support is present for app-development work;
@@ -67,13 +76,17 @@ Before pushing, verify:
 - generated artifacts that should not be committed are absent;
 - app/version/build changes are deliberate.
 
-## 6. Commit and push
+## 6. Publish the finalized change to GitHub
 
-Commit only when the current batch is internally complete and verified in the chat-local workspace.
+Publish only when the current batch is internally complete and verified in the chat-local workspace.
 
-Prefer focused commits with clear messages. Avoid knowingly broken or placeholder commits.
+Before publishing, verify again that the intended GitHub branch still points to the ZIP's recorded base commit. If it has advanced, stop and obtain a fresh latest-commit ZIP from the user rather than overwriting or merging blindly.
 
-The GitHub connector may be used to create/push the finalized commit when needed, but GitHub-side file edits are not the development workspace.
+Prefer one focused commit with a clear message for one coherent batch.
+
+When direct `git push` is unavailable from the chat runtime, the authorized GitHub connector/API may publish the exact local diff by creating the required Git objects/commit and advancing the target branch. This is an acceptable publication mechanism because development and review already happened in the chat-local workspace.
+
+GitHub-side file edits are not the development workspace.
 
 ## 7. Run authoritative Android CI
 
@@ -93,9 +106,9 @@ When CI fails:
 1. Inspect the exact failing step and relevant log lines.
 2. Determine whether the failure is code-related or environment-specific.
 3. Reproduce or reason about it in the chat-local workspace where possible.
-4. Fix it in the chat-local working copy.
+4. Fix it in the same chat-local working copy.
 5. Run chat-local checks again.
-6. Push a focused correction.
+6. Publish a focused correction.
 
 Do not repeatedly make blind CI-only edits.
 
