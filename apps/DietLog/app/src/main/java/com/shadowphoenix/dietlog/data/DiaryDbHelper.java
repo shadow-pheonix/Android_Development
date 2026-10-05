@@ -6,6 +6,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.shadowphoenix.dietlog.progress.ProgressData.DailyNutrition;
+import com.shadowphoenix.dietlog.progress.ProgressData.WeightPoint;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -16,7 +19,7 @@ import java.util.Map;
 
 public final class DiaryDbHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "dietlog.db";
-    private static final int DB_VERSION = 3;
+    private static final int DB_VERSION = 4;
     private static final int HISTORY_SCAN_LIMIT = 2000;
 
     public DiaryDbHelper(Context context) {
@@ -41,6 +44,7 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
                 ")");
         db.execSQL("CREATE INDEX idx_food_entries_logged_at ON food_entries(logged_at)");
         createFavoritesTable(db);
+        createWeightLogsTable(db);
     }
 
     @Override
@@ -57,6 +61,10 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         if (oldVersion < 3) {
             createFavoritesTable(db);
             oldVersion = 3;
+        }
+        if (oldVersion < 4) {
+            createWeightLogsTable(db);
+            oldVersion = 4;
         }
         if (oldVersion != newVersion) {
             throw new IllegalStateException("No database migration exists from " + oldVersion + " to " + newVersion);
@@ -140,6 +148,78 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
             writable.endTransaction();
         }
         return copied;
+    }
+
+    public List<DailyNutrition> getNutritionRange(LocalDate startDate, LocalDate endDate) {
+        List<DailyNutrition> result = new ArrayList<>();
+        if (startDate == null || endDate == null || endDate.isBefore(startDate)) return result;
+        long start = dateBounds(startDate)[0];
+        long end = dateBounds(endDate.plusDays(1))[0];
+        String sql = "SELECT strftime('%Y-%m-%d', logged_at / 1000, 'unixepoch', 'localtime') AS day, " +
+                "SUM(calories), SUM(protein), SUM(carbs), SUM(fat), COUNT(*) " +
+                "FROM food_entries WHERE logged_at >= ? AND logged_at < ? " +
+                "GROUP BY day ORDER BY day ASC";
+        try (Cursor c = getReadableDatabase().rawQuery(
+                sql, new String[]{Long.toString(start), Long.toString(end)})) {
+            while (c.moveToNext()) {
+                result.add(new DailyNutrition(
+                        LocalDate.parse(c.getString(0)),
+                        c.getDouble(1),
+                        c.getDouble(2),
+                        c.getDouble(3),
+                        c.getDouble(4),
+                        c.getInt(5)
+                ));
+            }
+        }
+        return result;
+    }
+
+    public void upsertWeight(LocalDate date, double weightKg) {
+        ContentValues values = new ContentValues();
+        values.put("log_date", date.toString());
+        values.put("weight_kg", weightKg);
+        values.put("logged_at", System.currentTimeMillis());
+        getWritableDatabase().insertWithOnConflict(
+                "weight_logs", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    public List<WeightPoint> getWeightRange(LocalDate startDate, LocalDate endDate) {
+        List<WeightPoint> result = new ArrayList<>();
+        if (startDate == null || endDate == null || endDate.isBefore(startDate)) return result;
+        try (Cursor c = getReadableDatabase().query(
+                "weight_logs",
+                new String[]{"log_date", "weight_kg"},
+                "log_date >= ? AND log_date <= ?",
+                new String[]{startDate.toString(), endDate.toString()},
+                null, null, "log_date ASC")) {
+            while (c.moveToNext()) {
+                result.add(new WeightPoint(
+                        LocalDate.parse(c.getString(0)),
+                        c.getDouble(1)
+                ));
+            }
+        }
+        return result;
+    }
+
+    public WeightPoint getLatestWeight() {
+        try (Cursor c = getReadableDatabase().query(
+                "weight_logs",
+                new String[]{"log_date", "weight_kg"},
+                null, null, null, null,
+                "log_date DESC", "1")) {
+            if (c.moveToFirst()) {
+                return new WeightPoint(LocalDate.parse(c.getString(0)), c.getDouble(1));
+            }
+        }
+        return null;
+    }
+
+    public long getWeightLogCount() {
+        try (Cursor c = getReadableDatabase().rawQuery("SELECT COUNT(*) FROM weight_logs", null)) {
+            return c.moveToFirst() ? c.getLong(0) : 0;
+        }
     }
 
     public double[] getTodayTotals() {
@@ -310,6 +390,14 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
                 "source_food_id TEXT," +
                 "source_serving_id TEXT," +
                 "updated_at INTEGER NOT NULL" +
+                ")");
+    }
+
+    private static void createWeightLogsTable(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS weight_logs (" +
+                "log_date TEXT PRIMARY KEY," +
+                "weight_kg REAL NOT NULL," +
+                "logged_at INTEGER NOT NULL" +
                 ")");
     }
 

@@ -74,6 +74,16 @@ public final class ProfileController {
     public double getCarbsGoal() { return hasSavedProfile ? Math.max(0.0, settings.carbsGoalG) : LEGACY_CARBS_GOAL; }
     public double getFatGoal() { return hasSavedProfile ? positiveOr(settings.fatGoalG, LEGACY_FAT_GOAL) : LEGACY_FAT_GOAL; }
     public ProfileSettings getSettings() { return settings; }
+    public boolean hasSavedProfile() { return hasSavedProfile; }
+
+    public void updateCurrentWeightFromProgress(double weightKg) {
+        if (!Double.isFinite(weightKg) || weightKg < 25.0 || weightKg > 350.0) return;
+        settings.currentWeightKg = weightKg;
+        if (hasSavedProfile) preferences.save(settings);
+        populateUi();
+        refreshPreview();
+        onTargetsChanged.run();
+    }
 
     public void refreshPreview() {
         if (calorieTargetText == null) return;

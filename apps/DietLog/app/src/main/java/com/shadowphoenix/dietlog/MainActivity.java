@@ -26,6 +26,7 @@ import com.shadowphoenix.dietlog.food.CatalogFood;
 import com.shadowphoenix.dietlog.food.FoodCatalogDb;
 import com.shadowphoenix.dietlog.food.ServingOption;
 import com.shadowphoenix.dietlog.profile.ProfileController;
+import com.shadowphoenix.dietlog.progress.ProgressController;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
 
 import java.time.LocalDate;
@@ -49,6 +50,7 @@ public final class MainActivity extends Activity {
     private DiaryDbHelper diary;
     private FoodCatalogDb catalog;
     private ProfileController profileController;
+    private ProgressController progressController;
 
     private View homeScreen, searchScreen, detailScreen, manualScreen, progressScreen, profileScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
@@ -102,8 +104,10 @@ public final class MainActivity extends Activity {
             activeMealType = FoodEntry.normalizeMealType(savedInstanceState.getString("active_meal", activeMealType));
         }
         bindViews();
-        profileController = new ProfileController(this, this::refreshHome);
+        profileController = new ProfileController(this, this::refreshTargetsAndProgress);
         profileController.bind();
+        progressController = new ProgressController(this, diary, profileController);
+        progressController.bind();
         configureRings();
         configureNavigation();
         configureSearch();
@@ -234,7 +238,10 @@ public final class MainActivity extends Activity {
             setActiveMeal(defaultMealType());
             showManualEntry(null, null);
         });
-        navProgress.setOnClickListener(v -> showScreen(progressScreen, 2));
+        navProgress.setOnClickListener(v -> {
+            if (progressController != null) progressController.refresh();
+            showScreen(progressScreen, 2);
+        });
         navProfile.setOnClickListener(v -> showScreen(profileScreen, 3));
         findViewById(R.id.homeSeeAll).setOnClickListener(v -> {
             setActiveMeal(defaultMealType());
@@ -411,6 +418,11 @@ public final class MainActivity extends Activity {
             labels[i].setTextColor(color);
             labels[i].setTypeface(labels[i].getTypeface(), i == selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         }
+    }
+
+    private void refreshTargetsAndProgress() {
+        refreshHome();
+        if (progressController != null) progressController.refresh();
     }
 
     private void refreshHome() {

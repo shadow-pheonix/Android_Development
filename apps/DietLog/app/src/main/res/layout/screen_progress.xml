@@ -1,12 +1,245 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp">
-        <TextView style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Progress" />
-        <TextView style="@style/Text.Body" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="Nutrition trends and goals" />
-        <LinearLayout android:layout_width="match_parent" android:layout_height="220dp" android:layout_marginTop="20dp" android:gravity="center" android:orientation="vertical" android:padding="24dp" android:background="@drawable/bg_card_alt">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="▥" android:textColor="@color/accent" android:textSize="52sp" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Progress is the next feature" android:textColor="@color/text_primary" android:textSize="18sp" android:textStyle="bold" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center" android:text="The UI shell is ready. We can add daily/weekly charts, goals and streaks one by one." android:textColor="@color/text_secondary" android:textSize="13sp" android:textAlignment="center" />
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="18dp"
+        android:paddingTop="18dp"
+        android:paddingRight="18dp"
+        android:paddingBottom="28dp">
+
+        <TextView
+            style="@style/Text.Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Progress" />
+
+        <TextView
+            style="@style/Text.Body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Your nutrition consistency and body-weight trend" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:padding="14dp"
+            android:background="@drawable/bg_card_alt">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Weight"
+                        android:textColor="@color/text_primary"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/progressWeightGoal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Target — kg"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/progressLogWeight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:gravity="center"
+                    android:paddingLeft="13dp"
+                    android:paddingRight="13dp"
+                    android:background="@drawable/bg_chip"
+                    android:text="+ Log weight"
+                    android:textColor="@color/accent"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="bottom">
+                <TextView
+                    android:id="@+id/progressCurrentWeight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textColor="@color/text_primary"
+                    android:textSize="32sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginBottom="5dp"
+                    android:text="kg"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <com.shadowphoenix.dietlog.ui.ProgressTrendView
+                android:id="@+id/progressWeightTrend"
+                android:layout_width="match_parent"
+                android:layout_height="185dp"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/progressWeightPace"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Log weight on at least two days to measure pace."
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Nutrition overview"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:weightSum="3">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="104dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="5dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp"
+                android:background="@drawable/bg_card">
+                <TextView android:id="@+id/progressAvg7Calories" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textColor="@color/text_primary" android:textSize="21sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="7-day avg" android:textColor="@color/text_secondary" android:textSize="11sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="kcal / logged day" android:textColor="@color/text_tertiary" android:textSize="9sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="104dp"
+                android:layout_weight="1"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp"
+                android:background="@drawable/bg_card">
+                <TextView android:id="@+id/progressAvg30Calories" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textColor="@color/text_primary" android:textSize="21sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="30-day avg" android:textColor="@color/text_secondary" android:textSize="11sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="kcal / logged day" android:textColor="@color/text_tertiary" android:textSize="9sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="104dp"
+                android:layout_weight="1"
+                android:layout_marginStart="5dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp"
+                android:background="@drawable/bg_card">
+                <TextView android:id="@+id/progressAdherence" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textColor="@color/accent" android:textSize="21sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Goal adherence" android:textColor="@color/text_secondary" android:textSize="11sp" />
+                <TextView android:id="@+id/progressLoggedDays" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0 logged days" android:textColor="@color/text_tertiary" android:textSize="9sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="vertical"
+            android:padding="14dp"
+            android:background="@drawable/bg_card">
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Nutrition trends" android:textColor="@color/text_primary" android:textSize="18sp" android:textStyle="bold" />
+                <TextView android:id="@+id/progressRange7" android:layout_width="48dp" android:layout_height="34dp" android:gravity="center" android:background="@drawable/bg_chip_selected" android:text="7D" android:textColor="@color/black" android:textSize="11sp" android:textStyle="bold" />
+                <TextView android:id="@+id/progressRange30" android:layout_width="48dp" android:layout_height="34dp" android:layout_marginStart="6dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="30D" android:textColor="@color/text_secondary" android:textSize="11sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Calories" android:textColor="@color/text_primary" android:textSize="14sp" android:textStyle="bold" />
+
+            <com.shadowphoenix.dietlog.ui.ProgressTrendView
+                android:id="@+id/progressCaloriesTrend"
+                android:layout_width="match_parent"
+                android:layout_height="185dp"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/progressCaloriesSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="Macros • % of daily target" android:textColor="@color/text_primary" android:textSize="14sp" android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="● Protein     ● Carbs     ● Fat"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <com.shadowphoenix.dietlog.ui.ProgressTrendView
+                android:id="@+id/progressMacroTrend"
+                android:layout_width="match_parent"
+                android:layout_height="185dp"
+                android:layout_marginTop="2dp" />
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:orientation="horizontal" android:weightSum="3">
+                <TextView android:id="@+id/progressProteinAvg" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="P —" android:textColor="@color/protein" android:textSize="11sp" android:textStyle="bold" />
+                <TextView android:id="@+id/progressCarbsAvg" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="C —" android:textColor="@color/carbs" android:textSize="11sp" android:textStyle="bold" />
+                <TextView android:id="@+id/progressFatAvg" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="F —" android:textColor="@color/fat" android:textSize="11sp" android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="vertical"
+            android:padding="14dp"
+            android:background="@drawable/bg_card_alt">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Goal adherence • last 30 days" android:textColor="@color/text_primary" android:textSize="17sp" android:textStyle="bold" />
+            <TextView android:id="@+id/progressCalorieAdherence" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="Calories —" android:textColor="@color/text_secondary" android:textSize="13sp" />
+            <TextView android:id="@+id/progressProteinAdherence" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Protein —" android:textColor="@color/text_secondary" android:textSize="13sp" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Calories count as on-target within ±10%. Protein counts as on-target at ≥90% of your goal. Only days with food logged are included." android:textColor="@color/text_tertiary" android:textSize="10sp" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>
