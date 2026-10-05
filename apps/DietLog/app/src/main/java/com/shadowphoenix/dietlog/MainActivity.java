@@ -461,8 +461,7 @@ public final class MainActivity extends Activity {
         dates.add(null);
 
         new AlertDialog.Builder(this)
-                .setTitle("Relog")
-                .setMessage("Copy a previous day’s full food log into today. Foods already logged today will stay.")
+                .setTitle("Relog from…")
                 .setItems(labels.toArray(new String[0]), (dialog, which) -> {
                     LocalDate sourceDate = dates.get(which);
                     if (sourceDate == null) showRelogDatePicker(lastLogged != null ? lastLogged : yesterday);
