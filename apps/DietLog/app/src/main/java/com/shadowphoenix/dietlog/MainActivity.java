@@ -2,6 +2,7 @@ package com.shadowphoenix.dietlog;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -16,11 +17,13 @@ import android.widget.Toast;
 
 import com.shadowphoenix.dietlog.data.DiaryDbHelper;
 import com.shadowphoenix.dietlog.data.FoodEntry;
+import com.shadowphoenix.dietlog.data.FoodHistory;
 import com.shadowphoenix.dietlog.diagnostics.AppLogger;
 import com.shadowphoenix.dietlog.diagnostics.CrashHandler;
 import com.shadowphoenix.dietlog.diagnostics.DiagnosticsExporter;
 import com.shadowphoenix.dietlog.food.CatalogFood;
 import com.shadowphoenix.dietlog.food.FoodCatalogDb;
+import com.shadowphoenix.dietlog.food.ServingOption;
 import com.shadowphoenix.dietlog.profile.ProfileController;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
 
@@ -40,6 +43,7 @@ public final class MainActivity extends Activity {
     private static final double PROTEIN_GOAL = 150.0;
     private static final double CARBS_GOAL = 250.0;
     private static final double FAT_GOAL = 70.0;
+    private static final String SERVING_PREFS = "serving_memory";
 
     private DiaryDbHelper diary;
     private FoodCatalogDb catalog;
@@ -57,16 +61,20 @@ public final class MainActivity extends Activity {
 
     private EditText searchInput;
     private TextView databaseStatusText, profileDatabaseStatus, searchSectionTitle;
+    private TextView shortcutAll, shortcutRecent, shortcutFrequent, shortcutFavorites;
     private LinearLayout searchResultsContainer;
 
     private TextView detailEmoji, detailName, detailSubtitle, detailSourceChip, detailCategoryChip, detailBrandChip;
     private TextView detailCalories100, detailProtein100, detailCarbs100, detailFat100, detailServingLabel;
     private TextView detailTotalCalories, detailTotalProtein, detailTotalCarbs, detailTotalFat;
     private TextView detailTotalFiber, detailTotalSugar, detailTotalSodium, detailExtra, servingCountText;
+    private TextView detailFavorite;
     private EditText detailGramsInput;
     private CatalogFood selectedFood;
-    private int servingCount = 1;
+    private double servingMultiplier = 1.0;
     private double baseServingGrams = 100.0;
+    private String selectedServingLabel = "100 g";
+    private List<ServingOption> servingOptions = new ArrayList<>();
     private boolean internalGramsChange;
 
     private EditText nameInput, gramsInput, caloriesInput, proteinInput, carbsInput, fatInput;
@@ -164,6 +172,10 @@ public final class MainActivity extends Activity {
         databaseStatusText = findViewById(R.id.databaseStatusText);
         profileDatabaseStatus = findViewById(R.id.profileDatabaseStatus);
         searchSectionTitle = findViewById(R.id.searchSectionTitle);
+        shortcutAll = findViewById(R.id.shortcutAll);
+        shortcutRecent = findViewById(R.id.shortcutRecent);
+        shortcutFrequent = findViewById(R.id.shortcutFrequent);
+        shortcutFavorites = findViewById(R.id.shortcutFavorites);
         searchResultsContainer = findViewById(R.id.searchResultsContainer);
 
         detailEmoji = findViewById(R.id.detailEmoji);
@@ -188,6 +200,7 @@ public final class MainActivity extends Activity {
         servingCountText = findViewById(R.id.servingCount);
         detailGramsInput = findViewById(R.id.detailGramsInput);
         detailAddButton = findViewById(R.id.detailAddButton);
+        detailFavorite = findViewById(R.id.detailFavorite);
 
         nameInput = findViewById(R.id.nameInput);
         gramsInput = findViewById(R.id.gramsInput);
@@ -240,6 +253,22 @@ public final class MainActivity extends Activity {
             }
             return false;
         });
+        shortcutAll.setOnClickListener(v -> {
+            searchInput.setText("");
+            loadPopularFoods();
+        });
+        shortcutRecent.setOnClickListener(v -> {
+            searchInput.setText("");
+            loadRecentFoods();
+        });
+        shortcutFrequent.setOnClickListener(v -> {
+            searchInput.setText("");
+            loadFrequentFoods();
+        });
+        shortcutFavorites.setOnClickListener(v -> {
+            searchInput.setText("");
+            loadFavoriteFoods();
+        });
         findViewById(R.id.manualEntryButton).setOnClickListener(v -> showManualEntry(null, null));
         findViewById(R.id.barcodeTile).setOnClickListener(v -> toast("Barcode scanner will be added next."));
         findViewById(R.id.voiceTile).setOnClickListener(v -> toast("Voice search will be added later."));
@@ -249,11 +278,17 @@ public final class MainActivity extends Activity {
         findViewById(R.id.detailBack).setOnClickListener(v -> showScreen(searchScreen, 1));
         findViewById(R.id.servingMinus).setOnClickListener(v -> changeServingCount(-1));
         findViewById(R.id.servingPlus).setOnClickListener(v -> changeServingCount(1));
+        servingCountText.setOnClickListener(v -> showServingMultiplierOptions());
+        detailServingLabel.setOnClickListener(v -> showServingOptions());
+        detailFavorite.setOnClickListener(v -> toggleSelectedFavorite());
         detailAddButton.setOnClickListener(v -> addSelectedFood());
         detailGramsInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (!internalGramsChange) updateDetailTotals();
+                if (!internalGramsChange) {
+                    updateServingMultiplierFromGrams();
+                    updateDetailTotals();
+                }
             }
             @Override public void afterTextChanged(Editable s) {}
         });
@@ -478,12 +513,14 @@ public final class MainActivity extends Activity {
     }
 
     private void showEntryActions(FoodEntry entry) {
-        String[] actions = {"Edit amount", "Move to another meal", "Delete"};
+        String favoriteAction = diary.isFavorite(entry) ? "Remove from favorites" : "Add to favorites";
+        String[] actions = {"Edit amount", "Move to another meal", favoriteAction, "Delete"};
         new AlertDialog.Builder(this)
                 .setTitle(entry.name + " • " + formatAmount(entry.grams) + " g")
                 .setItems(actions, (dialog, which) -> {
                     if (which == 0) showEditAmountDialog(entry);
                     else if (which == 1) showMoveMealDialog(entry);
+                    else if (which == 2) toggleEntryFavorite(entry);
                     else showDeleteEntryDialog(entry);
                 })
                 .setNegativeButton("Cancel", null)
@@ -511,6 +548,7 @@ public final class MainActivity extends Activity {
                         double grams = Double.parseDouble(amount.getText().toString().trim());
                         FoodEntry updated = entry.withAmount(grams);
                         if (diary.update(updated) == 1) {
+                            if (diary.isFavorite(entry)) diary.setFavorite(updated);
                             AppLogger.i("Diary entry amount updated id=" + entry.id + " grams=" + grams);
                             refreshHome();
                             toast("Amount updated");
@@ -535,6 +573,7 @@ public final class MainActivity extends Activity {
                 .setSingleChoiceItems(labels, checked, (dialog, which) -> {
                     FoodEntry updated = entry.withMealType(values[which]);
                     if (diary.update(updated) == 1) {
+                        if (diary.isFavorite(entry)) diary.setFavorite(updated);
                         AppLogger.i("Diary entry moved id=" + entry.id + " meal=" + values[which]);
                         refreshHome();
                         toast("Moved to " + labels[which]);
@@ -545,6 +584,16 @@ public final class MainActivity extends Activity {
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private void toggleEntryFavorite(FoodEntry entry) {
+        if (diary.isFavorite(entry)) {
+            diary.removeFavorite(entry);
+            toast("Removed from favorites");
+        } else {
+            diary.setFavorite(entry);
+            toast("Added to favorites");
+        }
     }
 
     private void showDeleteEntryDialog(FoodEntry entry) {
@@ -578,6 +627,7 @@ public final class MainActivity extends Activity {
             loadPopularFoods();
             return;
         }
+        selectShortcutTab(null);
         List<CatalogFood> results = catalog.search(q, 30);
         AppLogger.i("Offline search queryLength=" + q.length() + " results=" + results.size());
         searchSectionTitle.setText("Search Results • " + mealTargetLabel());
@@ -586,6 +636,7 @@ public final class MainActivity extends Activity {
 
     private void loadPopularFoods() {
         if (catalog == null) return;
+        selectShortcutTab(shortcutAll);
         String[] queries = {"idli", "upma", "biryani", "paneer", "bread", "dosa", "milk"};
         List<CatalogFood> foods = new ArrayList<>();
         Set<String> seen = new HashSet<>();
@@ -599,6 +650,119 @@ public final class MainActivity extends Activity {
         }
         searchSectionTitle.setText("Popular Foods • " + mealTargetLabel());
         renderFoodResults(foods);
+    }
+
+    private void loadRecentFoods() {
+        selectShortcutTab(shortcutRecent);
+        searchSectionTitle.setText("Recent Foods • " + mealTargetLabel());
+        renderHistoryResults(diary.getRecentFoods(20), "recent");
+    }
+
+    private void loadFrequentFoods() {
+        selectShortcutTab(shortcutFrequent);
+        searchSectionTitle.setText("Frequent Foods • " + mealTargetLabel());
+        renderHistoryResults(diary.getFrequentFoods(20), "frequent");
+    }
+
+    private void loadFavoriteFoods() {
+        selectShortcutTab(shortcutFavorites);
+        searchSectionTitle.setText("Favorites • " + mealTargetLabel());
+        renderHistoryResults(diary.getFavoriteFoods(30), "favorite");
+    }
+
+    private void selectShortcutTab(TextView selected) {
+        TextView[] tabs = {shortcutAll, shortcutRecent, shortcutFrequent, shortcutFavorites};
+        for (TextView tab : tabs) {
+            boolean active = tab == selected;
+            tab.setBackgroundResource(active ? R.drawable.bg_chip_selected : R.drawable.bg_chip);
+            tab.setTextColor(getColor(active ? R.color.black : R.color.text_secondary));
+            tab.setTypeface(tab.getTypeface(), active ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        }
+    }
+
+    private void renderHistoryResults(List<FoodHistory.Item> items, String mode) {
+        searchResultsContainer.removeAllViews();
+        if (items.isEmpty()) {
+            TextView empty = new TextView(this);
+            String message = "favorite".equals(mode) ? "No favorites yet. Tap ♡ on a food or favorite a diary entry."
+                    : "frequent".equals(mode) ? "Log foods a few times and your most-used foods will appear here."
+                    : "No recent foods yet.";
+            empty.setText(message);
+            empty.setTextColor(getColor(R.color.text_secondary));
+            empty.setTextSize(13f);
+            empty.setPadding(dp(4), dp(14), dp(4), dp(14));
+            searchResultsContainer.addView(empty);
+            return;
+        }
+
+        for (FoodHistory.Item item : items) {
+            FoodEntry entry = item.entry;
+            View row = getLayoutInflater().inflate(R.layout.item_food_search, searchResultsContainer, false);
+            ((TextView) row.findViewById(R.id.foodIcon)).setText(foodEmoji(entry.name));
+            ((TextView) row.findViewById(R.id.foodName)).setText(entry.name);
+            String subtitle;
+            if ("favorite".equals(mode)) {
+                subtitle = "Favorite • " + formatAmount(entry.grams) + " g remembered";
+            } else if ("frequent".equals(mode)) {
+                subtitle = item.count + (item.count == 1 ? " log" : " logs") +
+                        " • last " + formatAmount(entry.grams) + " g";
+            } else {
+                subtitle = "Last " + formatAmount(entry.grams) + " g • " +
+                        FoodEntry.mealDisplayName(entry.mealType);
+            }
+            ((TextView) row.findViewById(R.id.foodSubtitle)).setText(subtitle);
+            ((TextView) row.findViewById(R.id.foodMacros)).setText(String.format(Locale.getDefault(),
+                    "%.0f kcal   P %.0fg   C %.0fg   F %.0fg",
+                    entry.calories, entry.protein, entry.carbs, entry.fat));
+            TextView action = row.findViewById(R.id.foodAdd);
+            action.setText("↻");
+            action.setContentDescription("Quick log " + entry.name);
+            action.setOnClickListener(v -> quickRelog(entry));
+            row.setOnClickListener(v -> openHistoryFood(entry));
+            searchResultsContainer.addView(row);
+        }
+    }
+
+    private void quickRelog(FoodEntry remembered) {
+        try {
+            FoodEntry entry = remembered.copyForLog(selectedDateTimestamp(), activeMealType);
+            long id = diary.insert(entry);
+            syncFavoriteSnapshot(entry);
+            AppLogger.i("Food quick re-logged id=" + id + " source=" + entry.source + " meal=" + activeMealType);
+            refreshHome();
+            toast(addConfirmationText());
+            showScreen(homeScreen, 0);
+        } catch (Exception e) {
+            AppLogger.e("Quick re-log failed", e);
+            toast("Unable to re-log food");
+        }
+    }
+
+    private void openHistoryFood(FoodEntry remembered) {
+        if (catalog != null && remembered.sourceFoodId != null) {
+            CatalogFood food = catalog.findByCode(remembered.sourceFoodId);
+            if (food != null) {
+                openDetail(food);
+                setRememberedHistoryAmount(remembered.grams);
+                return;
+            }
+        }
+        showManualEntryFromHistory(remembered);
+    }
+
+    private void showManualEntryFromHistory(FoodEntry entry) {
+        clearManualInputs();
+        nameInput.setText(entry.name);
+        gramsInput.setText(formatAmount(entry.grams));
+        double factor = entry.grams / 100.0;
+        if (factor > 0) {
+            caloriesInput.setText(formatAmount(entry.calories / factor));
+            proteinInput.setText(formatAmount(entry.protein / factor));
+            carbsInput.setText(formatAmount(entry.carbs / factor));
+            fatInput.setText(formatAmount(entry.fat / factor));
+        }
+        updateMealTargetLabels();
+        showScreen(manualScreen, -1);
     }
 
     private void renderFoodResults(List<CatalogFood> results) {
@@ -639,8 +803,7 @@ public final class MainActivity extends Activity {
 
     private void openDetail(CatalogFood food) {
         selectedFood = food;
-        servingCount = 1;
-        baseServingGrams = food.servingG != null && food.servingG > 0 ? food.servingG : 100.0;
+        restoreServingState(food);
         detailEmoji.setText(foodEmoji(food.name));
         detailName.setText(food.name);
         detailSubtitle.setText(detailSubtitle(food));
@@ -651,12 +814,11 @@ public final class MainActivity extends Activity {
         detailProtein100.setText(numberOrDash(food.protein));
         detailCarbs100.setText(numberOrDash(food.carbs));
         detailFat100.setText(numberOrDash(food.fat));
-        detailServingLabel.setText(servingLabel(food));
-        servingCountText.setText("1");
-        setDetailGrams(baseServingGrams);
+        updateServingControls();
         detailExtra.setText(detailExtra(food));
         updateDetailTotals();
         updateMealTargetLabels();
+        updateFavoriteButton();
         AppLogger.i("Catalog food selected source=" + food.source + " code=" + food.code + " meal=" + activeMealType);
         showScreen(detailScreen, -1);
     }
@@ -665,14 +827,6 @@ public final class MainActivity extends Activity {
         if (food.brand != null && !food.brand.trim().isEmpty()) return food.brand;
         if (food.category != null && !food.category.trim().isEmpty()) return compact(food.category, 55);
         return friendlySource(food.source) + " food";
-    }
-
-    private String servingLabel(CatalogFood food) {
-        if (food.servingSize != null && !food.servingSize.trim().isEmpty()) {
-            if (food.servingG != null && food.servingG > 0) return food.servingSize + "  •  " + formatAmount(food.servingG) + " g";
-            return food.servingSize;
-        }
-        return formatAmount(baseServingGrams) + " g";
     }
 
     private String detailExtra(CatalogFood food) {
@@ -696,9 +850,111 @@ public final class MainActivity extends Activity {
 
     private void changeServingCount(int delta) {
         if (selectedFood == null) return;
-        servingCount = Math.max(1, servingCount + delta);
-        servingCountText.setText(String.valueOf(servingCount));
-        setDetailGrams(baseServingGrams * servingCount);
+        double snapped = Math.round(servingMultiplier * 2.0) / 2.0;
+        servingMultiplier = Math.max(0.5, snapped + delta * 0.5);
+        updateServingControls();
+        updateDetailTotals();
+    }
+
+    private void showServingMultiplierOptions() {
+        if (selectedFood == null) return;
+        String[] labels = {"½ serving", "1 serving", "1.5 servings", "2 servings", "2.5 servings", "3 servings"};
+        double[] values = {0.5, 1.0, 1.5, 2.0, 2.5, 3.0};
+        new AlertDialog.Builder(this)
+                .setTitle("Number of servings")
+                .setItems(labels, (dialog, which) -> {
+                    servingMultiplier = values[which];
+                    updateServingControls();
+                    updateDetailTotals();
+                })
+                .show();
+    }
+
+    private void showServingOptions() {
+        if (selectedFood == null || servingOptions.isEmpty()) return;
+        String[] labels = new String[servingOptions.size()];
+        for (int i = 0; i < servingOptions.size(); i++) {
+            ServingOption option = servingOptions.get(i);
+            labels[i] = option.label + "  •  " + formatAmount(option.grams) + " g";
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Choose serving size")
+                .setItems(labels, (dialog, which) -> {
+                    ServingOption option = servingOptions.get(which);
+                    selectedServingLabel = option.label;
+                    baseServingGrams = option.grams;
+                    servingMultiplier = 1.0;
+                    updateServingControls();
+                    updateDetailTotals();
+                })
+                .show();
+    }
+
+    private void restoreServingState(CatalogFood food) {
+        servingOptions = ServingOption.forFood(food);
+        ServingOption initial = servingOptions.get(0);
+        selectedServingLabel = initial.label;
+        baseServingGrams = initial.grams;
+        servingMultiplier = 1.0;
+
+        SharedPreferences prefs = getSharedPreferences(SERVING_PREFS, MODE_PRIVATE);
+        String key = servingMemoryKey(food);
+        if (prefs.contains(key + ".base")) {
+            double rememberedBase = prefs.getFloat(key + ".base", (float) baseServingGrams);
+            double rememberedMultiplier = prefs.getFloat(key + ".multiplier", 1.0f);
+            if (rememberedBase > 0 && rememberedMultiplier > 0) {
+                baseServingGrams = rememberedBase;
+                servingMultiplier = rememberedMultiplier;
+                selectedServingLabel = prefs.getString(key + ".label", selectedServingLabel);
+            }
+        }
+    }
+
+    private void saveServingMemory() {
+        if (selectedFood == null || baseServingGrams <= 0 || servingMultiplier <= 0) return;
+        getSharedPreferences(SERVING_PREFS, MODE_PRIVATE).edit()
+                .putFloat(servingMemoryKey(selectedFood) + ".base", (float) baseServingGrams)
+                .putFloat(servingMemoryKey(selectedFood) + ".multiplier", (float) servingMultiplier)
+                .putString(servingMemoryKey(selectedFood) + ".label", selectedServingLabel)
+                .apply();
+    }
+
+    private String servingMemoryKey(CatalogFood food) {
+        return FoodEntry.foodKey(food.source, food.code, food.name);
+    }
+
+    private void updateServingControls() {
+        detailServingLabel.setText(selectedServingLabel + "  •  " +
+                formatAmount(baseServingGrams) + " g  ›");
+        servingCountText.setText(formatServingMultiplier(servingMultiplier));
+        setDetailGrams(baseServingGrams * servingMultiplier);
+    }
+
+    private void updateServingMultiplierFromGrams() {
+        if (baseServingGrams <= 0) return;
+        String raw = detailGramsInput.getText().toString().trim();
+        if (raw.isEmpty()) return;
+        try {
+            double grams = Double.parseDouble(raw);
+            if (grams > 0) {
+                servingMultiplier = grams / baseServingGrams;
+                servingCountText.setText(formatServingMultiplier(servingMultiplier));
+            }
+        } catch (NumberFormatException ignored) {}
+    }
+
+    private String formatServingMultiplier(double value) {
+        if (Math.abs(value - 0.5) < 0.001) return "½";
+        if (Math.abs(value - Math.rint(value)) < 0.001) return String.format(Locale.US, "%.0f", value);
+        if (Math.abs(value * 2.0 - Math.rint(value * 2.0)) < 0.001) return String.format(Locale.US, "%.1f", value);
+        return String.format(Locale.US, "%.2f", value);
+    }
+
+    private void setRememberedHistoryAmount(double grams) {
+        if (grams <= 0 || baseServingGrams <= 0) return;
+        servingMultiplier = grams / baseServingGrams;
+        servingCountText.setText(formatServingMultiplier(servingMultiplier));
+        setDetailGrams(grams);
         updateDetailTotals();
     }
 
@@ -711,7 +967,7 @@ public final class MainActivity extends Activity {
 
     private void updateDetailTotals() {
         if (selectedFood == null) return;
-        double grams = parseOptional(detailGramsInput, baseServingGrams * servingCount);
+        double grams = parseOptional(detailGramsInput, baseServingGrams * servingMultiplier);
         double factor = grams / 100.0;
         detailTotalCalories.setText(selectedFood.calories == null ? "— kcal" : String.format(Locale.getDefault(), "%.0f kcal", selectedFood.calories * factor));
         detailTotalProtein.setText("Protein" + System.lineSeparator() + scaled(selectedFood.protein, factor, "g"));
@@ -734,11 +990,10 @@ public final class MainActivity extends Activity {
             return;
         }
         try {
-            double grams = positive(detailGramsInput, "amount");
-            FoodEntry entry = FoodEntry.fromPer100g(selectedFood.name, grams, selectedFood.calories,
-                    selectedFood.protein, selectedFood.carbs, selectedFood.fat,
-                    selectedDateTimestamp(), activeMealType, selectedFood.source, selectedFood.code);
+            FoodEntry entry = selectedFoodEntry(selectedDateTimestamp());
+            saveServingMemory();
             long id = diary.insert(entry);
+            syncFavoriteSnapshot(entry);
             AppLogger.i("Food entry added id=" + id + " source=" + selectedFood.source + " meal=" + activeMealType);
             refreshHome();
             toast(addConfirmationText());
@@ -747,6 +1002,49 @@ public final class MainActivity extends Activity {
             AppLogger.e("Failed to add selected food", e);
             toast("Unable to add food");
         }
+    }
+
+    private FoodEntry selectedFoodEntry(long loggedAt) {
+        double grams = positive(detailGramsInput, "amount");
+        return FoodEntry.fromPer100g(selectedFood.name, grams, selectedFood.calories,
+                selectedFood.protein, selectedFood.carbs, selectedFood.fat,
+                loggedAt, activeMealType, selectedFood.source, selectedFood.code);
+    }
+
+    private void toggleSelectedFavorite() {
+        if (selectedFood == null) return;
+        String key = FoodEntry.foodKey(selectedFood.source, selectedFood.code, selectedFood.name);
+        if (diary.isFavoriteKey(key)) {
+            diary.removeFavoriteKey(key);
+            updateFavoriteButton();
+            toast("Removed from favorites");
+            return;
+        }
+        if (!selectedFood.hasCompleteCoreMacros()) {
+            toast("Complete the missing nutrition before favoriting this food.");
+            return;
+        }
+        try {
+            FoodEntry snapshot = selectedFoodEntry(System.currentTimeMillis());
+            diary.setFavorite(snapshot);
+            saveServingMemory();
+            updateFavoriteButton();
+            toast("Added to favorites");
+        } catch (IllegalArgumentException e) {
+            toast(e.getMessage());
+        }
+    }
+
+    private void updateFavoriteButton() {
+        if (selectedFood == null) return;
+        String key = FoodEntry.foodKey(selectedFood.source, selectedFood.code, selectedFood.name);
+        boolean favorite = diary.isFavoriteKey(key);
+        detailFavorite.setText(favorite ? "♥" : "♡");
+        detailFavorite.setTextColor(getColor(favorite ? R.color.accent : R.color.text_primary));
+    }
+
+    private void syncFavoriteSnapshot(FoodEntry entry) {
+        if (diary.isFavorite(entry)) diary.setFavorite(entry);
     }
 
     private void showManualEntry(String prefillName, CatalogFood sourceFood) {
@@ -774,6 +1072,7 @@ public final class MainActivity extends Activity {
             double fat = nonNegative(fatInput, "fat");
             FoodEntry entry = FoodEntry.fromPer100g(name, grams, calories, protein, carbs, fat, selectedDateTimestamp(), activeMealType);
             long id = diary.insert(entry);
+            syncFavoriteSnapshot(entry);
             AppLogger.i("Food entry added id=" + id + " source=manual meal=" + activeMealType);
             clearManualInputs();
             refreshHome();

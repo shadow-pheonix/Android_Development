@@ -77,6 +77,13 @@ public final class FoodCatalogDb implements AutoCloseable {
         return out;
     }
 
+    public CatalogFood findByCode(String code) {
+        if (code == null || code.trim().isEmpty()) return null;
+        try (Cursor c = db.rawQuery("SELECT * FROM foods WHERE code=? LIMIT 1", new String[]{code})) {
+            return c.moveToFirst() ? read(c) : null;
+        }
+    }
+
     private static CatalogFood read(Cursor c) {
         return new CatalogFood(s(c,"code"),s(c,"barcode"),s(c,"name"),s(c,"brand"),s(c,"quantity"),s(c,"category"),s(c,"source"),
                 d(c,"calories_100g"),d(c,"protein_100g"),d(c,"carbs_100g"),d(c,"fat_100g"),d(c,"sugars_100g"),d(c,"fiber_100g"),

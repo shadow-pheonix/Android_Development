@@ -79,6 +79,26 @@ public final class FoodEntry {
                 newMealType, source, sourceFoodId, sourceServingId);
     }
 
+    public FoodEntry copyForLog(long newLoggedAt, String newMealType) {
+        return new FoodEntry(0, name, grams, calories, protein, carbs, fat, newLoggedAt,
+                newMealType, source, sourceFoodId, sourceServingId);
+    }
+
+    public String foodKey() {
+        return foodKey(source, sourceFoodId, name);
+    }
+
+    public static String foodKey(String source, String sourceFoodId, String name) {
+        String normalizedSource = source == null || source.trim().isEmpty()
+                ? "manual" : source.trim().toLowerCase(Locale.ROOT);
+        if (sourceFoodId != null && !sourceFoodId.trim().isEmpty()) {
+            return normalizedSource + "|id|" + sourceFoodId.trim().toLowerCase(Locale.ROOT);
+        }
+        String normalizedName = name == null ? "" :
+                name.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
+        return normalizedSource + "|name|" + normalizedName;
+    }
+
     public static String normalizeMealType(String mealType) {
         if (mealType == null) return MEAL_SNACKS;
         switch (mealType.trim().toLowerCase(Locale.ROOT)) {
