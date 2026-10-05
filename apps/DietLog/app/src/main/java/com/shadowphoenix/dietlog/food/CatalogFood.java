@@ -21,4 +21,8 @@ public final class CatalogFood {
         this.labels = labels; this.nutriscore = nutriscore; this.nova = nova;
         this.productUrl = productUrl; this.extraJson = extraJson;
     }
+
+    public boolean hasCompleteCoreMacros() {
+        return calories != null && protein != null && carbs != null && fat != null;
+    }
 }

@@ -15,6 +15,9 @@ import java.util.List;
 
 public final class FoodCatalogDb implements AutoCloseable {
     private static final String ASSET = "offline_foods.db";
+    private static final String COMPLETE_CORE_MACROS =
+            "calories_100g IS NOT NULL AND protein_100g IS NOT NULL AND " +
+                    "carbs_100g IS NOT NULL AND fat_100g IS NOT NULL";
     private final SQLiteDatabase db;
 
     public FoodCatalogDb(Context context) throws Exception {
@@ -60,8 +63,13 @@ public final class FoodCatalogDb implements AutoCloseable {
             args = new String[]{q, "%" + q + "%", q, Integer.toString(limit)};
         } else {
             sql = "SELECT * FROM foods WHERE search_name LIKE ? ORDER BY " +
-                    "CASE WHEN search_name=? THEN 0 WHEN search_name LIKE ? THEN 1 WHEN source='INDB' THEN 2 WHEN source='IFCT' THEN 3 WHEN source='OFF' THEN 4 ELSE 5 END, name LIMIT ?";
-            args = new String[]{"%" + q + "%", q, q + "%", Integer.toString(limit)};
+                    "CASE WHEN lower(name)=? AND (" + COMPLETE_CORE_MACROS + ") THEN 0 " +
+                    "WHEN lower(name) LIKE ? AND (" + COMPLETE_CORE_MACROS + ") THEN 1 " +
+                    "WHEN (" + COMPLETE_CORE_MACROS + ") THEN 2 " +
+                    "WHEN lower(name)=? THEN 3 WHEN lower(name) LIKE ? THEN 4 ELSE 5 END, " +
+                    "CASE WHEN source='INDB' THEN 0 WHEN source='IFCT' THEN 1 " +
+                    "WHEN source='USDA' THEN 2 WHEN source='OFF' THEN 3 ELSE 4 END, name LIMIT ?";
+            args = new String[]{"%" + q + "%", q, q + "%", q, q + "%", Integer.toString(limit)};
         }
         try (Cursor c = db.rawQuery(sql, args)) {
             while (c.moveToNext()) out.add(read(c));

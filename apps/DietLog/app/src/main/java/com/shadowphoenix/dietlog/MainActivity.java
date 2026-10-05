@@ -590,8 +590,8 @@ public final class MainActivity extends Activity {
         List<CatalogFood> foods = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         for (String q : queries) {
-            for (CatalogFood food : catalog.search(q, 4)) {
-                if (food.code != null && seen.add(food.code)) {
+            for (CatalogFood food : catalog.search(q, 20)) {
+                if (food.hasCompleteCoreMacros() && food.code != null && seen.add(food.code)) {
                     foods.add(food);
                     break;
                 }
@@ -632,7 +632,9 @@ public final class MainActivity extends Activity {
 
     private String searchMacroLine(CatalogFood food) {
         String kcal = food.calories == null ? "—" : String.format(Locale.getDefault(), "%.0f", food.calories);
-        return kcal + " kcal/100g   P " + numberOrDash(food.protein) + "   C " + numberOrDash(food.carbs) + "   F " + numberOrDash(food.fat);
+        String line = kcal + " kcal/100g   P " + numberOrDash(food.protein) +
+                "   C " + numberOrDash(food.carbs) + "   F " + numberOrDash(food.fat);
+        return food.hasCompleteCoreMacros() ? line : line + "   • Incomplete nutrition";
     }
 
     private void openDetail(CatalogFood food) {
@@ -726,7 +728,7 @@ public final class MainActivity extends Activity {
 
     private void addSelectedFood() {
         if (selectedFood == null) return;
-        if (selectedFood.calories == null || selectedFood.protein == null || selectedFood.carbs == null || selectedFood.fat == null) {
+        if (!selectedFood.hasCompleteCoreMacros()) {
             toast("This record is missing a core macro. Complete it in Manual Food.");
             showManualEntry(selectedFood.name, selectedFood);
             return;
