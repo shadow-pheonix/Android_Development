@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:layout_marginTop="18dp" android:orientation="vertical">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp" android:background="@drawable/bg_card">
+        <FrameLayout android:id="@+id/profileAvatarPicker" android:layout_width="64dp" android:layout_height="64dp" android:background="@drawable/bg_food_thumb">
+            <TextView android:id="@+id/profileAvatarFallback" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="◎" android:textColor="@color/accent" android:textSize="30sp" />
+            <ImageView android:id="@+id/profileAvatarImage" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="Profile photo" android:scaleType="centerCrop" android:visibility="gone" />
+        </FrameLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="14dp" android:orientation="vertical">
+            <TextView android:id="@+id/profileHeaderName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Your profile" android:textColor="@color/text_primary" android:textSize="20sp" android:textStyle="bold" />
+            <TextView android:id="@+id/profileHeaderSummary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="70 kg  •  170 cm" android:textColor="@color/text_secondary" android:textSize="12sp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Tap avatar to choose photo" android:textColor="@color/accent" android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp"
+        android:orientation="vertical" android:padding="16dp" android:background="@drawable/bg_card_alt">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Personal Profile" android:textColor="@color/text_primary" android:textSize="18sp" android:textStyle="bold" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="These inputs drive BMR and daily calorie estimation." android:textColor="@color/text_secondary" android:textSize="12sp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Name / nickname" android:textColor="@color/text_secondary" android:textSize="12sp" />
+        <EditText android:id="@+id/profileNameInput" style="@style/Input.Dark" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="6dp" android:hint="Optional" android:singleLine="true" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Date of birth or age" android:textColor="@color/text_secondary" android:textSize="12sp" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:orientation="horizontal">
+            <TextView android:id="@+id/profileDobButton" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:gravity="center_vertical" android:paddingLeft="14dp" android:background="@drawable/bg_input" android:text="Select date" android:textColor="@color/text_primary" android:textSize="14sp" />
+            <EditText android:id="@+id/profileAgeInput" style="@style/Input.Dark" android:layout_width="92dp" android:layout_height="52dp" android:layout_marginLeft="8dp" android:hint="Age" android:inputType="number" android:maxLength="3" android:singleLine="true" />
+        </LinearLayout>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="DOB is preferred; age is used when DOB is not set." android:textColor="@color/text_tertiary" android:textSize="11sp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Sex (used by BMR equation)" android:textColor="@color/text_secondary" android:textSize="12sp" />
+        <Spinner android:id="@+id/profileSexSpinner" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="6dp" android:background="@drawable/bg_input" android:paddingLeft="10dp" android:paddingRight="10dp" />
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Height (cm)" android:textColor="@color/text_secondary" android:textSize="12sp" />
+                <EditText android:id="@+id/profileHeightInput" style="@style/Input.Dark" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="6dp" android:inputType="numberDecimal" android:singleLine="true" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="8dp" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Current weight (kg)" android:textColor="@color/text_secondary" android:textSize="12sp" />
+                <EditText android:id="@+id/profileWeightInput" style="@style/Input.Dark" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="6dp" android:inputType="numberDecimal" android:singleLine="true" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Target weight (kg)" android:textColor="@color/text_secondary" android:textSize="12sp" />
+        <EditText android:id="@+id/profileTargetWeightInput" style="@style/Input.Dark" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="6dp" android:inputType="numberDecimal" android:singleLine="true" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Activity level" android:textColor="@color/text_secondary" android:textSize="12sp" />
+        <Spinner android:id="@+id/profileActivitySpinner" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="6dp" android:background="@drawable/bg_input" android:paddingLeft="10dp" android:paddingRight="10dp" />
+        <TextView android:id="@+id/profileActivityDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:textColor="@color/text_tertiary" android:textSize="11sp" />
+    </LinearLayout>
+</LinearLayout>
