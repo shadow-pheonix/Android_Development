@@ -318,7 +318,7 @@ public final class BarcodeScannerActivity extends Activity implements TextureVie
         }
 
         @Override public void onDisconnected(CameraDevice camera) {
-            AppLogger.w("Barcode camera disconnected");
+            AppLogger.i("Barcode camera disconnected");
             camera.close();
             synchronized (cameraLock) {
                 cameraOpening = false;
@@ -327,7 +327,7 @@ public final class BarcodeScannerActivity extends Activity implements TextureVie
         }
 
         @Override public void onError(CameraDevice camera, int error) {
-            AppLogger.w("Barcode camera device error=" + error);
+            AppLogger.i("Barcode camera device error=" + error);
             camera.close();
             synchronized (cameraLock) {
                 cameraOpening = false;
@@ -352,7 +352,7 @@ public final class BarcodeScannerActivity extends Activity implements TextureVie
             texture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
             Surface surface = new Surface(texture);
             synchronized (cameraLock) {
-                if (previewSurface != null) previewSurface.close();
+                if (previewSurface != null) previewSurface.release();
                 previewSurface = surface;
             }
             CaptureRequest.Builder request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
@@ -387,7 +387,7 @@ public final class BarcodeScannerActivity extends Activity implements TextureVie
                 }
 
                 @Override public void onConfigureFailed(CameraCaptureSession session) {
-                    AppLogger.w("Barcode camera session configuration failed");
+                    AppLogger.i("Barcode camera session configuration failed");
                     showCameraError("Unable to configure the camera for barcode scanning.");
                 }
             }, cameraHandler);
@@ -525,7 +525,7 @@ public final class BarcodeScannerActivity extends Activity implements TextureVie
                 imageReader = null;
             }
             if (previewSurface != null) {
-                previewSurface.close();
+                previewSurface.release();
                 previewSurface = null;
             }
             cameraOpening = false;
