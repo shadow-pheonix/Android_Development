@@ -4,13 +4,15 @@ A multi-app Android development monorepo for building, testing, debugging, and p
 
 ## Mandatory for AI/agent development
 
-Before making any change, read **[AGENTS.md](./AGENTS.md)** completely. Its routing, diagnostics, and local-first rules are mandatory.
+Before making any change, read **[AGENTS.md](./AGENTS.md)** completely. Its routing, diagnostics, and chat-local-first rules are mandatory.
+
+For work performed from ChatGPT, **chat-local workspace** means the filesystem/runtime attached directly to the current chat/agent session (sandbox/container). It does **not** mean the user's Windows PC and it does **not** authorize use of `windows-bridge`. `windows-bridge` is used only when the user explicitly requests it or explicitly asks to perform the task on their Windows machine.
 
 The core rule is simple:
 
-> **Develop and verify locally first. Commit only a coherent, checked batch. Use GitHub Actions afterward for authoritative Android build/test validation and APK generation.**
+> **Develop and verify in the chat-local workspace first. Commit only a coherent, checked batch. Use GitHub Actions afterward for authoritative Android build/test validation and APK generation.**
 
-For an app that already exists, a fresh chat must first clone or synchronize the current repository locally and continue from that existing source.
+For an app that already exists, a fresh chat must first synchronize the current repository into the chat-local workspace and continue from that existing source. Prefer `git clone`/fetch when available; when direct clone of the private repository is unavailable in the chat runtime, use the authorized GitHub connector/materialization path to obtain the current source in the chat-local workspace.
 
 Every app developed here must also provide an **Export diagnostics** feature that saves a debugging ZIP under `Internal storage/AppDebug/<AppName>/`. See [docs/DIAGNOSTICS.md](docs/DIAGNOSTICS.md).
 

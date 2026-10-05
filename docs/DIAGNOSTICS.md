@@ -113,4 +113,4 @@ For a new app, diagnostics export is part of the initial baseline and must exist
 
 For an existing app that lacks this capability, add the diagnostics baseline during active development unless the user explicitly asks to defer it.
 
-The implementation should be verified locally as far as possible, and the Android build must be validated through the app's normal GitHub Actions workflow before APK delivery.
+The implementation should be verified in the **chat-local workspace** as far as possible, and the Android build must be validated through the app's normal GitHub Actions workflow before APK delivery. As defined in [../AGENTS.md](../AGENTS.md), this chat-local verification does not imply or authorize use of the user's Windows machine or `windows-bridge`.

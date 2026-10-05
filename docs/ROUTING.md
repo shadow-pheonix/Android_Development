@@ -2,6 +2,14 @@
 
 Use this document after reading the root `AGENTS.md`.
 
+## Environment rule before routing
+
+For AI/assistant tasks in ChatGPT, **local means the chat-local workspace attached to the current chat/agent session**. It does not mean the user's Windows PC and does not authorize `windows-bridge`.
+
+- Do not search for, connect to, or invoke `windows-bridge` merely to satisfy a “local” or “local-first” instruction.
+- Use `windows-bridge` only when the user explicitly asks for it or explicitly asks to perform the current task on their Windows machine.
+- If direct `git clone` is unavailable in the chat runtime, synchronize/materialize the repository through the authorized GitHub connector into the chat-local workspace, then work there.
+
 ## Decision tree
 
 1. **Does the requested app already exist in this repository?**
@@ -9,8 +17,8 @@ Use this document after reading the root `AGENTS.md`.
    - **Yes** → Route B: Existing app.
    - **Task is not app-specific** → Route C: Shared/CI/docs/infrastructure.
 
-2. **For an existing app, is there a current local checkout?**
-   - **No** → clone the repository locally before editing.
+2. **For an existing app, is there a current chat-local checkout/snapshot?**
+   - **No** → sync the repository into the chat-local workspace before editing. Prefer `git clone`; if unavailable, use authorized GitHub connector/materialization.
    - **Yes** → fetch/sync the relevant branch/commit before editing.
 
 3. **Does the target app contain its own `AGENTS.md`?**
@@ -32,16 +40,16 @@ Use this document after reading the root `AGENTS.md`.
 
 Target path: `apps/<AppName>/`.
 
-Do not create the app piecemeal through GitHub connector writes. Build the intended batch in the local working environment first.
+Do not create the app piecemeal through GitHub connector writes. Build the intended batch in the chat-local working environment first.
 
 Minimum sequence:
 
-1. Sync the monorepo locally.
+1. Sync the monorepo into the chat-local workspace.
 2. Choose a unique app directory and application ID.
-3. Create the complete app locally.
+3. Create the complete app in the chat-local workspace.
 4. Implement mandatory diagnostics export to `AppDebug/<AppName>/` according to [DIAGNOSTICS.md](DIAGNOSTICS.md).
 5. Add app documentation and app-level `AGENTS.md` only when useful.
-6. Run all available local validation.
+6. Run all validation available in the chat-local workspace.
 7. Review the complete diff.
 8. Commit/push the coherent batch.
 9. Run the app-specific GitHub Actions workflow.
@@ -55,17 +63,19 @@ Never reconstruct an existing app from memory in a fresh chat.
 Minimum sequence:
 
 1. Read root `AGENTS.md`.
-2. Clone or sync the current GitHub repository locally.
+2. Sync the current GitHub repository into the chat-local workspace. Prefer clone/fetch when available; otherwise use authorized connector/materialization.
 3. Locate the exact target app.
 4. Read its README, app-level `AGENTS.md`, build files, and relevant source.
 5. Inspect whether the mandatory diagnostics baseline exists; add it during active development if missing unless explicitly deferred.
 6. Establish a baseline when the change is substantial or risky.
-7. Implement locally.
-8. Validate locally.
+7. Implement in the chat-local workspace.
+8. Validate in the chat-local workspace.
 9. Review the diff.
 10. Commit/push the coherent batch.
 11. Run only the relevant CI workflow.
 12. Produce the APK artifact after successful validation.
+
+**Do not use the user's Windows checkout or `windows-bridge` for steps 2, 7, or 8 unless the user explicitly requested that environment.**
 
 ### Legacy root project
 
@@ -84,10 +94,10 @@ Examples:
 
 Minimum sequence:
 
-1. Sync current repository state locally.
+1. Sync current repository state into the chat-local workspace.
 2. Identify affected apps/workflows.
-3. Make the change locally.
-4. Run narrow validation first.
+3. Make the change in the chat-local workspace.
+4. Run narrow validation there first.
 5. Expand validation only when the shared impact requires it.
 6. Review the final diff.
 7. Commit/push.
