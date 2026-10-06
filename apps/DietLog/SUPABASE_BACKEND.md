@@ -7,8 +7,8 @@ authenticated user.
 ## Security model
 
 - The Android app uses a Supabase **publishable** key, never a secret/service-role key.
-- Users authenticate with Supabase Auth email/password. Passwords are sent only to the Auth API and
-  are never stored by DietLog.
+- Users authenticate through Supabase Auth using browser-based GitHub OAuth with PKCE. DietLog never
+  receives or stores the GitHub password.
 - The refresh token is encrypted with an Android Keystore AES-GCM key before local persistence.
   Access tokens are kept only in memory.
 - `public.dietlog_snapshots` has Row Level Security enabled and every policy binds `user_id` to
@@ -80,3 +80,10 @@ create policy "dietlog snapshots delete own"
 The final project URL and publishable key are supplied at build time through
 `DIETLOG_SUPABASE_URL` and `DIETLOG_SUPABASE_PUBLISHABLE_KEY`. No Supabase secret key belongs in the
 repository, APK, diagnostics, or GitHub Actions logs.
+
+## Browser OAuth setup
+
+DietLog uses the GitHub social provider through Supabase Auth. Configure a GitHub OAuth App with the
+Supabase callback `https://<project-ref>.supabase.co/auth/v1/callback`, enable GitHub under Supabase
+Authentication providers, and add `com.shadowphoenix.dietlog://supabase-auth` to the project's redirect
+allow list. The GitHub client secret stays only in Supabase's server-side provider configuration.
