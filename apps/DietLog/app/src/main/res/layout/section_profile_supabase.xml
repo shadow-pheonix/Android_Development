@@ -30,7 +30,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:text="Sign in to add encrypted-session cloud backup and multi-device merge while DietLog remains local-first."
+        android:text="Sign in with a one-time Supabase email code to add cloud backup and multi-device merge while DietLog remains local-first."
         android:textColor="@color/text_secondary"
         android:textSize="12sp" />
 
@@ -41,7 +41,7 @@
         android:layout_marginTop="12dp"
         android:background="@drawable/bg_button_primary"
         android:gravity="center"
-        android:text="Sign in / create account"
+        android:text="Sign in with email code"
         android:textColor="@color/background"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -92,7 +92,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="Supabase stores private per-account DietLog snapshots behind row-level security. Passwords are never stored; the refresh token is encrypted with Android Keystore. Google Drive remains available separately."
+        android:text="Supabase stores private per-account DietLog snapshots behind row-level security. No password is created or stored; the refresh token is encrypted with Android Keystore. Google Drive remains available separately."
         android:textColor="@color/text_tertiary"
         android:textSize="11sp" />
 </LinearLayout>

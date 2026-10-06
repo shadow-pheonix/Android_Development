@@ -10,39 +10,35 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
-/** Minimal Supabase Auth REST client for email/password and refresh-token sessions. */
+/** Minimal Supabase Auth REST client for passwordless email OTP and refresh-token sessions. */
 public final class SupabaseAuthClient {
     private static final int CONNECT_TIMEOUT_MS = 15_000;
     private static final int READ_TIMEOUT_MS = 30_000;
     private static final int MAX_RESPONSE_BYTES = 512 * 1024;
 
-    public SignUpResult signUp(String email, String password) throws IOException {
+    public void sendEmailOtp(String email) throws IOException {
         JSONObject body = new JSONObject();
         try {
-            body.put("email", normalizeEmail(email));
-            body.put("password", requirePassword(password));
+            body.put("email", requireEmail(email));
+            body.put("create_user", true);
         } catch (JSONException e) {
-            throw new IOException("Could not prepare Supabase sign-up", e);
+            throw new IOException("Could not prepare Supabase email code request", e);
         }
-        JSONObject response = request("POST", "/auth/v1/signup", body, null);
-        Session session = parseSession(response);
-        JSONObject user = response.optJSONObject("user");
-        String userId = user == null ? "" : user.optString("id", "");
-        String returnedEmail = user == null ? normalizeEmail(email) : user.optString("email", normalizeEmail(email));
-        return new SignUpResult(session, userId, returnedEmail, session == null);
+        request("POST", "/auth/v1/otp", body, null);
     }
 
-    public Session signIn(String email, String password) throws IOException {
+    public Session verifyEmailOtp(String email, String token) throws IOException {
         JSONObject body = new JSONObject();
         try {
-            body.put("email", normalizeEmail(email));
-            body.put("password", requirePassword(password));
+            body.put("email", requireEmail(email));
+            body.put("token", requireEmailOtp(token));
+            body.put("type", "email");
         } catch (JSONException e) {
-            throw new IOException("Could not prepare Supabase sign-in", e);
+            throw new IOException("Could not prepare Supabase email code verification", e);
         }
-        JSONObject response = request(
-                "POST", "/auth/v1/token?grant_type=password", body, null);
+        JSONObject response = request("POST", "/auth/v1/verify", body, null);
         Session session = parseSession(response);
         if (session == null) throw new IOException("Supabase returned no login session");
         return session;
@@ -153,17 +149,20 @@ public final class SupabaseAuthClient {
         }
     }
 
-    private static String normalizeEmail(String value) {
-        if (value == null) return "";
-        return value.trim().toLowerCase(java.util.Locale.US);
+    private static String requireEmail(String value) {
+        String email = value == null ? "" : value.trim().toLowerCase(Locale.US);
+        if (email.length() < 3 || email.length() > 254 || !email.contains("@")) {
+            throw new IllegalArgumentException("Enter a valid email address");
+        }
+        return email;
     }
 
-    private static String requirePassword(String value) {
-        if (value == null || value.length() < 6) {
-            throw new IllegalArgumentException("Password must be at least 6 characters");
+    private static String requireEmailOtp(String value) {
+        String token = value == null ? "" : value.trim();
+        if (!token.matches("\\d{6}")) {
+            throw new IllegalArgumentException("Enter the 6-digit Supabase code");
         }
-        if (value.length() > 200) throw new IllegalArgumentException("Password is too long");
-        return value;
+        return token;
     }
 
     public static final class Session {
@@ -179,20 +178,6 @@ public final class SupabaseAuthClient {
             this.userId = userId == null ? "" : userId;
             this.email = email == null ? "" : email;
             this.expiresAt = expiresAt;
-        }
-    }
-
-    public static final class SignUpResult {
-        public final Session session;
-        public final String userId;
-        public final String email;
-        public final boolean emailConfirmationRequired;
-
-        SignUpResult(Session session, String userId, String email, boolean emailConfirmationRequired) {
-            this.session = session;
-            this.userId = userId == null ? "" : userId;
-            this.email = email == null ? "" : email;
-            this.emailConfirmationRequired = emailConfirmationRequired;
         }
     }
 
