@@ -104,7 +104,7 @@ public final class MainActivity extends Activity {
     private LinearLayout nutritionMineralsContainer, nutritionVitaminsContainer;
 
     private EditText searchInput;
-    private TextView databaseStatusText, profileDatabaseStatus, searchSectionTitle;
+    private TextView databaseStatusText, profileDatabaseStatus, searchSectionTitle, searchMealTargetText;
     private TextView shortcutAll, shortcutRecent, shortcutFrequent, shortcutFavorites;
     private LinearLayout searchResultsContainer;
 
@@ -274,6 +274,7 @@ public final class MainActivity extends Activity {
         supabaseRestoreButton = findViewById(R.id.supabaseRestoreButton);
         supabaseDisconnectButton = findViewById(R.id.supabaseDisconnectButton);
         searchSectionTitle = findViewById(R.id.searchSectionTitle);
+        searchMealTargetText = findViewById(R.id.searchMealTarget);
         shortcutAll = findViewById(R.id.shortcutAll);
         shortcutRecent = findViewById(R.id.shortcutRecent);
         shortcutFrequent = findViewById(R.id.shortcutFrequent);
@@ -385,7 +386,6 @@ public final class MainActivity extends Activity {
         });
         findViewById(R.id.manualEntryButton).setOnClickListener(v -> showManualEntry(null, null));
         findViewById(R.id.barcodeTile).setOnClickListener(v -> startBarcodeScan());
-        findViewById(R.id.voiceTile).setOnClickListener(v -> toast("Voice search will be added later."));
     }
 
     private void configureDetail() {
@@ -1612,7 +1612,7 @@ public final class MainActivity extends Activity {
         selectShortcutTab(null);
         List<CatalogFood> results = catalog.search(q, 30);
         AppLogger.i("Offline search queryLength=" + q.length() + " results=" + results.size());
-        searchSectionTitle.setText("Search Results • " + mealTargetLabel());
+        searchSectionTitle.setText("Search results");
         renderFoodResults(results);
     }
 
@@ -1668,25 +1668,25 @@ public final class MainActivity extends Activity {
                 }
             }
         }
-        searchSectionTitle.setText("Popular Foods • " + mealTargetLabel());
+        searchSectionTitle.setText("Popular foods");
         renderFoodResults(foods);
     }
 
     private void loadRecentFoods() {
         selectShortcutTab(shortcutRecent);
-        searchSectionTitle.setText("Recent Foods • " + mealTargetLabel());
+        searchSectionTitle.setText("Recent foods");
         renderHistoryResults(diary.getRecentFoods(20), "recent");
     }
 
     private void loadFrequentFoods() {
         selectShortcutTab(shortcutFrequent);
-        searchSectionTitle.setText("Frequent Foods • " + mealTargetLabel());
+        searchSectionTitle.setText("Frequent foods");
         renderHistoryResults(diary.getFrequentFoods(20), "frequent");
     }
 
     private void loadFavoriteFoods() {
         selectShortcutTab(shortcutFavorites);
-        searchSectionTitle.setText("Favorites • " + mealTargetLabel());
+        searchSectionTitle.setText("Favorites");
         renderHistoryResults(diary.getFavoriteFoods(30), "favorite");
     }
 
@@ -1809,16 +1809,28 @@ public final class MainActivity extends Activity {
     }
 
     private String searchSubtitle(CatalogFood food) {
-        if (food.servingSize != null && !food.servingSize.trim().isEmpty()) return food.servingSize;
-        if (food.brand != null && !food.brand.trim().isEmpty()) return food.brand + " • " + friendlySource(food.source);
-        return friendlySource(food.source) + (food.category == null ? "" : " • " + compact(food.category, 32));
+        String source = friendlySource(food.source);
+        if (food.brand != null && !food.brand.trim().isEmpty()) {
+            return compact(food.brand, 34) + " • " + source;
+        }
+        if (food.category != null && !food.category.trim().isEmpty()) {
+            return source + " • " + compact(food.category, 34);
+        }
+        if (food.servingSize != null && !food.servingSize.trim().isEmpty()) {
+            return compact(food.servingSize, 34) + " • " + source;
+        }
+        return source;
     }
 
     private String searchMacroLine(CatalogFood food) {
-        String kcal = food.calories == null ? "—" : String.format(Locale.getDefault(), "%.0f", food.calories);
-        String line = kcal + " kcal/100g   P " + numberOrDash(food.protein) +
-                "   C " + numberOrDash(food.carbs) + "   F " + numberOrDash(food.fat);
-        return food.hasCompleteCoreMacros() ? line : line + "   • Incomplete nutrition";
+        String kcal = food.calories == null ? "—" : formatAmount(food.calories);
+        String line = kcal + " kcal / 100 g  ·  P " + macroAmount(food.protein) +
+                "  C " + macroAmount(food.carbs) + "  F " + macroAmount(food.fat);
+        return food.hasCompleteCoreMacros() ? line : line + "  ·  Incomplete";
+    }
+
+    private String macroAmount(Double value) {
+        return value == null ? "—" : formatAmount(value) + " g";
     }
 
     private void openDetail(CatalogFood food) {
@@ -2256,6 +2268,7 @@ public final class MainActivity extends Activity {
         String target = mealTargetLabel();
         if (detailAddButton != null) detailAddButton.setText("+  Add to " + target);
         if (manualAddButton != null) manualAddButton.setText("+  Add to " + target);
+        if (searchMealTargetText != null) searchMealTargetText.setText("Adding to " + target);
     }
 
     private void toast(String message) {
