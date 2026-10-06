@@ -78,6 +78,25 @@ public final class SyncCoordinator {
         SupabaseBackupScheduler.scheduleDebounced(context);
     }
 
+    /**
+     * Reconciles this installation with the highest revision already observed remotely.
+     *
+     * A clean installation adopts the remote baseline. If local state is dirty, its revision is
+     * advanced past that baseline so the next upload cannot restart the sequence after reinstall.
+     */
+    public static long reconcileRemoteRevision(Context context, long remoteRevision) {
+        SharedPreferences prefs = prefs(context);
+        long currentRevision = prefs.getLong(KEY_LOCAL_REVISION, 0L);
+        boolean dirty = prefs.getBoolean(KEY_DIRTY, false);
+        long reconciled = RevisionPolicy.reconcile(currentRevision, dirty, remoteRevision);
+        if (reconciled == currentRevision) return currentRevision;
+        prefs.edit().putLong(KEY_LOCAL_REVISION, reconciled).commit();
+        AppLogger.i("Backup revision reconciled local=" + currentRevision
+                + " remote=" + Math.max(0L, remoteRevision)
+                + " dirty=" + dirty + " result=" + reconciled);
+        return reconciled;
+    }
+
     /** Marks one completed remote merge without recursively scheduling the worker already running. */
     public static long markRemoteMergeApplied(Context context, int snapshotCount) {
         SharedPreferences prefs = prefs(context);
