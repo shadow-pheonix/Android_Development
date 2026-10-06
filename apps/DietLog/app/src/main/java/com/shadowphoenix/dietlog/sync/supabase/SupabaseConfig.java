@@ -22,7 +22,7 @@ public final class SupabaseConfig {
     static void requireConfigured() {
         if (!isConfigured()) {
             throw new IllegalStateException(
-                    "Supabase is not configured in this DietLog build.");
+                    "Supabase is not configured in this FuelNote build.");
         }
     }
 

@@ -173,8 +173,8 @@ public final class BarcodeScannerActivity extends Activity implements TextureVie
         retryButton.setOnClickListener(v -> retryCameraPermissionOrSettings());
         boolean canAskAgain = shouldShowRequestPermissionRationale(Manifest.permission.CAMERA);
         statusText.setText(canAskAgain
-                ? "Camera permission denied. DietLog only uses it while this scanner is open."
-                : "Camera permission is off. Enable it in DietLog app settings to scan barcodes.");
+                ? "Camera permission denied. FuelNote only uses it while this scanner is open."
+                : "Camera permission is off. Enable it in FuelNote app settings to scan barcodes.");
         retryButton.setText(canAskAgain ? "Try camera permission again" : "Open app settings");
         retryButton.setVisibility(View.VISIBLE);
     }

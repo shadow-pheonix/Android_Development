@@ -11,6 +11,7 @@
     <color name="text_tertiary">#7C9499</color>
     <color name="accent">#00E7B4</color>
     <color name="accent_dark">#00B894</color>
+    <color name="fuelnote_icon_background">#06181C</color>
     <color name="cyan">#2AB7FF</color>
     <color name="protein">#2AB7FF</color>
     <color name="carbs">#E6D62C</color>

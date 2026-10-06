@@ -50,7 +50,7 @@ public final class DiagnosticsExporter {
 
     public static ExportResult export(Context context, DiaryDbHelper db) throws Exception {
         String stamp = utcStamp();
-        String fileName = "DietLog-diagnostics-" + stamp + ".zip";
+        String fileName = "FuelNote-diagnostics-" + stamp + ".zip";
         byte[] zip = buildZip(context, db);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -166,7 +166,7 @@ public final class DiagnosticsExporter {
     }
 
     private static String appInfo(Context context) {
-        return "appName=Diet Log\n" +
+        return "appName=FuelNote\n" +
                 "applicationId=" + context.getPackageName() + '\n' +
                 "versionName=" + BuildConfig.VERSION_NAME + '\n' +
                 "versionCode=" + BuildConfig.VERSION_CODE + '\n' +

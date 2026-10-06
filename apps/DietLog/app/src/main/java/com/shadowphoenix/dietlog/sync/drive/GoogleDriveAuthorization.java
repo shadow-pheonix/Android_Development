@@ -241,7 +241,7 @@ public final class GoogleDriveAuthorization {
     private static String authorizationFailureMessage(int statusCode) {
         switch (statusCode) {
             case CommonStatusCodes.DEVELOPER_ERROR:
-                return "Google OAuth is not configured for this DietLog APK. Verify the Android OAuth client package name and signing SHA-1, then try again (status 10).";
+                return "Google OAuth is not configured for this FuelNote APK. Verify the Android OAuth client package name and signing SHA-1, then try again (status 10).";
             case CommonStatusCodes.NETWORK_ERROR:
                 return "Google Drive authorization hit a network error. Check your connection and try again (status 7).";
             case CommonStatusCodes.INVALID_ACCOUNT:

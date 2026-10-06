@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DietLog</string>
+    <string name="app_name">FuelNote</string>
     <string name="food_search">Search foods, brands, dishes</string>
     <string name="search">Search</string>
     <string name="database_status">Offline food database</string>

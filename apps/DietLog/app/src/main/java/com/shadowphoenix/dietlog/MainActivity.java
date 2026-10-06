@@ -497,7 +497,7 @@ public final class MainActivity extends Activity {
     private void confirmDriveRestore() {
         new AlertDialog.Builder(this)
                 .setTitle("Restore from Google Drive?")
-                .setMessage("DietLog will merge the newest valid backup from each device. Newer records win and local-only records are kept.")
+                .setMessage("FuelNote will merge the newest valid backup from each device. Newer records win and local-only records are kept.")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Restore / merge", (dialog, which) -> restoreFromDrive())
                 .show();
@@ -522,7 +522,7 @@ public final class MainActivity extends Activity {
                             setDriveControlsEnabled(true);
                             refreshDriveBackupUi();
                             toast(result.changed
-                                    ? "Drive backup merged into DietLog"
+                                    ? "Drive backup merged into FuelNote"
                                     : "Drive backup is already up to date");
                         });
                     } catch (Exception e) {
@@ -612,7 +612,7 @@ public final class MainActivity extends Activity {
             if (!status.lastError.isEmpty()) {
                 driveSyncStatus.setText("Last connection issue: " + status.lastError);
             } else {
-                driveSyncStatus.setText("DietLog stays local-first. Connect Drive to back up and merge your user data automatically.");
+                driveSyncStatus.setText("FuelNote stays local-first. Connect Drive to back up and merge your user data automatically.");
             }
             return;
         }
@@ -683,7 +683,7 @@ public final class MainActivity extends Activity {
 
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Supabase cloud sync")
-                .setMessage("Enter your email and Supabase will send a one-time sign-in code. No password is created or stored by DietLog.")
+                .setMessage("Enter your email and Supabase will send a one-time sign-in code. No password is created or stored by FuelNote.")
                 .setView(content)
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Send code", null)
@@ -832,7 +832,7 @@ public final class MainActivity extends Activity {
         }
         new AlertDialog.Builder(this)
                 .setTitle("Restore from Supabase?")
-                .setMessage("DietLog will merge the newest valid snapshot from each device. Newer records win and local-only records are kept.")
+                .setMessage("FuelNote will merge the newest valid snapshot from each device. Newer records win and local-only records are kept.")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Restore / merge", (dialog, which) -> restoreFromSupabase())
                 .show();
@@ -868,7 +868,7 @@ public final class MainActivity extends Activity {
                     setSupabaseControlsEnabled(true);
                     refreshSupabaseBackupUi();
                     toast(result.changed
-                            ? "Supabase snapshot merged into DietLog"
+                            ? "Supabase snapshot merged into FuelNote"
                             : "Supabase backup is already up to date");
                 });
             } catch (Exception e) {
@@ -968,7 +968,7 @@ public final class MainActivity extends Activity {
             if (!status.lastError.isEmpty()) {
                 supabaseSyncStatus.setText("Last sign-in issue: " + status.lastError);
             } else {
-                supabaseSyncStatus.setText("DietLog stays local-first. Sign in with a Supabase email code to add backup and multi-device merge.");
+                supabaseSyncStatus.setText("FuelNote stays local-first. Sign in with a Supabase email code to add backup and multi-device merge.");
             }
             return;
         }
@@ -1649,7 +1649,7 @@ public final class MainActivity extends Activity {
     private void showBarcodeNotFound(String barcode) {
         new AlertDialog.Builder(this)
                 .setTitle("Barcode not found")
-                .setMessage(barcode + " is not in DietLog's offline database.")
+                .setMessage(barcode + " is not in FuelNote's offline database.")
                 .setPositiveButton("Manual food", (dialog, which) -> showManualEntryForBarcode(barcode))
                 .setNegativeButton("Scan again", (dialog, which) -> startBarcodeScan())
                 .setNeutralButton("Cancel", null)
