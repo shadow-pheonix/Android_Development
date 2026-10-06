@@ -98,7 +98,7 @@ public final class MainActivity extends Activity {
 
     private RingProgressView caloriesRing, proteinRing, carbsRing, fatRing;
     private TextView calorieValue, calorieGoalText, calorieLeft, proteinValue, carbsValue, fatValue;
-    private TextView dateText, foodLogTitle, relogButton;
+    private TextView dateText, homeTodayButton, foodLogTitle, relogButton;
     private LinearLayout entriesContainer;
     private TextView nutritionDateText, nutritionMacroSummary, nutritionTargetNote;
     private LinearLayout nutritionMineralsContainer, nutritionVitaminsContainer;
@@ -1030,11 +1030,11 @@ public final class MainActivity extends Activity {
         controls.setOrientation(LinearLayout.HORIZONTAL);
         controls.setGravity(android.view.Gravity.CENTER_VERTICAL);
         LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(44));
-        controlsParams.topMargin = dp(14);
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
+        controlsParams.topMargin = dp(12);
         controls.setLayoutParams(controlsParams);
 
-        TextView previous = dateControl("‹", 42);
+        TextView previous = dateControl("‹", 38);
         previous.setContentDescription("Previous week");
         previous.setOnClickListener(v -> selectDate(selectedDate.minusWeeks(1)));
         controls.addView(previous);
@@ -1042,17 +1042,17 @@ public final class MainActivity extends Activity {
         dateText.setVisibility(View.VISIBLE);
         dateText.setGravity(android.view.Gravity.CENTER);
         dateText.setTextColor(getColor(R.color.text_primary));
-        dateText.setTextSize(13f);
+        dateText.setTextSize(14f);
         dateText.setTypeface(dateText.getTypeface(), android.graphics.Typeface.BOLD);
-        dateText.setOnClickListener(v -> selectDate(LocalDate.now()));
-        controls.addView(dateText, new LinearLayout.LayoutParams(0, dp(44), 1f));
+        dateText.setClickable(false);
+        controls.addView(dateText, new LinearLayout.LayoutParams(0, dp(40), 1f));
 
-        TextView today = dateControl("Today", 64);
-        today.setContentDescription("Jump to today");
-        today.setOnClickListener(v -> selectDate(LocalDate.now()));
-        controls.addView(today);
+        homeTodayButton = dateControl("Today", 60);
+        homeTodayButton.setContentDescription("Jump to today");
+        homeTodayButton.setOnClickListener(v -> selectDate(LocalDate.now()));
+        controls.addView(homeTodayButton);
 
-        TextView next = dateControl("›", 42);
+        TextView next = dateControl("›", 38);
         next.setContentDescription("Next week");
         next.setOnClickListener(v -> selectDate(selectedDate.plusWeeks(1)));
         controls.addView(next);
@@ -1066,12 +1066,12 @@ public final class MainActivity extends Activity {
         control.setText(text);
         control.setGravity(android.view.Gravity.CENTER);
         control.setTextColor(getColor(R.color.accent));
-        control.setTextSize(13f);
+        control.setTextSize(12f);
         control.setTypeface(control.getTypeface(), android.graphics.Typeface.BOLD);
         control.setBackgroundResource(R.drawable.bg_chip);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(widthDp), dp(36));
-        params.setMarginStart(dp(4));
-        params.setMarginEnd(dp(4));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(widthDp), dp(34));
+        params.setMarginStart(dp(3));
+        params.setMarginEnd(dp(3));
         control.setLayoutParams(params);
         return control;
     }
@@ -1086,8 +1086,12 @@ public final class MainActivity extends Activity {
     private void renderWeekStrip() {
         LocalDate today = LocalDate.now();
         LocalDate monday = selectedDate.minusDays(selectedDate.getDayOfWeek().getValue() - 1L);
-        DateTimeFormatter headerFormat = DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.getDefault());
-        dateText.setText(selectedDate.equals(today) ? "Today • " + selectedDate.format(headerFormat) : selectedDate.format(headerFormat));
+        String headerPattern = selectedDate.getYear() == today.getYear() ? "EEE, d MMM" : "EEE, d MMM yyyy";
+        DateTimeFormatter headerFormat = DateTimeFormatter.ofPattern(headerPattern, Locale.getDefault());
+        dateText.setText(selectedDate.format(headerFormat));
+        if (homeTodayButton != null) {
+            homeTodayButton.setVisibility(selectedDate.equals(today) ? View.GONE : View.VISIBLE);
+        }
         for (int i = 0; i < 7; i++) {
             int id = getResources().getIdentifier("day" + i, "id", getPackageName());
             TextView day = findViewById(id);
@@ -1425,7 +1429,7 @@ public final class MainActivity extends Activity {
         section.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams sectionParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        if (entriesContainer.getChildCount() > 0) sectionParams.topMargin = dp(14);
+        if (entriesContainer.getChildCount() > 0) sectionParams.topMargin = dp(10);
         section.setLayoutParams(sectionParams);
 
         LinearLayout header = new LinearLayout(this);
@@ -1435,10 +1439,10 @@ public final class MainActivity extends Activity {
         TextView title = new TextView(this);
         title.setText(icon + "  " + FoodEntry.mealDisplayName(mealType));
         title.setTextColor(getColor(R.color.text_primary));
-        title.setTextSize(16f);
+        title.setTextSize(15f);
         title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
         title.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        header.addView(title, new LinearLayout.LayoutParams(0, dp(40), 1f));
+        header.addView(title, new LinearLayout.LayoutParams(0, dp(36), 1f));
 
         double mealCalories = 0.0;
         for (FoodEntry entry : entries) {
@@ -1447,21 +1451,21 @@ public final class MainActivity extends Activity {
         TextView calories = new TextView(this);
         calories.setText(String.format(Locale.getDefault(), "%.0f kcal", mealCalories));
         calories.setTextColor(getColor(R.color.text_secondary));
-        calories.setTextSize(11f);
+        calories.setTextSize(12f);
         calories.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        calories.setPadding(dp(8), 0, dp(10), 0);
-        header.addView(calories, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(40)));
+        calories.setPadding(dp(6), 0, dp(8), 0);
+        header.addView(calories, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(36)));
 
         TextView add = new TextView(this);
         add.setText("+ Add");
         add.setTextColor(getColor(R.color.accent));
-        add.setTextSize(12f);
+        add.setTextSize(11.5f);
         add.setTypeface(add.getTypeface(), android.graphics.Typeface.BOLD);
         add.setGravity(android.view.Gravity.CENTER);
         add.setPadding(dp(12), 0, dp(12), 0);
         add.setBackgroundResource(R.drawable.bg_chip);
         add.setOnClickListener(v -> openMealSearch(mealType));
-        header.addView(add, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(36)));
+        header.addView(add, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(34)));
         section.addView(header);
 
         boolean hasEntries = false;
@@ -1484,7 +1488,7 @@ public final class MainActivity extends Activity {
             empty.setText("No foods logged");
             empty.setTextColor(getColor(R.color.text_tertiary));
             empty.setTextSize(12f);
-            empty.setPadding(dp(4), dp(4), dp(4), dp(8));
+            empty.setPadding(dp(4), dp(2), dp(4), dp(6));
             section.addView(empty);
         }
         entriesContainer.addView(section);
