@@ -1,4 +1,21 @@
+import groovy.json.JsonSlurper
+
 plugins { id 'com.android.application' }
+
+def signingConfigPath = System.getenv('DIETLOG_SIGNING_CONFIG')
+def stableSigning = null
+if (signingConfigPath) {
+    def signingConfigFile = file(signingConfigPath)
+    if (!signingConfigFile.isFile()) {
+        throw new GradleException('DIETLOG_SIGNING_CONFIG does not point to a readable file')
+    }
+    stableSigning = new JsonSlurper().parse(signingConfigFile)
+    ['storeFile', 'storePassword', 'keyAlias', 'keyPassword'].each { key ->
+        if (!stableSigning[key]) {
+            throw new GradleException("Stable DietLog signing config is missing ${key}")
+        }
+    }
+}
 
 android {
     namespace 'com.shadowphoenix.dietlog'
@@ -8,16 +25,32 @@ android {
         applicationId 'com.shadowphoenix.dietlog'
         minSdk 29
         targetSdk 35
-        versionCode 20
-        versionName '0.7.1'
+        versionCode 21
+        versionName '0.7.2'
         buildConfigField 'String', 'SOURCE_COMMIT', '"' + (System.getenv('GITHUB_SHA') ?: 'local') + '"'
         buildConfigField 'String', 'CI_RUN_ID', '"' + (System.getenv('GITHUB_RUN_ID') ?: 'local') + '"'
         buildConfigField 'String', 'SUPABASE_URL', '"' + (System.getenv('DIETLOG_SUPABASE_URL') ?: '') + '"'
         buildConfigField 'String', 'SUPABASE_PUBLISHABLE_KEY', '"' + (System.getenv('DIETLOG_SUPABASE_PUBLISHABLE_KEY') ?: '') + '"'
     }
     buildFeatures { buildConfig true }
+    signingConfigs {
+        if (stableSigning != null) {
+            stableCiDebug {
+                storeFile file(stableSigning.storeFile)
+                storePassword stableSigning.storePassword
+                keyAlias stableSigning.keyAlias
+                keyPassword stableSigning.keyPassword
+            }
+        }
+    }
     buildTypes {
-        debug { applicationIdSuffix '.debug'; versionNameSuffix '-debug' }
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+            if (stableSigning != null) {
+                signingConfig signingConfigs.stableCiDebug
+            }
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

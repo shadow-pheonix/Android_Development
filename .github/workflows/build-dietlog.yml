@@ -43,6 +43,57 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Prepare stable DietLog signing key
+        env:
+          DIETLOG_ANDROID_SIGNING_JSON: ${{ secrets.DIETLOG_ANDROID_SIGNING_JSON }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          from pathlib import Path
+
+          raw = os.environ.get("DIETLOG_ANDROID_SIGNING_JSON", "").strip()
+          if not raw:
+              raise SystemExit("Missing required GitHub Actions secret DIETLOG_ANDROID_SIGNING_JSON")
+          try:
+              source = json.loads(raw)
+          except json.JSONDecodeError as exc:
+              raise SystemExit("DIETLOG_ANDROID_SIGNING_JSON is not valid JSON") from exc
+
+          required = ("keystore_b64", "store_password", "key_alias", "key_password", "certificate_sha1")
+          missing = [key for key in required if not source.get(key)]
+          if missing:
+              raise SystemExit("DIETLOG_ANDROID_SIGNING_JSON is missing required signing fields")
+
+          try:
+              keystore_bytes = base64.b64decode(source["keystore_b64"], validate=True)
+          except Exception as exc:
+              raise SystemExit("DIETLOG_ANDROID_SIGNING_JSON contains an invalid keystore payload") from exc
+          if len(keystore_bytes) < 512:
+              raise SystemExit("DietLog signing keystore payload is unexpectedly small")
+
+          signing_dir = Path(os.environ["RUNNER_TEMP"]) / "dietlog-signing"
+          signing_dir.mkdir(parents=True, exist_ok=True)
+          keystore_path = signing_dir / "dietlog-ci-debug-signing.p12"
+          config_path = signing_dir / "gradle-signing.json"
+          keystore_path.write_bytes(keystore_bytes)
+          config_path.write_text(json.dumps({
+              "storeFile": str(keystore_path),
+              "storePassword": source["store_password"],
+              "keyAlias": source["key_alias"],
+              "keyPassword": source["key_password"],
+          }), encoding="utf-8")
+          os.chmod(keystore_path, 0o600)
+          os.chmod(config_path, 0o600)
+
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+              env_file.write(f"DIETLOG_SIGNING_CONFIG={config_path}\n")
+              env_file.write(f"DIETLOG_EXPECTED_SIGNING_SHA1={source['certificate_sha1']}\n")
+          print("Stable DietLog signing material prepared.")
+          PY
       - name: Check optional Supabase build configuration
         shell: bash
         run: |
@@ -74,6 +125,27 @@ jobs:
           ls -lh app/src/main/assets/offline_foods.db
       - name: Lint, unit test, and build debug APK
         run: gradle --no-daemon lintDebug testDebugUnitTest assembleDebug
+      - name: Verify stable DietLog signing certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          test -x "$APKSIGNER"
+          test -f "$APK"
+          CERT_OUTPUT="$("$APKSIGNER" verify --print-certs "$APK")"
+          printf '%s\n' "$CERT_OUTPUT"
+          APK_SHA1_RAW="$(printf '%s\n' "$CERT_OUTPUT" | sed -n 's/^Signer #1 certificate SHA-1 digest: //p' | head -n 1)"
+          test -n "$APK_SHA1_RAW"
+          NORMALIZED_APK_SHA1="$(printf '%s' "$APK_SHA1_RAW" | tr -d ':' | tr '[:lower:]' '[:upper:]')"
+          NORMALIZED_EXPECTED_SHA1="$(printf '%s' "$DIETLOG_EXPECTED_SIGNING_SHA1" | tr -d ':' | tr '[:lower:]' '[:upper:]')"
+          if [[ "$NORMALIZED_APK_SHA1" != "$NORMALIZED_EXPECTED_SHA1" ]]; then
+            echo "::error::DietLog APK signing certificate does not match the configured stable certificate."
+            exit 1
+          fi
+          FORMATTED_SHA1="$(printf '%s' "$NORMALIZED_APK_SHA1" | sed 's/../&:/g; s/:$//')"
+          echo "DietLog stable signing SHA-1: $FORMATTED_SHA1"
+          echo "DIETLOG_SIGNING_SHA1=$FORMATTED_SHA1" >> "$GITHUB_ENV"
       - name: Prepare release APK
         if: github.event_name != 'pull_request'
         run: cp app/build/outputs/apk/debug/app-debug.apk DietLog-debug.apk
@@ -95,9 +167,9 @@ jobs:
             gh release upload dietlog-latest DietLog-debug.apk --clobber
             gh release edit dietlog-latest \
               --title "DietLog Latest Debug" \
-              --notes "Latest successful DietLog debug build from commit $GITHUB_SHA. The APK includes the bundled offline food database."
+              --notes "Latest successful DietLog debug build from commit $GITHUB_SHA. Stable signing SHA-1: $DIETLOG_SIGNING_SHA1. The APK includes the bundled offline food database."
           else
             gh release create dietlog-latest DietLog-debug.apk \
               --title "DietLog Latest Debug" \
-              --notes "Latest successful DietLog debug build from commit $GITHUB_SHA. The APK includes the bundled offline food database."
+              --notes "Latest successful DietLog debug build from commit $GITHUB_SHA. Stable signing SHA-1: $DIETLOG_SIGNING_SHA1. The APK includes the bundled offline food database."
           fi
