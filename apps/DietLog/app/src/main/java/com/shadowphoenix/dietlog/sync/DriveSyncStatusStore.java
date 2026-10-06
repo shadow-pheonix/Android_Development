@@ -14,6 +14,7 @@ public final class DriveSyncStatusStore {
     private static final String KEY_REMOTE_FILE_ID = "remoteFileId";
     private static final String KEY_LAST_REMOTE_MERGE_AT = "lastRemoteMergeAt";
     private static final String KEY_REMOTE_SNAPSHOTS_APPLIED = "remoteSnapshotsApplied";
+    private static final String KEY_DATA_CHANGE_GENERATION = "dataChangeGeneration";
 
     private final SharedPreferences prefs;
 
@@ -53,11 +54,28 @@ public final class DriveSyncStatusStore {
                 .apply();
     }
 
-    public void markRemoteMerge(int snapshotsApplied) {
-        prefs.edit()
+    public void markRemoteMerge(int snapshotsApplied, boolean dataChanged) {
+        SharedPreferences.Editor editor = prefs.edit()
                 .putLong(KEY_LAST_REMOTE_MERGE_AT, System.currentTimeMillis())
-                .putInt(KEY_REMOTE_SNAPSHOTS_APPLIED, Math.max(0, snapshotsApplied))
-                .apply();
+                .putInt(KEY_REMOTE_SNAPSHOTS_APPLIED, Math.max(0, snapshotsApplied));
+        if (dataChanged) {
+            long generation = prefs.getLong(KEY_DATA_CHANGE_GENERATION, 0L);
+            long nextGeneration = generation == Long.MAX_VALUE ? Long.MAX_VALUE : generation + 1L;
+            editor.putLong(KEY_DATA_CHANGE_GENERATION, nextGeneration);
+        }
+        editor.apply();
+    }
+
+    public void registerListener(SharedPreferences.OnSharedPreferenceChangeListener listener) {
+        prefs.registerOnSharedPreferenceChangeListener(listener);
+    }
+
+    public void unregisterListener(SharedPreferences.OnSharedPreferenceChangeListener listener) {
+        prefs.unregisterOnSharedPreferenceChangeListener(listener);
+    }
+
+    public static boolean isDataChangeKey(String key) {
+        return KEY_DATA_CHANGE_GENERATION.equals(key);
     }
 
     public String getRemoteFileId() {
@@ -72,7 +90,8 @@ public final class DriveSyncStatusStore {
                 prefs.getString(KEY_LAST_ERROR, ""),
                 prefs.getBoolean(KEY_REAUTH_REQUIRED, false),
                 prefs.getLong(KEY_LAST_REMOTE_MERGE_AT, 0L),
-                prefs.getInt(KEY_REMOTE_SNAPSHOTS_APPLIED, 0));
+                prefs.getInt(KEY_REMOTE_SNAPSHOTS_APPLIED, 0),
+                prefs.getLong(KEY_DATA_CHANGE_GENERATION, 0L));
     }
 
     public void clear() {
@@ -87,10 +106,11 @@ public final class DriveSyncStatusStore {
         public final boolean reauthRequired;
         public final long lastRemoteMergeAt;
         public final int remoteSnapshotsApplied;
+        public final long dataChangeGeneration;
 
         State(long lastAttemptAt, long lastSuccessAt, long lastSuccessRevision,
               String lastError, boolean reauthRequired, long lastRemoteMergeAt,
-              int remoteSnapshotsApplied) {
+              int remoteSnapshotsApplied, long dataChangeGeneration) {
             this.lastAttemptAt = lastAttemptAt;
             this.lastSuccessAt = lastSuccessAt;
             this.lastSuccessRevision = lastSuccessRevision;
@@ -98,6 +118,7 @@ public final class DriveSyncStatusStore {
             this.reauthRequired = reauthRequired;
             this.lastRemoteMergeAt = lastRemoteMergeAt;
             this.remoteSnapshotsApplied = remoteSnapshotsApplied;
+            this.dataChangeGeneration = dataChangeGeneration;
         }
     }
 }

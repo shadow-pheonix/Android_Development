@@ -79,6 +79,9 @@ public final class MainActivity extends Activity {
     private ProgressController progressController;
     private final ExecutorService driveExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService supabaseExecutor = Executors.newSingleThreadExecutor();
+    private DriveSyncStatusStore driveSyncStatusStore;
+    private SharedPreferences.OnSharedPreferenceChangeListener driveSyncStatusListener;
+    private long renderedDriveDataChangeGeneration;
 
     private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
@@ -379,10 +382,31 @@ public final class MainActivity extends Activity {
     }
 
     private void configureDriveBackup() {
+        driveSyncStatusStore = new DriveSyncStatusStore(this);
+        renderedDriveDataChangeGeneration = driveSyncStatusStore.getState().dataChangeGeneration;
+        driveSyncStatusListener = (sharedPreferences, key) -> {
+            if (!DriveSyncStatusStore.isDataChangeKey(key)) return;
+            runOnUiThread(this::refreshAfterDriveDataChangeIfNeeded);
+        };
         driveConnectButton.setOnClickListener(v -> connectGoogleDrive());
         driveSyncNowButton.setOnClickListener(v -> syncDriveNow());
         driveRestoreButton.setOnClickListener(v -> confirmDriveRestore());
         driveDisconnectButton.setOnClickListener(v -> confirmDriveDisconnect());
+    }
+
+    private void refreshAfterDriveDataChangeIfNeeded() {
+        if (driveSyncStatusStore == null) return;
+        long generation = driveSyncStatusStore.getState().dataChangeGeneration;
+        if (generation <= renderedDriveDataChangeGeneration) return;
+        renderedDriveDataChangeGeneration = generation;
+        if (profileController != null) profileController.reloadFromPreferences();
+        if (progressController != null) progressController.refresh();
+        refreshHome();
+        if (nutritionScreen != null && nutritionScreen.getVisibility() == View.VISIBLE) {
+            refreshNutritionDetails();
+        }
+        refreshDriveBackupUi();
+        AppLogger.i("UI refreshed after Drive merge generation=" + generation);
     }
 
     private void connectGoogleDrive() {
@@ -526,8 +550,13 @@ public final class MainActivity extends Activity {
     private void finishLocalDriveDisconnect() {
         DriveBackupScheduler.cancel(this);
         new DriveConnectionStore(this).clear();
-        new DriveSyncStatusStore(this).clear();
+        if (driveSyncStatusStore != null) {
+            driveSyncStatusStore.clear();
+        } else {
+            new DriveSyncStatusStore(this).clear();
+        }
         runOnUiThread(() -> {
+            renderedDriveDataChangeGeneration = 0L;
             setDriveControlsEnabled(true);
             refreshDriveBackupUi();
             toast("Google Drive backup disconnected");
@@ -2202,10 +2231,27 @@ public final class MainActivity extends Activity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (driveSyncStatusStore != null && driveSyncStatusListener != null) {
+            driveSyncStatusStore.registerListener(driveSyncStatusListener);
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
+        refreshAfterDriveDataChangeIfNeeded();
         refreshDriveBackupUi();
         refreshSupabaseBackupUi();
+    }
+
+    @Override
+    protected void onStop() {
+        if (driveSyncStatusStore != null && driveSyncStatusListener != null) {
+            driveSyncStatusStore.unregisterListener(driveSyncStatusListener);
+        }
+        super.onStop();
     }
 
     @Override

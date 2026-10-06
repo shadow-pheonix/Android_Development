@@ -40,7 +40,13 @@ public final class DriveRestoreManager {
             if (snapshot != null) snapshots.add(snapshot);
         }
         BackupMergeEngine.MergeResult result = BackupMergeEngine.merge(context, snapshots);
-        return new MergeResult(result.changed, result.snapshotsApplied);
+        long maxRemoteRevision = 0L;
+        for (BackupSnapshotCodec.DecodedSnapshot snapshot : snapshots) {
+            maxRemoteRevision = Math.max(maxRemoteRevision, snapshot.revision);
+        }
+        long localRevision = SyncCoordinator.reconcileRemoteRevision(context, maxRemoteRevision);
+        return new MergeResult(result.changed, result.snapshotsApplied,
+                maxRemoteRevision, localRevision);
     }
 
     private BackupSnapshotCodec.DecodedSnapshot loadBestSnapshot(
@@ -73,10 +79,15 @@ public final class DriveRestoreManager {
     public static final class MergeResult {
         public final boolean changed;
         public final int snapshotsApplied;
+        public final long maxRemoteRevision;
+        public final long localRevision;
 
-        MergeResult(boolean changed, int snapshotsApplied) {
+        MergeResult(boolean changed, int snapshotsApplied, long maxRemoteRevision,
+                    long localRevision) {
             this.changed = changed;
             this.snapshotsApplied = snapshotsApplied;
+            this.maxRemoteRevision = maxRemoteRevision;
+            this.localRevision = localRevision;
         }
     }
 }
