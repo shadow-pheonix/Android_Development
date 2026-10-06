@@ -30,6 +30,7 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 - Numeric barcode lookup remains available through normal search.
 - Tap a search result to populate the logger and view product/nutrition details.
 - SQLite meal history with micronutrient snapshots for new logs and offline-catalog enrichment for older compatible entries.
+- Optional Google Drive `appDataFolder` backup/sync: local-first writes, background upload/merge, per-device snapshots, deletion tombstones, and rolling recovery history.
 - Mandatory bounded logs, crash capture and `Export diagnostics`.
 
 Barcode decoding uses ZXing Core under the Apache License 2.0; camera capture uses Android Camera2 directly so scanning has no runtime network/service dependency.
@@ -51,6 +52,12 @@ The SQLite schema preserves the useful structured fields (barcode, brand, catego
 ## Rebuilding the database
 
 `tools/build_food_db.py` accepts local source files and produces the SQLite asset. It uses Python stdlib plus `openpyxl` only for INDB `.xlsx` parsing. Fixtures and `tools/test_builder.py` validate the transform locally without network access.
+
+## Google Drive backup setup
+
+Drive backup uses Google Identity Services authorization and the narrow `drive.appdata` scope. The Android distribution must be registered in a Google Cloud project with its package name and SHA-1 signing certificate, and the Google Drive API must be enabled for that project. No OAuth access token is persisted by DietLog.
+
+Debug builds currently use the `.debug` application ID suffix, so OAuth registration for CI/debug APKs must match `com.shadowphoenix.dietlog.debug` and the SHA-1 of the signing certificate used for that APK.
 
 ## Build
 

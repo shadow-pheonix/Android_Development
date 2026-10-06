@@ -10,6 +10,9 @@ import android.provider.MediaStore;
 
 import com.shadowphoenix.dietlog.BuildConfig;
 import com.shadowphoenix.dietlog.data.DiaryDbHelper;
+import com.shadowphoenix.dietlog.sync.DriveSyncStatusStore;
+import com.shadowphoenix.dietlog.sync.SyncCoordinator;
+import com.shadowphoenix.dietlog.sync.drive.DriveConnectionStore;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -119,7 +122,7 @@ public final class DiagnosticsExporter {
             addText(zip, "device-info.txt", deviceInfo());
             addText(zip, "app-info.txt", appInfo(context));
             addText(zip, "build-info.txt", buildInfo());
-            addText(zip, "diagnostics.json", diagnosticState(db));
+            addText(zip, "diagnostics.json", diagnosticState(context, db));
         }
         return bytes.toByteArray();
     }
@@ -167,11 +170,17 @@ public final class DiagnosticsExporter {
                 "ciRunId=" + BuildConfig.CI_RUN_ID + '\n';
     }
 
-    private static String diagnosticState(DiaryDbHelper db) {
+    private static String diagnosticState(Context context, DiaryDbHelper db) {
         double[] totals = db.getTodayTotals();
+        DriveConnectionStore.State connection = new DriveConnectionStore(context).getState();
+        DriveSyncStatusStore.State drive = new DriveSyncStatusStore(context).getState();
+        SyncCoordinator.State sync = SyncCoordinator.getState(context);
         return String.format(Locale.US,
-                "{\n  \"entryCount\": %d,\n  \"todayCalories\": %.1f,\n  \"todayProtein\": %.1f,\n  \"todayCarbs\": %.1f,\n  \"todayFat\": %.1f\n}\n",
-                db.getEntryCount(), totals[0], totals[1], totals[2], totals[3]);
+                "{\n  \"entryCount\": %d,\n  \"todayCalories\": %.1f,\n  \"todayProtein\": %.1f,\n  \"todayCarbs\": %.1f,\n  \"todayFat\": %.1f,\n  \"driveConnected\": %s,\n  \"driveDirty\": %s,\n  \"driveLocalRevision\": %d,\n  \"driveLastSuccessAt\": %d,\n  \"driveLastSuccessRevision\": %d,\n  \"driveReauthRequired\": %s\n}\n",
+                db.getEntryCount(), totals[0], totals[1], totals[2], totals[3],
+                Boolean.toString(connection.connected), Boolean.toString(sync.dirty),
+                sync.localRevision, drive.lastSuccessAt, drive.lastSuccessRevision,
+                Boolean.toString(drive.reauthRequired));
     }
 
     private static String utcStamp() {

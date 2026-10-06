@@ -11,6 +11,7 @@ import com.google.android.gms.auth.api.identity.AuthorizationClient;
 import com.google.android.gms.auth.api.identity.AuthorizationRequest;
 import com.google.android.gms.auth.api.identity.AuthorizationResult;
 import com.google.android.gms.auth.api.identity.Identity;
+import com.google.android.gms.auth.api.identity.RevokeAccessRequest;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
@@ -87,6 +88,29 @@ public final class GoogleDriveAuthorization {
             builder.setAccount(new Account(state.accountName, "com.google"));
         }
         return builder.build();
+    }
+
+
+    public static void revokeAccess(Context context, DisconnectCallback callback) {
+        DriveConnectionStore.State state = new DriveConnectionStore(context).getState();
+        if (!state.connected) {
+            callback.onDisconnected();
+            return;
+        }
+        if (state.accountName == null || state.accountName.trim().isEmpty()) {
+            callback.onFailure(
+                    "Google account identity is unavailable for server-side revocation.", null);
+            return;
+        }
+
+        RevokeAccessRequest request = RevokeAccessRequest.builder()
+                .setAccount(new Account(state.accountName.trim(), "com.google"))
+                .setScopes(Collections.singletonList(new Scope(DRIVE_APPDATA_SCOPE)))
+                .build();
+        Identity.getAuthorizationClient(context).revokeAccess(request)
+                .addOnSuccessListener(unused -> callback.onDisconnected())
+                .addOnFailureListener(error -> callback.onFailure(
+                        "Google Drive permission revocation failed.", error));
     }
 
     public static boolean handleActivityResult(
@@ -205,6 +229,11 @@ public final class GoogleDriveAuthorization {
             super(message, cause);
             this.failure = failure;
         }
+    }
+
+    public interface DisconnectCallback {
+        void onDisconnected();
+        void onFailure(String message, Throwable error);
     }
 
     public interface Callback {

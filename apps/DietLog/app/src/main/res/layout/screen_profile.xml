@@ -10,6 +10,7 @@
         <include layout="@layout/section_profile_personal" />
         <include layout="@layout/section_profile_goal" />
         <include layout="@layout/section_profile_nutrition" />
+        <include layout="@layout/section_profile_drive" />
         <include layout="@layout/section_profile_diagnostics" />
     </LinearLayout>
 </ScrollView>

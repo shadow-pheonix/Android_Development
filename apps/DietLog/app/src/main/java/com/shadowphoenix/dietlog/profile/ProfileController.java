@@ -76,6 +76,14 @@ public final class ProfileController {
     public ProfileSettings getSettings() { return settings; }
     public boolean hasSavedProfile() { return hasSavedProfile; }
 
+    public void reloadFromPreferences() {
+        hasSavedProfile = preferences.hasSavedProfile();
+        settings = preferences.load();
+        populateUi();
+        refreshPreview();
+        onTargetsChanged.run();
+    }
+
     public void updateCurrentWeightFromProgress(double weightKg) {
         if (!Double.isFinite(weightKg) || weightKg < 25.0 || weightKg > 350.0) return;
         settings.currentWeightKg = weightKg;

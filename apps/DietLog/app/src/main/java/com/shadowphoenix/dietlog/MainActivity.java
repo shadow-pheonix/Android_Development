@@ -35,9 +35,15 @@ import com.shadowphoenix.dietlog.nutrition.MicronutrientValues;
 import com.shadowphoenix.dietlog.profile.ProfileController;
 import com.shadowphoenix.dietlog.profile.ProfileSettings;
 import com.shadowphoenix.dietlog.progress.ProgressController;
+import com.shadowphoenix.dietlog.sync.DriveBackupScheduler;
+import com.shadowphoenix.dietlog.sync.DriveRestoreManager;
+import com.shadowphoenix.dietlog.sync.DriveSyncStatusStore;
 import com.shadowphoenix.dietlog.sync.SyncCoordinator;
+import com.shadowphoenix.dietlog.sync.drive.DriveConnectionStore;
+import com.shadowphoenix.dietlog.sync.drive.GoogleDriveAuthorization;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -49,6 +55,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class MainActivity extends Activity {
     private static final double CALORIE_GOAL = 2000.0;
@@ -62,11 +70,15 @@ public final class MainActivity extends Activity {
     private FoodCatalogDb catalog;
     private ProfileController profileController;
     private ProgressController progressController;
+    private final ExecutorService driveExecutor = Executors.newSingleThreadExecutor();
 
     private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
     private TextView navHomeIcon, navHomeLabel, navSearchIcon, navSearchLabel;
     private TextView navProgressIcon, navProgressLabel, navProfileIcon, navProfileLabel;
+    private TextView driveConnectionStatus, driveSyncStatus, driveConnectButton;
+    private TextView driveSyncNowButton, driveRestoreButton, driveDisconnectButton;
+    private View driveConnectedActions;
 
     private RingProgressView caloriesRing, proteinRing, carbsRing, fatRing;
     private TextView calorieValue, calorieGoalText, calorieLeft, proteinValue, carbsValue, fatValue;
@@ -127,6 +139,7 @@ public final class MainActivity extends Activity {
         configureSearch();
         configureDetail();
         configureManualEntry();
+        configureDriveBackup();
         configureDiagnostics();
         configureWeekStrip();
 
@@ -144,6 +157,8 @@ public final class MainActivity extends Activity {
             profileDatabaseStatus.setText("Offline database unavailable");
         }
 
+        DriveBackupScheduler.schedulePeriodic(this);
+        refreshDriveBackupUi();
         refreshHome();
         showScreen(homeScreen, 0);
     }
@@ -195,6 +210,13 @@ public final class MainActivity extends Activity {
         searchInput = findViewById(R.id.searchInput);
         databaseStatusText = findViewById(R.id.databaseStatusText);
         profileDatabaseStatus = findViewById(R.id.profileDatabaseStatus);
+        driveConnectionStatus = findViewById(R.id.driveConnectionStatus);
+        driveSyncStatus = findViewById(R.id.driveSyncStatus);
+        driveConnectButton = findViewById(R.id.driveConnectButton);
+        driveConnectedActions = findViewById(R.id.driveConnectedActions);
+        driveSyncNowButton = findViewById(R.id.driveSyncNowButton);
+        driveRestoreButton = findViewById(R.id.driveRestoreButton);
+        driveDisconnectButton = findViewById(R.id.driveDisconnectButton);
         searchSectionTitle = findViewById(R.id.searchSectionTitle);
         shortcutAll = findViewById(R.id.shortcutAll);
         shortcutRecent = findViewById(R.id.shortcutRecent);
@@ -264,7 +286,10 @@ public final class MainActivity extends Activity {
             if (progressController != null) progressController.refresh();
             showScreen(progressScreen, 2);
         });
-        navProfile.setOnClickListener(v -> showScreen(profileScreen, 3));
+        navProfile.setOnClickListener(v -> {
+            refreshDriveBackupUi();
+            showScreen(profileScreen, 3);
+        });
         findViewById(R.id.homeSeeAll).setOnClickListener(v -> {
             setActiveMeal(defaultMealType());
             if (catalog != null) loadPopularFoods();
@@ -329,6 +354,216 @@ public final class MainActivity extends Activity {
     private void configureManualEntry() {
         findViewById(R.id.manualBack).setOnClickListener(v -> showScreen(searchScreen, 1));
         manualAddButton.setOnClickListener(v -> addManualFood());
+    }
+
+    private void configureDriveBackup() {
+        driveConnectButton.setOnClickListener(v -> connectGoogleDrive());
+        driveSyncNowButton.setOnClickListener(v -> syncDriveNow());
+        driveRestoreButton.setOnClickListener(v -> confirmDriveRestore());
+        driveDisconnectButton.setOnClickListener(v -> confirmDriveDisconnect());
+    }
+
+    private void connectGoogleDrive() {
+        setDriveControlsEnabled(false);
+        driveSyncStatus.setText("Opening Google authorization…");
+        GoogleDriveAuthorization.beginConnect(this, driveAuthorizationCallback());
+    }
+
+    private GoogleDriveAuthorization.Callback driveAuthorizationCallback() {
+        return new GoogleDriveAuthorization.Callback() {
+            @Override
+            public void onAuthorized(String accessToken, String accountName) {
+                SyncCoordinator.forceDirty(MainActivity.this, "drive-connect");
+                DriveBackupScheduler.schedulePeriodic(MainActivity.this);
+                DriveBackupScheduler.scheduleImmediate(MainActivity.this);
+                runOnUiThread(() -> {
+                    setDriveControlsEnabled(true);
+                    refreshDriveBackupUi();
+                    toast("Google Drive backup connected");
+                });
+            }
+
+            @Override
+            public void onFailure(GoogleDriveAuthorization.Failure failure, String message, Throwable error) {
+                if (error != null) AppLogger.e("Drive authorization UI failed: " + failure, error);
+                runOnUiThread(() -> {
+                    setDriveControlsEnabled(true);
+                    refreshDriveBackupUi();
+                    if (failure != GoogleDriveAuthorization.Failure.CANCELLED) {
+                        toast(message == null ? "Google Drive authorization failed" : message);
+                    }
+                });
+            }
+        };
+    }
+
+    private void syncDriveNow() {
+        if (!new DriveConnectionStore(this).getState().connected) {
+            connectGoogleDrive();
+            return;
+        }
+        SyncCoordinator.forceDirty(this, "manual-sync");
+        DriveBackupScheduler.scheduleImmediate(this);
+        driveSyncStatus.setText("Sync queued • will run when network is available");
+        toast("Drive sync queued");
+    }
+
+    private void confirmDriveRestore() {
+        new AlertDialog.Builder(this)
+                .setTitle("Restore from Google Drive?")
+                .setMessage("DietLog will merge the newest valid backup from each device. Newer records win and local-only records are kept.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Restore / merge", (dialog, which) -> restoreFromDrive())
+                .show();
+    }
+
+    private void restoreFromDrive() {
+        setDriveControlsEnabled(false);
+        driveSyncStatus.setText("Authorizing restore…");
+        GoogleDriveAuthorization.requestSilentToken(this, new GoogleDriveAuthorization.Callback() {
+            @Override
+            public void onAuthorized(String accessToken, String accountName) {
+                driveExecutor.execute(() -> {
+                    try {
+                        String localDeviceId = SyncCoordinator.getState(MainActivity.this).deviceId;
+                        DriveRestoreManager.MergeResult result = new DriveRestoreManager()
+                                .mergeDriveSnapshots(MainActivity.this, accessToken, localDeviceId, true);
+                        if (result.changed) DriveBackupScheduler.scheduleImmediate(MainActivity.this);
+                        runOnUiThread(() -> {
+                            if (profileController != null) profileController.reloadFromPreferences();
+                            if (progressController != null) progressController.refresh();
+                            refreshHome();
+                            setDriveControlsEnabled(true);
+                            refreshDriveBackupUi();
+                            toast(result.changed
+                                    ? "Drive backup merged into DietLog"
+                                    : "Drive backup is already up to date");
+                        });
+                    } catch (Exception e) {
+                        AppLogger.e("Manual Drive restore failed", e);
+                        runOnUiThread(() -> {
+                            setDriveControlsEnabled(true);
+                            refreshDriveBackupUi();
+                            Toast.makeText(MainActivity.this,
+                                    "Drive restore failed: " + safeMessage(e), Toast.LENGTH_LONG).show();
+                        });
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(GoogleDriveAuthorization.Failure failure, String message, Throwable error) {
+                if (error != null) AppLogger.e("Drive restore authorization failed: " + failure, error);
+                runOnUiThread(() -> {
+                    setDriveControlsEnabled(true);
+                    refreshDriveBackupUi();
+                    toast(message == null ? "Google Drive authorization failed" : message);
+                });
+            }
+        });
+    }
+
+    private void confirmDriveDisconnect() {
+        new AlertDialog.Builder(this)
+                .setTitle("Disconnect Google Drive?")
+                .setMessage("Automatic backup will stop. Existing backup files remain in Drive app data so they can be restored after reconnecting.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Disconnect", (dialog, which) -> disconnectDrive())
+                .show();
+    }
+
+    private void disconnectDrive() {
+        setDriveControlsEnabled(false);
+        GoogleDriveAuthorization.revokeAccess(this, new GoogleDriveAuthorization.DisconnectCallback() {
+            @Override
+            public void onDisconnected() {
+                finishLocalDriveDisconnect();
+            }
+
+            @Override
+            public void onFailure(String message, Throwable error) {
+                if (error != null) AppLogger.e("Drive revoke failed", error);
+                // Always allow the user to stop local automatic sync even if Google cannot be reached.
+                finishLocalDriveDisconnect();
+                runOnUiThread(() -> Toast.makeText(MainActivity.this,
+                        "Drive disconnected locally. Google permission could not be fully revoked: "
+                                + (message == null ? "unknown error" : message),
+                        Toast.LENGTH_LONG).show());
+            }
+        });
+    }
+
+    private void finishLocalDriveDisconnect() {
+        DriveBackupScheduler.cancel(this);
+        new DriveConnectionStore(this).clear();
+        new DriveSyncStatusStore(this).clear();
+        runOnUiThread(() -> {
+            setDriveControlsEnabled(true);
+            refreshDriveBackupUi();
+            toast("Google Drive backup disconnected");
+        });
+    }
+
+    private void refreshDriveBackupUi() {
+        if (driveConnectionStatus == null) return;
+        DriveConnectionStore.State connection = new DriveConnectionStore(this).getState();
+        DriveSyncStatusStore.State status = new DriveSyncStatusStore(this).getState();
+        SyncCoordinator.State sync = SyncCoordinator.getState(this);
+
+        driveConnectedActions.setVisibility(connection.connected ? View.VISIBLE : View.GONE);
+        driveConnectButton.setText(connection.connected
+                ? (status.reauthRequired ? "Reconnect Google Drive" : "Change / reconnect account")
+                : "Connect Google Drive");
+
+        if (!connection.connected) {
+            driveConnectionStatus.setText("Not connected");
+            driveSyncStatus.setText("DietLog stays local-first. Connect Drive to back up and merge your user data automatically.");
+            return;
+        }
+
+        String account = connection.accountName.isEmpty()
+                ? "Google account connected"
+                : "Connected • " + connection.accountName;
+        driveConnectionStatus.setText(status.reauthRequired ? "Reconnect required" : account);
+
+        if (status.reauthRequired) {
+            driveSyncStatus.setText("Google authorization expired. Reconnect to resume automatic backup.");
+        } else if (!status.lastError.isEmpty()) {
+            driveSyncStatus.setText("Last sync issue: " + status.lastError);
+        } else if (status.lastSuccessAt > 0L) {
+            String text = "Last synced " + formatDriveTime(status.lastSuccessAt)
+                    + " • revision " + status.lastSuccessRevision;
+            if (sync.dirty) text += " • newer changes waiting";
+            driveSyncStatus.setText(text);
+        } else if (sync.dirty) {
+            driveSyncStatus.setText("Connected • first backup is waiting to sync");
+        } else {
+            driveSyncStatus.setText("Connected • automatic backup is enabled");
+        }
+    }
+
+    private void setDriveControlsEnabled(boolean enabled) {
+        if (driveConnectButton != null) driveConnectButton.setEnabled(enabled);
+        if (driveSyncNowButton != null) driveSyncNowButton.setEnabled(enabled);
+        if (driveRestoreButton != null) driveRestoreButton.setEnabled(enabled);
+        if (driveDisconnectButton != null) driveDisconnectButton.setEnabled(enabled);
+    }
+
+    private String formatDriveTime(long timestamp) {
+        try {
+            return Instant.ofEpochMilli(timestamp)
+                    .atZone(ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("d MMM, h:mm a", Locale.getDefault()));
+        } catch (RuntimeException ignored) {
+            return "recently";
+        }
+    }
+
+    private static String safeMessage(Throwable error) {
+        String message = error == null ? null : error.getMessage();
+        if (message == null || message.trim().isEmpty()) return "unknown error";
+        String flattened = message.replace('\n', ' ').replace('\r', ' ').trim();
+        return flattened.length() <= 160 ? flattened : flattened.substring(0, 160);
     }
 
     private void configureDiagnostics() {
@@ -1577,6 +1812,12 @@ public final class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        refreshDriveBackupUi();
+    }
+
+    @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putString("selected_date", selectedDate.toString());
         outState.putString("active_meal", activeMealType);
@@ -1593,6 +1834,8 @@ public final class MainActivity extends Activity {
             }
             return;
         }
+        if (GoogleDriveAuthorization.handleActivityResult(
+                this, requestCode, resultCode, data, driveAuthorizationCallback())) return;
         if (profileController != null && profileController.onActivityResult(requestCode, resultCode, data)) return;
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -1612,6 +1855,7 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        driveExecutor.shutdownNow();
         if (catalog != null) catalog.close();
         diary.close();
         super.onDestroy();
