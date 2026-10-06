@@ -12,6 +12,8 @@ android {
         versionName '0.6.1'
         buildConfigField 'String', 'SOURCE_COMMIT', '"' + (System.getenv('GITHUB_SHA') ?: 'local') + '"'
         buildConfigField 'String', 'CI_RUN_ID', '"' + (System.getenv('GITHUB_RUN_ID') ?: 'local') + '"'
+        buildConfigField 'String', 'SUPABASE_URL', '"' + (System.getenv('DIETLOG_SUPABASE_URL') ?: '') + '"'
+        buildConfigField 'String', 'SUPABASE_PUBLISHABLE_KEY', '"' + (System.getenv('DIETLOG_SUPABASE_PUBLISHABLE_KEY') ?: '') + '"'
     }
     buildFeatures { buildConfig true }
     buildTypes {
