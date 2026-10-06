@@ -28,6 +28,26 @@ public final class ProgressStatsTest {
         assertEquals(100, s.combinedAdherencePercent, 0.001);
     }
 
+
+    @Test
+    public void completedDayAdherenceExcludesCurrentDay() {
+        LocalDate today = LocalDate.of(2026, 10, 6);
+        List<DailyNutrition> days = Arrays.asList(
+                new DailyNutrition(today.minusDays(1), 2000, 150, 250, 70, 4),
+                new DailyNutrition(today, 871, 16, 191, 5, 3));
+
+        ProgressStats.NutritionSummary all = ProgressStats.summarize(days, 2000, 150);
+        ProgressStats.NutritionSummary completed =
+                ProgressStats.summarizeCompletedDays(days, today, 2000, 150);
+
+        assertEquals(2, all.loggedDays);
+        assertEquals(50, all.combinedAdherencePercent, 0.001);
+        assertEquals(1, completed.loggedDays);
+        assertEquals(100, completed.calorieAdherencePercent, 0.001);
+        assertEquals(100, completed.proteinAdherencePercent, 0.001);
+        assertEquals(100, completed.combinedAdherencePercent, 0.001);
+    }
+
     @Test
     public void weeklyWeightRateUsesElapsedDays() {
         List<WeightPoint> points = Arrays.asList(

@@ -46,6 +46,9 @@ public final class ProfileController {
     private CheckBox manualCalorieCheck;
     private TextView dobButton, activityDescription, goalHint, calorieTargetText, energyBreakdown;
     private TextView macroSummary, macroWarning, headerName, headerSummary, avatarFallback;
+    private TextView currentTargetSummary, currentTargetNote, recommendedTargetSummary, macroTargetSummary;
+    private TextView editProfileButton, editGoalButton, editNutritionButton;
+    private View personalEditor, goalSection, nutritionSection;
     private ImageView avatarImage;
 
     public ProfileController(Activity activity, Runnable onTargetsChanged) {
@@ -100,6 +103,7 @@ public final class ProfileController {
         updateGoalHint(draft);
         updateHeader(draft);
         updateMacroModeState(draft.macroMode);
+        updateSavedTargetSummary();
         try {
             CalorieCalculator.Estimate e = CalorieCalculator.calculate(draft, LocalDate.now());
             calorieTargetText.setText(String.format(Locale.getDefault(), "%,.0f kcal/day", e.calorieTarget));
@@ -166,6 +170,16 @@ public final class ProfileController {
         headerSummary = activity.findViewById(R.id.profileHeaderSummary);
         avatarFallback = activity.findViewById(R.id.profileAvatarFallback);
         avatarImage = activity.findViewById(R.id.profileAvatarImage);
+        currentTargetSummary = activity.findViewById(R.id.profileCurrentTargetSummary);
+        currentTargetNote = activity.findViewById(R.id.profileCurrentTargetNote);
+        recommendedTargetSummary = activity.findViewById(R.id.profileRecommendedTargetSummary);
+        macroTargetSummary = activity.findViewById(R.id.profileMacroTargetSummary);
+        editProfileButton = activity.findViewById(R.id.profileEditProfileButton);
+        editGoalButton = activity.findViewById(R.id.profileEditGoalButton);
+        editNutritionButton = activity.findViewById(R.id.profileEditNutritionButton);
+        personalEditor = activity.findViewById(R.id.profilePersonalEditor);
+        goalSection = activity.findViewById(R.id.profileGoalSection);
+        nutritionSection = activity.findViewById(R.id.profileNutritionSection);
     }
 
     private void setupSpinners() {
@@ -264,6 +278,11 @@ public final class ProfileController {
         });
         activity.findViewById(R.id.profileUseRecommendedMacros).setOnClickListener(v -> applyRecommendedMacros());
         activity.findViewById(R.id.profileSaveButton).setOnClickListener(v -> save());
+        activity.findViewById(R.id.profileSavePersonalButton).setOnClickListener(v -> save());
+        activity.findViewById(R.id.profileSaveGoalButton).setOnClickListener(v -> save());
+        editProfileButton.setOnClickListener(v -> toggleEditor(personalEditor));
+        editGoalButton.setOnClickListener(v -> toggleEditor(goalSection));
+        editNutritionButton.setOnClickListener(v -> toggleEditor(nutritionSection));
         activity.findViewById(R.id.profileAvatarPicker).setOnClickListener(v -> pickAvatar());
         dobButton.setOnClickListener(v -> pickDateOfBirth());
 
@@ -307,6 +326,7 @@ public final class ProfileController {
             hasSavedProfile = true;
             populateUi();
             refreshPreview();
+            collapseEditors();
             onTargetsChanged.run();
             Toast.makeText(activity, "Profile and nutrition targets saved", Toast.LENGTH_SHORT).show();
         } catch (IllegalArgumentException e) {
@@ -371,6 +391,67 @@ public final class ProfileController {
         s.sugarLimitG = strict ? optionalNonNegative(sugarInput, "sugar limit") : nonNegativeOr(sugarInput, settings.sugarLimitG);
         s.sodiumLimitMg = strict ? optionalNonNegative(sodiumInput, "sodium limit") : nonNegativeOr(sodiumInput, settings.sodiumLimitMg);
         return s;
+    }
+
+    private void toggleEditor(View target) {
+        boolean opening = target.getVisibility() != View.VISIBLE;
+        collapseEditors();
+        if (opening) target.setVisibility(View.VISIBLE);
+        updateEditorButtonLabels();
+    }
+
+    private void collapseEditors() {
+        if (personalEditor != null) personalEditor.setVisibility(View.GONE);
+        if (goalSection != null) goalSection.setVisibility(View.GONE);
+        if (nutritionSection != null) nutritionSection.setVisibility(View.GONE);
+        updateEditorButtonLabels();
+    }
+
+    private void updateEditorButtonLabels() {
+        if (editProfileButton != null) editProfileButton.setText(
+                personalEditor != null && personalEditor.getVisibility() == View.VISIBLE ? "Close" : "Edit profile");
+        if (editGoalButton != null) editGoalButton.setText(
+                goalSection != null && goalSection.getVisibility() == View.VISIBLE ? "Close calorie goal" : "Edit calorie goal");
+        if (editNutritionButton != null) editNutritionButton.setText(
+                nutritionSection != null && nutritionSection.getVisibility() == View.VISIBLE ? "Close nutrition" : "Edit nutrition");
+    }
+
+    private void updateSavedTargetSummary() {
+        if (currentTargetSummary == null) return;
+        double currentCalories = getCalorieGoal();
+        currentTargetSummary.setText(String.format(Locale.getDefault(), "%,.0f kcal/day", currentCalories));
+        if (!hasSavedProfile) {
+            currentTargetNote.setText("Default target until you save a profile");
+        } else if (settings.manualCalorieOverride) {
+            currentTargetNote.setText("Manual override currently used by Home");
+        } else {
+            currentTargetNote.setText("Calculated from your saved profile");
+        }
+        try {
+            ProfileSettings recommended = calculatorSettingsWithoutManualOverride(settings);
+            double recommendedCalories = CalorieCalculator.calculate(recommended, LocalDate.now()).calorieTarget;
+            recommendedTargetSummary.setText(String.format(Locale.getDefault(), "%,.0f kcal/day", recommendedCalories));
+        } catch (RuntimeException ignored) {
+            recommendedTargetSummary.setText("— kcal/day");
+        }
+        macroTargetSummary.setText(String.format(Locale.getDefault(),
+                "Macros • P %.0f g • C %.0f g • F %.0f g",
+                getProteinGoal(), getCarbsGoal(), getFatGoal()));
+    }
+
+    private ProfileSettings calculatorSettingsWithoutManualOverride(ProfileSettings source) {
+        ProfileSettings copy = new ProfileSettings();
+        copy.dateOfBirthIso = source.dateOfBirthIso;
+        copy.ageYears = source.ageYears;
+        copy.sex = source.sex;
+        copy.heightCm = source.heightCm;
+        copy.currentWeightKg = source.currentWeightKg;
+        copy.targetWeightKg = source.targetWeightKg;
+        copy.activityLevel = source.activityLevel;
+        copy.goal = source.goal;
+        copy.weeklyWeightChangeKg = source.weeklyWeightChangeKg;
+        copy.manualCalorieOverride = false;
+        return copy;
     }
 
     private void updateHeader(ProfileSettings draft) {

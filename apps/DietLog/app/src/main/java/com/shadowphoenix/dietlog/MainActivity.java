@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.res.ColorStateList;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
@@ -12,6 +13,7 @@ import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -96,13 +98,13 @@ public final class MainActivity extends Activity {
 
     private RingProgressView caloriesRing, proteinRing, carbsRing, fatRing;
     private TextView calorieValue, calorieGoalText, calorieLeft, proteinValue, carbsValue, fatValue;
-    private TextView dateText, foodLogTitle, relogButton;
+    private TextView dateText, homeTodayButton, foodLogTitle, relogButton;
     private LinearLayout entriesContainer;
     private TextView nutritionDateText, nutritionMacroSummary, nutritionTargetNote;
     private LinearLayout nutritionMineralsContainer, nutritionVitaminsContainer;
 
     private EditText searchInput;
-    private TextView databaseStatusText, profileDatabaseStatus, searchSectionTitle;
+    private TextView databaseStatusText, profileDatabaseStatus, searchSectionTitle, searchMealTargetText;
     private TextView shortcutAll, shortcutRecent, shortcutFrequent, shortcutFavorites;
     private LinearLayout searchResultsContainer;
 
@@ -134,6 +136,7 @@ public final class MainActivity extends Activity {
         getWindow().setStatusBarColor(getColor(R.color.background));
         getWindow().setNavigationBarColor(getColor(R.color.background));
         setContentView(R.layout.activity_main);
+        configureSystemBarInsets();
 
         diary = new DiaryDbHelper(this);
         if (savedInstanceState != null) {
@@ -178,6 +181,35 @@ public final class MainActivity extends Activity {
         refreshSupabaseBackupUi();
         refreshHome();
         showScreen(homeScreen, 0);
+    }
+
+    private void configureSystemBarInsets() {
+        View root = findViewById(R.id.appRoot);
+        final int baseLeft = root.getPaddingLeft();
+        final int baseTop = root.getPaddingTop();
+        final int baseRight = root.getPaddingRight();
+        final int baseBottom = root.getPaddingBottom();
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            int left;
+            int top;
+            int right;
+            int bottom;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars());
+                left = bars.left;
+                top = bars.top;
+                right = bars.right;
+                bottom = bars.bottom;
+            } else {
+                left = insets.getSystemWindowInsetLeft();
+                top = insets.getSystemWindowInsetTop();
+                right = insets.getSystemWindowInsetRight();
+                bottom = insets.getSystemWindowInsetBottom();
+            }
+            view.setPadding(baseLeft + left, baseTop + top, baseRight + right, baseBottom + bottom);
+            return insets;
+        });
+        root.requestApplyInsets();
     }
 
     private void bindViews() {
@@ -242,6 +274,7 @@ public final class MainActivity extends Activity {
         supabaseRestoreButton = findViewById(R.id.supabaseRestoreButton);
         supabaseDisconnectButton = findViewById(R.id.supabaseDisconnectButton);
         searchSectionTitle = findViewById(R.id.searchSectionTitle);
+        searchMealTargetText = findViewById(R.id.searchMealTarget);
         shortcutAll = findViewById(R.id.shortcutAll);
         shortcutRecent = findViewById(R.id.shortcutRecent);
         shortcutFrequent = findViewById(R.id.shortcutFrequent);
@@ -353,7 +386,6 @@ public final class MainActivity extends Activity {
         });
         findViewById(R.id.manualEntryButton).setOnClickListener(v -> showManualEntry(null, null));
         findViewById(R.id.barcodeTile).setOnClickListener(v -> startBarcodeScan());
-        findViewById(R.id.voiceTile).setOnClickListener(v -> toast("Voice search will be added later."));
     }
 
     private void configureDetail() {
@@ -571,8 +603,9 @@ public final class MainActivity extends Activity {
 
         driveConnectedActions.setVisibility(connection.connected ? View.VISIBLE : View.GONE);
         driveConnectButton.setText(connection.connected
-                ? (status.reauthRequired ? "Reconnect Google Drive" : "Change / reconnect account")
+                ? (status.reauthRequired ? "Reconnect Google Drive" : "Change account")
                 : "Connect Google Drive");
+        styleCloudConnectButton(driveConnectButton, !connection.connected || status.reauthRequired);
 
         if (!connection.connected) {
             driveConnectionStatus.setText("Not connected");
@@ -913,8 +946,9 @@ public final class MainActivity extends Activity {
 
         supabaseConnectedActions.setVisibility(connection.connected ? View.VISIBLE : View.GONE);
         supabaseConnectButton.setText(connection.connected
-                ? (status.reauthRequired ? "Send a new code" : "Change Supabase account")
+                ? (status.reauthRequired ? "Send a new code" : "Change account")
                 : "Sign in with email code");
+        styleCloudConnectButton(supabaseConnectButton, !connection.connected || status.reauthRequired);
 
         if (!configured) {
             supabaseConnectionStatus.setText("Not configured in this APK");
@@ -969,6 +1003,12 @@ public final class MainActivity extends Activity {
         if (supabaseDisconnectButton != null) supabaseDisconnectButton.setEnabled(enabled);
     }
 
+    private void styleCloudConnectButton(TextView button, boolean primary) {
+        if (button == null) return;
+        button.setBackgroundResource(primary ? R.drawable.bg_button_primary : R.drawable.bg_chip);
+        button.setTextColor(getColor(primary ? R.color.background : R.color.accent));
+    }
+
     private static boolean isSupabaseReauthFailure(Throwable error) {
         if (!(error instanceof SupabaseAuthClient.AuthHttpException)) return false;
         int status = ((SupabaseAuthClient.AuthHttpException) error).statusCode;
@@ -998,11 +1038,11 @@ public final class MainActivity extends Activity {
         controls.setOrientation(LinearLayout.HORIZONTAL);
         controls.setGravity(android.view.Gravity.CENTER_VERTICAL);
         LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(44));
-        controlsParams.topMargin = dp(14);
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
+        controlsParams.topMargin = dp(12);
         controls.setLayoutParams(controlsParams);
 
-        TextView previous = dateControl("‹", 42);
+        TextView previous = dateControl("‹", 38);
         previous.setContentDescription("Previous week");
         previous.setOnClickListener(v -> selectDate(selectedDate.minusWeeks(1)));
         controls.addView(previous);
@@ -1010,17 +1050,17 @@ public final class MainActivity extends Activity {
         dateText.setVisibility(View.VISIBLE);
         dateText.setGravity(android.view.Gravity.CENTER);
         dateText.setTextColor(getColor(R.color.text_primary));
-        dateText.setTextSize(13f);
+        dateText.setTextSize(14f);
         dateText.setTypeface(dateText.getTypeface(), android.graphics.Typeface.BOLD);
-        dateText.setOnClickListener(v -> selectDate(LocalDate.now()));
-        controls.addView(dateText, new LinearLayout.LayoutParams(0, dp(44), 1f));
+        dateText.setClickable(false);
+        controls.addView(dateText, new LinearLayout.LayoutParams(0, dp(40), 1f));
 
-        TextView today = dateControl("Today", 64);
-        today.setContentDescription("Jump to today");
-        today.setOnClickListener(v -> selectDate(LocalDate.now()));
-        controls.addView(today);
+        homeTodayButton = dateControl("Today", 60);
+        homeTodayButton.setContentDescription("Jump to today");
+        homeTodayButton.setOnClickListener(v -> selectDate(LocalDate.now()));
+        controls.addView(homeTodayButton);
 
-        TextView next = dateControl("›", 42);
+        TextView next = dateControl("›", 38);
         next.setContentDescription("Next week");
         next.setOnClickListener(v -> selectDate(selectedDate.plusWeeks(1)));
         controls.addView(next);
@@ -1034,12 +1074,12 @@ public final class MainActivity extends Activity {
         control.setText(text);
         control.setGravity(android.view.Gravity.CENTER);
         control.setTextColor(getColor(R.color.accent));
-        control.setTextSize(13f);
+        control.setTextSize(12f);
         control.setTypeface(control.getTypeface(), android.graphics.Typeface.BOLD);
         control.setBackgroundResource(R.drawable.bg_chip);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(widthDp), dp(36));
-        params.setMarginStart(dp(4));
-        params.setMarginEnd(dp(4));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(widthDp), dp(34));
+        params.setMarginStart(dp(3));
+        params.setMarginEnd(dp(3));
         control.setLayoutParams(params);
         return control;
     }
@@ -1054,8 +1094,12 @@ public final class MainActivity extends Activity {
     private void renderWeekStrip() {
         LocalDate today = LocalDate.now();
         LocalDate monday = selectedDate.minusDays(selectedDate.getDayOfWeek().getValue() - 1L);
-        DateTimeFormatter headerFormat = DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.getDefault());
-        dateText.setText(selectedDate.equals(today) ? "Today • " + selectedDate.format(headerFormat) : selectedDate.format(headerFormat));
+        String headerPattern = selectedDate.getYear() == today.getYear() ? "EEE, d MMM" : "EEE, d MMM yyyy";
+        DateTimeFormatter headerFormat = DateTimeFormatter.ofPattern(headerPattern, Locale.getDefault());
+        dateText.setText(selectedDate.format(headerFormat));
+        if (homeTodayButton != null) {
+            homeTodayButton.setVisibility(selectedDate.equals(today) ? View.GONE : View.VISIBLE);
+        }
         for (int i = 0; i < 7; i++) {
             int id = getResources().getIdentifier("day" + i, "id", getPackageName());
             TextView day = findViewById(id);
@@ -1382,10 +1426,10 @@ public final class MainActivity extends Activity {
 
     private void renderDiaryEntries(List<FoodEntry> entries) {
         entriesContainer.removeAllViews();
-        renderMealSection(FoodEntry.MEAL_BREAKFAST, "☀", entries);
-        renderMealSection(FoodEntry.MEAL_LUNCH, "🍱", entries);
-        renderMealSection(FoodEntry.MEAL_SNACKS, "🍎", entries);
-        renderMealSection(FoodEntry.MEAL_DINNER, "☾", entries);
+        renderMealSection(FoodEntry.MEAL_BREAKFAST, "B", entries);
+        renderMealSection(FoodEntry.MEAL_LUNCH, "L", entries);
+        renderMealSection(FoodEntry.MEAL_SNACKS, "S", entries);
+        renderMealSection(FoodEntry.MEAL_DINNER, "D", entries);
     }
 
     private void renderMealSection(String mealType, String icon, List<FoodEntry> entries) {
@@ -1393,7 +1437,7 @@ public final class MainActivity extends Activity {
         section.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams sectionParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        if (entriesContainer.getChildCount() > 0) sectionParams.topMargin = dp(14);
+        if (entriesContainer.getChildCount() > 0) sectionParams.topMargin = dp(10);
         section.setLayoutParams(sectionParams);
 
         LinearLayout header = new LinearLayout(this);
@@ -1403,10 +1447,10 @@ public final class MainActivity extends Activity {
         TextView title = new TextView(this);
         title.setText(icon + "  " + FoodEntry.mealDisplayName(mealType));
         title.setTextColor(getColor(R.color.text_primary));
-        title.setTextSize(16f);
+        title.setTextSize(15f);
         title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
         title.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        header.addView(title, new LinearLayout.LayoutParams(0, dp(40), 1f));
+        header.addView(title, new LinearLayout.LayoutParams(0, dp(36), 1f));
 
         double mealCalories = 0.0;
         for (FoodEntry entry : entries) {
@@ -1415,21 +1459,21 @@ public final class MainActivity extends Activity {
         TextView calories = new TextView(this);
         calories.setText(String.format(Locale.getDefault(), "%.0f kcal", mealCalories));
         calories.setTextColor(getColor(R.color.text_secondary));
-        calories.setTextSize(11f);
+        calories.setTextSize(12f);
         calories.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        calories.setPadding(dp(8), 0, dp(10), 0);
-        header.addView(calories, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(40)));
+        calories.setPadding(dp(6), 0, dp(8), 0);
+        header.addView(calories, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(36)));
 
         TextView add = new TextView(this);
         add.setText("+ Add");
         add.setTextColor(getColor(R.color.accent));
-        add.setTextSize(12f);
+        add.setTextSize(11.5f);
         add.setTypeface(add.getTypeface(), android.graphics.Typeface.BOLD);
         add.setGravity(android.view.Gravity.CENTER);
         add.setPadding(dp(12), 0, dp(12), 0);
         add.setBackgroundResource(R.drawable.bg_chip);
         add.setOnClickListener(v -> openMealSearch(mealType));
-        header.addView(add, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(36)));
+        header.addView(add, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(34)));
         section.addView(header);
 
         boolean hasEntries = false;
@@ -1437,7 +1481,7 @@ public final class MainActivity extends Activity {
             if (!mealType.equals(entry.mealType)) continue;
             hasEntries = true;
             View row = getLayoutInflater().inflate(R.layout.item_diary_entry, section, false);
-            ((TextView) row.findViewById(R.id.entryIcon)).setText(foodEmoji(entry.name));
+            ((TextView) row.findViewById(R.id.entryIcon)).setText(foodGlyph(entry.name));
             ((TextView) row.findViewById(R.id.entryName)).setText(entry.name);
             ((TextView) row.findViewById(R.id.entryAmount)).setText(String.format(Locale.getDefault(), "%.0f g  •  %s", entry.grams, friendlySource(entry.source)));
             ((TextView) row.findViewById(R.id.entryMacros)).setText(String.format(Locale.getDefault(), "P %.0fg    C %.0fg    F %.0fg", entry.protein, entry.carbs, entry.fat));
@@ -1452,7 +1496,7 @@ public final class MainActivity extends Activity {
             empty.setText("No foods logged");
             empty.setTextColor(getColor(R.color.text_tertiary));
             empty.setTextSize(12f);
-            empty.setPadding(dp(4), dp(4), dp(4), dp(8));
+            empty.setPadding(dp(4), dp(2), dp(4), dp(6));
             section.addView(empty);
         }
         entriesContainer.addView(section);
@@ -1576,7 +1620,7 @@ public final class MainActivity extends Activity {
         selectShortcutTab(null);
         List<CatalogFood> results = catalog.search(q, 30);
         AppLogger.i("Offline search queryLength=" + q.length() + " results=" + results.size());
-        searchSectionTitle.setText("Search Results • " + mealTargetLabel());
+        searchSectionTitle.setText("Search results");
         renderFoodResults(results);
     }
 
@@ -1632,25 +1676,25 @@ public final class MainActivity extends Activity {
                 }
             }
         }
-        searchSectionTitle.setText("Popular Foods • " + mealTargetLabel());
+        searchSectionTitle.setText("Popular foods");
         renderFoodResults(foods);
     }
 
     private void loadRecentFoods() {
         selectShortcutTab(shortcutRecent);
-        searchSectionTitle.setText("Recent Foods • " + mealTargetLabel());
+        searchSectionTitle.setText("Recent foods");
         renderHistoryResults(diary.getRecentFoods(20), "recent");
     }
 
     private void loadFrequentFoods() {
         selectShortcutTab(shortcutFrequent);
-        searchSectionTitle.setText("Frequent Foods • " + mealTargetLabel());
+        searchSectionTitle.setText("Frequent foods");
         renderHistoryResults(diary.getFrequentFoods(20), "frequent");
     }
 
     private void loadFavoriteFoods() {
         selectShortcutTab(shortcutFavorites);
-        searchSectionTitle.setText("Favorites • " + mealTargetLabel());
+        searchSectionTitle.setText("Favorites");
         renderHistoryResults(diary.getFavoriteFoods(30), "favorite");
     }
 
@@ -1682,7 +1726,7 @@ public final class MainActivity extends Activity {
         for (FoodHistory.Item item : items) {
             FoodEntry entry = item.entry;
             View row = getLayoutInflater().inflate(R.layout.item_food_search, searchResultsContainer, false);
-            ((TextView) row.findViewById(R.id.foodIcon)).setText(foodEmoji(entry.name));
+            ((TextView) row.findViewById(R.id.foodIcon)).setText(foodGlyph(entry.name));
             ((TextView) row.findViewById(R.id.foodName)).setText(entry.name);
             String subtitle;
             if ("favorite".equals(mode)) {
@@ -1762,7 +1806,7 @@ public final class MainActivity extends Activity {
         }
         for (CatalogFood food : results) {
             View row = getLayoutInflater().inflate(R.layout.item_food_search, searchResultsContainer, false);
-            ((TextView) row.findViewById(R.id.foodIcon)).setText(foodEmoji(food.name));
+            ((TextView) row.findViewById(R.id.foodIcon)).setText(foodGlyph(food.name));
             ((TextView) row.findViewById(R.id.foodName)).setText(food.name);
             ((TextView) row.findViewById(R.id.foodSubtitle)).setText(searchSubtitle(food));
             ((TextView) row.findViewById(R.id.foodMacros)).setText(searchMacroLine(food));
@@ -1773,22 +1817,34 @@ public final class MainActivity extends Activity {
     }
 
     private String searchSubtitle(CatalogFood food) {
-        if (food.servingSize != null && !food.servingSize.trim().isEmpty()) return food.servingSize;
-        if (food.brand != null && !food.brand.trim().isEmpty()) return food.brand + " • " + friendlySource(food.source);
-        return friendlySource(food.source) + (food.category == null ? "" : " • " + compact(food.category, 32));
+        String source = friendlySource(food.source);
+        if (food.brand != null && !food.brand.trim().isEmpty()) {
+            return compact(food.brand, 34) + " • " + source;
+        }
+        if (food.category != null && !food.category.trim().isEmpty()) {
+            return source + " • " + compact(food.category, 34);
+        }
+        if (food.servingSize != null && !food.servingSize.trim().isEmpty()) {
+            return compact(food.servingSize, 34) + " • " + source;
+        }
+        return source;
     }
 
     private String searchMacroLine(CatalogFood food) {
-        String kcal = food.calories == null ? "—" : String.format(Locale.getDefault(), "%.0f", food.calories);
-        String line = kcal + " kcal/100g   P " + numberOrDash(food.protein) +
-                "   C " + numberOrDash(food.carbs) + "   F " + numberOrDash(food.fat);
-        return food.hasCompleteCoreMacros() ? line : line + "   • Incomplete nutrition";
+        String kcal = food.calories == null ? "—" : formatAmount(food.calories);
+        String line = kcal + " kcal / 100 g  ·  P " + macroAmount(food.protein) +
+                "  C " + macroAmount(food.carbs) + "  F " + macroAmount(food.fat);
+        return food.hasCompleteCoreMacros() ? line : line + "  ·  Incomplete";
+    }
+
+    private String macroAmount(Double value) {
+        return value == null ? "—" : formatAmount(value) + " g";
     }
 
     private void openDetail(CatalogFood food) {
         selectedFood = food;
         restoreServingState(food);
-        detailEmoji.setText(foodEmoji(food.name));
+        detailEmoji.setText(foodGlyph(food.name));
         detailName.setText(food.name);
         detailSubtitle.setText(detailSubtitle(food));
         detailSourceChip.setText(friendlySource(food.source));
@@ -2104,20 +2160,19 @@ public final class MainActivity extends Activity {
         }
     }
 
-    private String foodEmoji(String name) {
+    private String foodGlyph(String name) {
         String n = name == null ? "" : name.toLowerCase(Locale.ROOT);
-        if (n.contains("idli")) return "◉";
-        if (n.contains("dosa") || n.contains("chapati") || n.contains("roti")) return "🥙";
-        if (n.contains("biryani") || n.contains("rice") || n.contains("pulao")) return "🍚";
-        if (n.contains("paneer") || n.contains("curry") || n.contains("dal") || n.contains("sambar")) return "🍛";
-        if (n.contains("bread") || n.contains("bun")) return "🍞";
-        if (n.contains("milk") || n.contains("curd") || n.contains("yogurt")) return "🥛";
-        if (n.contains("banana")) return "🍌";
-        if (n.contains("apple")) return "🍎";
-        if (n.contains("egg")) return "🥚";
-        if (n.contains("chicken")) return "🍗";
-        if (n.contains("tea") || n.contains("coffee")) return "☕";
-        return "🍽";
+        if (n.contains("idli")) return "ID";
+        if (n.contains("dosa") || n.contains("chapati") || n.contains("roti")) return "FL";
+        if (n.contains("biryani") || n.contains("rice") || n.contains("pulao")) return "RI";
+        if (n.contains("paneer") || n.contains("curry") || n.contains("dal") || n.contains("sambar")) return "CU";
+        if (n.contains("bread") || n.contains("bun")) return "BR";
+        if (n.contains("milk") || n.contains("curd") || n.contains("yogurt")) return "DA";
+        if (n.contains("banana") || n.contains("apple") || n.contains("fruit")) return "FR";
+        if (n.contains("egg")) return "EG";
+        if (n.contains("chicken")) return "CH";
+        if (n.contains("tea") || n.contains("coffee")) return "DR";
+        return "FO";
     }
 
     private String friendlySource(String source) {
@@ -2220,6 +2275,7 @@ public final class MainActivity extends Activity {
         String target = mealTargetLabel();
         if (detailAddButton != null) detailAddButton.setText("+  Add to " + target);
         if (manualAddButton != null) manualAddButton.setText("+  Add to " + target);
+        if (searchMealTargetText != null) searchMealTargetText.setText("Adding to " + target);
     }
 
     private void toast(String message) {

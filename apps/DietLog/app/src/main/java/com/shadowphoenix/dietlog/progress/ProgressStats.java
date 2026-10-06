@@ -3,6 +3,7 @@ package com.shadowphoenix.dietlog.progress;
 import com.shadowphoenix.dietlog.progress.ProgressData.DailyNutrition;
 import com.shadowphoenix.dietlog.progress.ProgressData.WeightPoint;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public final class ProgressStats {
@@ -36,6 +37,20 @@ public final class ProgressStats {
     public static NutritionSummary summarize(List<DailyNutrition> days,
                                              double calorieGoal,
                                              double proteinGoal) {
+        return summarize(days, calorieGoal, proteinGoal, null);
+    }
+
+    public static NutritionSummary summarizeCompletedDays(List<DailyNutrition> days,
+                                                          LocalDate today,
+                                                          double calorieGoal,
+                                                          double proteinGoal) {
+        return summarize(days, calorieGoal, proteinGoal, today);
+    }
+
+    private static NutritionSummary summarize(List<DailyNutrition> days,
+                                              double calorieGoal,
+                                              double proteinGoal,
+                                              LocalDate excludeFromDate) {
         int logged = 0;
         int calorieHits = 0;
         int proteinHits = 0;
@@ -47,6 +62,9 @@ public final class ProgressStats {
 
         for (DailyNutrition day : days) {
             if (day.entryCount <= 0) continue;
+            if (excludeFromDate != null && (day.date == null || !day.date.isBefore(excludeFromDate))) {
+                continue;
+            }
             logged++;
             calories += day.calories;
             protein += day.protein;

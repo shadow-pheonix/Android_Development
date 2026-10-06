@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.text.InputType;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -29,10 +30,11 @@ public final class ProgressController {
     private final DiaryDbHelper diary;
     private final ProfileController profile;
 
-    private TextView currentWeight, weightGoal, weightPace;
+    private TextView currentWeight, weightGoal, weightSource, weightEmpty, weightPace;
     private TextView avg7Calories, avg30Calories, adherence, loggedDays;
-    private TextView caloriesSummary, proteinAvg, carbsAvg, fatAvg;
+    private TextView caloriesSummary, proteinAvg, carbsAvg, fatAvg, nutritionLowData;
     private TextView calorieAdherence, proteinAdherence, range7, range30;
+    private TextView caloriesChartLabel, macroChartLabel, macroLegend;
     private ProgressTrendView weightTrend, caloriesTrend, macroTrend;
     private int rangeDays = 7;
 
@@ -45,12 +47,18 @@ public final class ProgressController {
     public void bind() {
         currentWeight = activity.findViewById(R.id.progressCurrentWeight);
         weightGoal = activity.findViewById(R.id.progressWeightGoal);
+        weightSource = activity.findViewById(R.id.progressWeightSource);
+        weightEmpty = activity.findViewById(R.id.progressWeightEmpty);
         weightPace = activity.findViewById(R.id.progressWeightPace);
         avg7Calories = activity.findViewById(R.id.progressAvg7Calories);
         avg30Calories = activity.findViewById(R.id.progressAvg30Calories);
         adherence = activity.findViewById(R.id.progressAdherence);
         loggedDays = activity.findViewById(R.id.progressLoggedDays);
         caloriesSummary = activity.findViewById(R.id.progressCaloriesSummary);
+        nutritionLowData = activity.findViewById(R.id.progressNutritionLowData);
+        caloriesChartLabel = activity.findViewById(R.id.progressCaloriesChartLabel);
+        macroChartLabel = activity.findViewById(R.id.progressMacroChartLabel);
+        macroLegend = activity.findViewById(R.id.progressMacroLegend);
         proteinAvg = activity.findViewById(R.id.progressProteinAvg);
         carbsAvg = activity.findViewById(R.id.progressCarbsAvg);
         fatAvg = activity.findViewById(R.id.progressFatAvg);
@@ -82,21 +90,38 @@ public final class ProgressController {
                 ProgressStats.summarize(days7, calorieGoal, proteinGoal);
         ProgressStats.NutritionSummary summary30 =
                 ProgressStats.summarize(days30, calorieGoal, proteinGoal);
+        ProgressStats.NutritionSummary adherence30 =
+                ProgressStats.summarizeCompletedDays(days30, today, calorieGoal, proteinGoal);
+        boolean todayInProgress = hasLoggedNutritionOn(days30, today);
 
         avg7Calories.setText(summary7.loggedDays == 0 ? "—" :
                 String.format(Locale.getDefault(), "%.0f", summary7.averageCalories));
         avg30Calories.setText(summary30.loggedDays == 0 ? "—" :
                 String.format(Locale.getDefault(), "%.0f", summary30.averageCalories));
-        adherence.setText(summary30.loggedDays == 0 ? "—" :
-                String.format(Locale.getDefault(), "%.0f%%", summary30.combinedAdherencePercent));
-        loggedDays.setText(summary30.loggedDays + (summary30.loggedDays == 1 ? " logged day" : " logged days"));
-        calorieAdherence.setText(summary30.loggedDays == 0 ? "Calories —" :
-                String.format(Locale.getDefault(), "Calories on target: %.0f%%", summary30.calorieAdherencePercent));
-        proteinAdherence.setText(summary30.loggedDays == 0 ? "Protein —" :
-                String.format(Locale.getDefault(), "Protein on target: %.0f%%", summary30.proteinAdherencePercent));
+        adherence.setText(adherence30.loggedDays == 0 ? "—" :
+                String.format(Locale.getDefault(), "%.0f%%", adherence30.combinedAdherencePercent));
+        if (adherence30.loggedDays == 0) {
+            loggedDays.setText(todayInProgress ? "Today in progress" : "No completed days");
+            calorieAdherence.setText("Calories —");
+            proteinAdherence.setText("Protein —");
+        } else {
+            loggedDays.setText(adherence30.loggedDays
+                    + (adherence30.loggedDays == 1 ? " completed day" : " completed days"));
+            calorieAdherence.setText(String.format(Locale.getDefault(),
+                    "Calories on target: %.0f%%", adherence30.calorieAdherencePercent));
+            proteinAdherence.setText(String.format(Locale.getDefault(),
+                    "Protein on target: %.0f%%", adherence30.proteinAdherencePercent));
+        }
 
         renderNutritionCharts(calorieGoal, proteinGoal, carbsGoal, fatGoal);
         renderWeight(settings);
+    }
+
+    private boolean hasLoggedNutritionOn(List<DailyNutrition> days, LocalDate date) {
+        for (DailyNutrition day : days) {
+            if (day.entryCount > 0 && date.equals(day.date)) return true;
+        }
+        return false;
     }
 
     private void setRange(int days) {
@@ -114,6 +139,41 @@ public final class ProgressController {
         LocalDate today = LocalDate.now();
         LocalDate start = today.minusDays(rangeDays - 1L);
         List<DailyNutrition> raw = diary.getNutritionRange(start, today);
+        ProgressStats.NutritionSummary selected =
+                ProgressStats.summarize(raw, calorieGoal, proteinGoal);
+
+        caloriesSummary.setText(selected.loggedDays == 0
+                ? "No logged nutrition days in this range."
+                : String.format(Locale.getDefault(),
+                "%d logged %s • average %.0f kcal/day • target %.0f kcal",
+                selected.loggedDays, selected.loggedDays == 1 ? "day" : "days",
+                selected.averageCalories, calorieGoal));
+        proteinAvg.setText(selected.loggedDays == 0 ? "P —" :
+                String.format(Locale.getDefault(), "P %.0fg", selected.averageProtein));
+        carbsAvg.setText(selected.loggedDays == 0 ? "C —" :
+                String.format(Locale.getDefault(), "C %.0fg", selected.averageCarbs));
+        fatAvg.setText(selected.loggedDays == 0 ? "F —" :
+                String.format(Locale.getDefault(), "F %.0fg", selected.averageFat));
+
+        boolean enoughTrendData = selected.loggedDays >= 3;
+        int chartVisibility = enoughTrendData ? View.VISIBLE : View.GONE;
+        caloriesChartLabel.setVisibility(chartVisibility);
+        caloriesTrend.setVisibility(chartVisibility);
+        macroChartLabel.setVisibility(chartVisibility);
+        macroLegend.setVisibility(chartVisibility);
+        macroTrend.setVisibility(chartVisibility);
+        nutritionLowData.setVisibility(enoughTrendData ? View.GONE : View.VISIBLE);
+        if (!enoughTrendData) {
+            if (selected.loggedDays == 0) {
+                nutritionLowData.setText("Log food on at least 3 days to start seeing nutrition trends.");
+            } else {
+                nutritionLowData.setText(String.format(Locale.getDefault(),
+                        "%d of 3 logged days • keep logging to unlock meaningful trend charts.",
+                        selected.loggedDays));
+            }
+            return;
+        }
+
         Map<LocalDate, DailyNutrition> byDate = new HashMap<>();
         for (DailyNutrition day : raw) byDate.put(day.date, day);
 
@@ -154,20 +214,6 @@ public final class ProgressController {
                         activity.getColor(R.color.fat)
                 },
                 100.0, true, "%");
-
-        ProgressStats.NutritionSummary selected =
-                ProgressStats.summarize(raw, calorieGoal, proteinGoal);
-        caloriesSummary.setText(selected.loggedDays == 0
-                ? "No logged nutrition days in this range."
-                : String.format(Locale.getDefault(),
-                "%d logged days • average %.0f kcal/day • target %.0f kcal",
-                selected.loggedDays, selected.averageCalories, calorieGoal));
-        proteinAvg.setText(selected.loggedDays == 0 ? "P —" :
-                String.format(Locale.getDefault(), "P %.0fg", selected.averageProtein));
-        carbsAvg.setText(selected.loggedDays == 0 ? "C —" :
-                String.format(Locale.getDefault(), "C %.0fg", selected.averageCarbs));
-        fatAvg.setText(selected.loggedDays == 0 ? "F —" :
-                String.format(Locale.getDefault(), "F %.0fg", selected.averageFat));
     }
 
     private void renderWeight(ProfileSettings settings) {
@@ -179,10 +225,24 @@ public final class ProgressController {
         currentWeight.setText(String.format(Locale.getDefault(), "%.1f", displayWeight));
         weightGoal.setText(String.format(Locale.getDefault(), "Target %.1f kg • %s",
                 settings.targetWeightKg, settings.goal.label));
+        if (latest == null) {
+            weightSource.setText("Profile weight • no progress weight logged yet");
+        } else {
+            weightSource.setText("Latest log • " + latest.date.format(
+                    DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())));
+        }
 
-        if (points.isEmpty()) {
-            weightTrend.setData(new String[0], new double[0][], new int[0],
-                    settings.targetWeightKg, false, "kg");
+        boolean enoughTrendData = points.size() >= 2;
+        weightTrend.setVisibility(enoughTrendData ? View.VISIBLE : View.GONE);
+        weightEmpty.setVisibility(enoughTrendData ? View.GONE : View.VISIBLE);
+        if (!enoughTrendData) {
+            if (points.isEmpty() && latest == null) {
+                weightEmpty.setText("Log your weight to start tracking change. Two logs on different days unlock the trend.");
+            } else if (points.isEmpty()) {
+                weightEmpty.setText("Your last weight log is older than 90 days • log again to restart the recent trend.");
+            } else {
+                weightEmpty.setText("1 recent weight log saved • add another on a different day to unlock your trend and pace.");
+            }
         } else {
             String[] labels = new String[points.size()];
             double[] weights = new double[points.size()];
@@ -204,11 +264,15 @@ public final class ProgressController {
                     settings.currentWeightKg *
                     settings.goal.defaultBodyWeightFractionPerWeek;
         }
-        String actual = actualRate == null ? "Actual —" :
-                String.format(Locale.getDefault(), "Actual %+.2f kg/week", actualRate);
-        String target = String.format(Locale.getDefault(), "Goal %+.2f kg/week", targetRate);
-        weightPace.setText(actual + "  •  " + target + System.lineSeparator() +
-                ProgressStats.paceLabel(actualRate, targetRate));
+        if (actualRate == null) {
+            weightPace.setVisibility(View.GONE);
+        } else {
+            weightPace.setVisibility(View.VISIBLE);
+            String actual = String.format(Locale.getDefault(), "Actual %+.2f kg/week", actualRate);
+            String target = String.format(Locale.getDefault(), "Goal %+.2f kg/week", targetRate);
+            weightPace.setText(actual + "  •  " + target + System.lineSeparator() +
+                    ProgressStats.paceLabel(actualRate, targetRate));
+        }
     }
 
     private void showWeightDialog() {
