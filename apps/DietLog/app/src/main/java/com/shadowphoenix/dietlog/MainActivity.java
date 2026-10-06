@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.res.ColorStateList;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
@@ -12,6 +13,7 @@ import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -134,6 +136,7 @@ public final class MainActivity extends Activity {
         getWindow().setStatusBarColor(getColor(R.color.background));
         getWindow().setNavigationBarColor(getColor(R.color.background));
         setContentView(R.layout.activity_main);
+        configureSystemBarInsets();
 
         diary = new DiaryDbHelper(this);
         if (savedInstanceState != null) {
@@ -178,6 +181,35 @@ public final class MainActivity extends Activity {
         refreshSupabaseBackupUi();
         refreshHome();
         showScreen(homeScreen, 0);
+    }
+
+    private void configureSystemBarInsets() {
+        View root = findViewById(R.id.appRoot);
+        final int baseLeft = root.getPaddingLeft();
+        final int baseTop = root.getPaddingTop();
+        final int baseRight = root.getPaddingRight();
+        final int baseBottom = root.getPaddingBottom();
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            int left;
+            int top;
+            int right;
+            int bottom;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars());
+                left = bars.left;
+                top = bars.top;
+                right = bars.right;
+                bottom = bars.bottom;
+            } else {
+                left = insets.getSystemWindowInsetLeft();
+                top = insets.getSystemWindowInsetTop();
+                right = insets.getSystemWindowInsetRight();
+                bottom = insets.getSystemWindowInsetBottom();
+            }
+            view.setPadding(baseLeft + left, baseTop + top, baseRight + right, baseBottom + bottom);
+            return insets;
+        });
+        root.requestApplyInsets();
     }
 
     private void bindViews() {
