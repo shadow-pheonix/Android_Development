@@ -18,6 +18,7 @@
         <include android:id="@+id/nutritionScreen" layout="@layout/screen_nutrition_details" android:visibility="gone" />
         <include android:id="@+id/progressScreen" layout="@layout/screen_progress" android:visibility="gone" />
         <include android:id="@+id/profileScreen" layout="@layout/screen_profile" android:visibility="gone" />
+        <include android:id="@+id/accountScreen" layout="@layout/screen_account" android:visibility="gone" />
     </FrameLayout>
 
     <LinearLayout

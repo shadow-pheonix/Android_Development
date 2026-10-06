@@ -85,7 +85,7 @@ public final class MainActivity extends Activity {
     private SharedPreferences.OnSharedPreferenceChangeListener driveSyncStatusListener;
     private long renderedDriveDataChangeGeneration;
 
-    private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, bottomNav;
+    private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, accountScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
     private TextView navHomeIcon, navHomeLabel, navSearchIcon, navSearchLabel;
     private TextView navProgressIcon, navProgressLabel, navProfileIcon, navProfileLabel;
@@ -95,6 +95,7 @@ public final class MainActivity extends Activity {
     private TextView supabaseConnectionStatus, supabaseSyncStatus, supabaseConnectButton;
     private TextView supabaseSyncNowButton, supabaseRestoreButton, supabaseDisconnectButton;
     private View supabaseConnectedActions;
+    private TextView profileAccountStatus, profileAccountAction;
 
     private RingProgressView caloriesRing, proteinRing, carbsRing, fatRing;
     private TextView calorieValue, calorieGoalText, calorieLeft, proteinValue, carbsValue, fatValue;
@@ -179,6 +180,7 @@ public final class MainActivity extends Activity {
         SupabaseBackupScheduler.schedulePeriodic(this);
         refreshDriveBackupUi();
         refreshSupabaseBackupUi();
+        refreshAccountUi();
         refreshHome();
         showScreen(homeScreen, 0);
     }
@@ -220,6 +222,7 @@ public final class MainActivity extends Activity {
         nutritionScreen = findViewById(R.id.nutritionScreen);
         progressScreen = findViewById(R.id.progressScreen);
         profileScreen = findViewById(R.id.profileScreen);
+        accountScreen = findViewById(R.id.accountScreen);
         bottomNav = findViewById(R.id.bottomNav);
 
         navHome = findViewById(R.id.navHome);
@@ -273,6 +276,8 @@ public final class MainActivity extends Activity {
         supabaseSyncNowButton = findViewById(R.id.supabaseSyncNowButton);
         supabaseRestoreButton = findViewById(R.id.supabaseRestoreButton);
         supabaseDisconnectButton = findViewById(R.id.supabaseDisconnectButton);
+        profileAccountStatus = findViewById(R.id.profileAccountStatus);
+        profileAccountAction = findViewById(R.id.profileAccountAction);
         searchSectionTitle = findViewById(R.id.searchSectionTitle);
         searchMealTargetText = findViewById(R.id.searchMealTarget);
         shortcutAll = findViewById(R.id.shortcutAll);
@@ -343,11 +348,9 @@ public final class MainActivity extends Activity {
             if (progressController != null) progressController.refresh();
             showScreen(progressScreen, 2);
         });
-        navProfile.setOnClickListener(v -> {
-            refreshDriveBackupUi();
-            refreshSupabaseBackupUi();
-            showScreen(profileScreen, 3);
-        });
+        navProfile.setOnClickListener(v -> showProfileScreen());
+        profileAccountAction.setOnClickListener(v -> openAccountScreen());
+        findViewById(R.id.accountBack).setOnClickListener(v -> showProfileScreen());
         findViewById(R.id.homeSeeAll).setOnClickListener(v -> {
             setActiveMeal(defaultMealType());
             if (catalog != null) loadPopularFoods();
@@ -356,6 +359,60 @@ public final class MainActivity extends Activity {
         relogButton.setOnClickListener(v -> showRelogDialog());
         findViewById(R.id.homeNutritionCard).setOnClickListener(v -> openNutritionDetails());
         findViewById(R.id.nutritionBack).setOnClickListener(v -> showScreen(homeScreen, 0));
+    }
+
+    private void showProfileScreen() {
+        refreshDriveBackupUi();
+        refreshSupabaseBackupUi();
+        refreshAccountUi();
+        showScreen(profileScreen, 3);
+    }
+
+    private void openAccountScreen() {
+        refreshDriveBackupUi();
+        refreshSupabaseBackupUi();
+        refreshAccountUi();
+        showScreen(accountScreen, -1);
+    }
+
+    private void refreshAccountUi() {
+        if (profileAccountStatus == null || profileAccountAction == null) return;
+
+        DriveConnectionStore.State drive = new DriveConnectionStore(this).getState();
+        SupabaseConnectionStore.State supabase = new SupabaseConnectionStore(this).getState();
+        boolean connected = drive.connected || supabase.connected;
+
+        String nickname = "";
+        if (profileController != null && profileController.getSettings() != null
+                && profileController.getSettings().displayName != null) {
+            nickname = profileController.getSettings().displayName.trim();
+        }
+        String googleAccountName = drive.connected && drive.accountName != null
+                ? drive.accountName.trim() : "";
+        String supabaseEmail = supabase.connected && supabase.email != null
+                ? supabase.email.trim() : "";
+        String accountFallback = !googleAccountName.isEmpty() ? googleAccountName : supabaseEmail;
+
+        if (!connected) {
+            profileAccountStatus.setText("Not signed in • local data stays on this device");
+            profileAccountAction.setText("Log in / sign up");
+            styleCloudConnectButton(profileAccountAction, true);
+            return;
+        }
+
+        String identity = !nickname.isEmpty() ? nickname : accountFallback;
+        String providers;
+        if (drive.connected && supabase.connected) providers = "Google Drive + Supabase";
+        else if (drive.connected) providers = "Google Drive";
+        else providers = "Supabase";
+
+        if (identity.isEmpty()) {
+            profileAccountStatus.setText(providers + " connected");
+        } else {
+            profileAccountStatus.setText("Signed in as " + identity + " • " + providers);
+        }
+        profileAccountAction.setText("Manage account");
+        styleCloudConnectButton(profileAccountAction, false);
     }
 
     private void configureSearch() {
@@ -1127,7 +1184,9 @@ public final class MainActivity extends Activity {
         nutritionScreen.setVisibility(target == nutritionScreen ? View.VISIBLE : View.GONE);
         progressScreen.setVisibility(target == progressScreen ? View.VISIBLE : View.GONE);
         profileScreen.setVisibility(target == profileScreen ? View.VISIBLE : View.GONE);
-        boolean immersive = target == detailScreen || target == manualScreen || target == nutritionScreen;
+        accountScreen.setVisibility(target == accountScreen ? View.VISIBLE : View.GONE);
+        boolean immersive = target == detailScreen || target == manualScreen || target == nutritionScreen
+                || target == accountScreen;
         bottomNav.setVisibility(immersive ? View.GONE : View.VISIBLE);
         if (!immersive) updateNavColors(navIndex);
     }
@@ -1144,6 +1203,7 @@ public final class MainActivity extends Activity {
     }
 
     private void refreshTargetsAndProgress() {
+        refreshAccountUi();
         refreshHome();
         if (nutritionScreen != null && nutritionScreen.getVisibility() == View.VISIBLE) refreshNutritionDetails();
         if (progressController != null) progressController.refresh();
@@ -2300,6 +2360,7 @@ public final class MainActivity extends Activity {
         refreshAfterDriveDataChangeIfNeeded();
         refreshDriveBackupUi();
         refreshSupabaseBackupUi();
+        refreshAccountUi();
     }
 
     @Override
@@ -2335,7 +2396,9 @@ public final class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (nutritionScreen.getVisibility() == View.VISIBLE) {
+        if (accountScreen.getVisibility() == View.VISIBLE) {
+            showProfileScreen();
+        } else if (nutritionScreen.getVisibility() == View.VISIBLE) {
             showScreen(homeScreen, 0);
         } else if (detailScreen.getVisibility() == View.VISIBLE || manualScreen.getVisibility() == View.VISIBLE) {
             showScreen(searchScreen, 1);

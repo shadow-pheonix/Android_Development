@@ -7,7 +7,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Backup &amp; sync"
+        android:text="Cloud accounts"
         android:textColor="@color/text_primary"
         android:textSize="17sp"
         android:textStyle="bold" />
@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="3dp"
-        android:text="Google Drive is the simplest private backup. Supabase is optional for account-based multi-device sync."
+        android:text="Use Google Drive for private app-data backup, Supabase for email-based cloud sync, or both."
         android:textColor="@color/text_secondary"
         android:textSize="12sp" />
 </LinearLayout>
