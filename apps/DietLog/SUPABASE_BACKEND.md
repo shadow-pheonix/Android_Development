@@ -7,8 +7,10 @@ authenticated user.
 ## Security model
 
 - The Android app uses a Supabase **publishable** key, never a secret/service-role key.
-- Users authenticate with Supabase Auth email/password. Passwords are sent only to the Auth API and
-  are never stored by DietLog.
+- Users authenticate with Supabase Auth passwordless email OTP. DietLog requests the email code
+  through `/auth/v1/otp` and exchanges the six-digit code through `/auth/v1/verify`.
+- No password is created or stored by DietLog. OTP codes are used only for the active verification
+  request and are never persisted.
 - The refresh token is encrypted with an Android Keystore AES-GCM key before local persistence.
   Access tokens are kept only in memory.
 - `public.dietlog_snapshots` has Row Level Security enabled and every policy binds `user_id` to
@@ -18,6 +20,29 @@ authenticated user.
 - Snapshot payloads are the same gzip-compressed logical backups used by the Drive provider. The
   table caps their Base64 representation to 16 MiB; the Android client caps compressed snapshots to
   12 MiB.
+
+
+## Passwordless email OTP configuration
+
+DietLog's Supabase sign-in flow is intentionally provider-free: enter an email address, receive a
+six-digit code from Supabase Auth, enter the code, and continue with the resulting Supabase session.
+No GitHub or Google OAuth application is involved, and Supabase email-code auth does not require an
+Android signing SHA-1.
+
+Supabase implements email OTP and Magic Link delivery through the same auth email template. The
+**Magic Link** template must contain `{{ .Token }}` for the user to receive a numeric code. A minimal
+body can be:
+
+```html
+<h2>DietLog sign-in code</h2>
+<p>Enter this code in DietLog: {{ .Token }}</p>
+```
+
+As of October 2026, new Supabase Free-plan projects using Supabase's default SMTP service cannot
+customize auth email templates. Those projects therefore send the default magic link instead of a
+numeric code. To use DietLog's six-digit-code flow on such a project, configure custom SMTP (or use a
+Supabase plan/configuration that allows editing the auth email template), then update the Magic Link
+template to include `{{ .Token }}`. Do not add a third-party OAuth provider as a workaround.
 
 ## Schema
 

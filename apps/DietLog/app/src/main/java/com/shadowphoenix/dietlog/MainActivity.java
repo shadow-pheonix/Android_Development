@@ -619,69 +619,112 @@ public final class MainActivity extends Activity {
         content.addView(email, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        EditText password = new EditText(this);
-        password.setHint("Password (6+ characters)");
-        password.setSingleLine(true);
-        password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        LinearLayout.LayoutParams passwordParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        passwordParams.topMargin = dp(8);
-        content.addView(password, passwordParams);
-
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Supabase cloud sync")
-                .setMessage("Sign in to an existing account or create one. DietLog never stores your password.")
+                .setMessage("Enter your email and Supabase will send a one-time sign-in code. No password is created or stored by DietLog.")
                 .setView(content)
                 .setNegativeButton("Cancel", null)
-                .setNeutralButton("Create account", (dialog, which) ->
-                        authenticateSupabase(email.getText().toString(), password.getText().toString(), true))
-                .setPositiveButton("Sign in", (dialog, which) ->
-                        authenticateSupabase(email.getText().toString(), password.getText().toString(), false))
-                .show();
+                .setPositiveButton("Send code", null)
+                .create();
+        dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                .setOnClickListener(v -> {
+                    String value = email.getText().toString().trim();
+                    if (value.isEmpty() || !value.contains("@")) {
+                        Toast.makeText(this, "Enter a valid email address", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    dialog.dismiss();
+                    requestSupabaseEmailCode(value);
+                }));
+        dialog.show();
     }
 
-    private void authenticateSupabase(String email, String password, boolean createAccount) {
-        String normalizedEmail = email == null ? "" : email.trim();
+    private void requestSupabaseEmailCode(String email) {
+        String normalizedEmail = email == null ? "" : email.trim().toLowerCase(Locale.US);
         if (normalizedEmail.isEmpty() || !normalizedEmail.contains("@")) {
             Toast.makeText(this, "Enter a valid email address", Toast.LENGTH_LONG).show();
             return;
         }
-        if (password == null || password.length() < 6) {
-            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_LONG).show();
-            return;
-        }
 
         setSupabaseControlsEnabled(false);
-        supabaseSyncStatus.setText(createAccount ? "Creating Supabase account…" : "Signing in to Supabase…");
+        supabaseSyncStatus.setText("Sending Supabase sign-in code…");
         supabaseExecutor.execute(() -> {
             try {
-                SupabaseAuthClient client = new SupabaseAuthClient();
-                if (createAccount) {
-                    SupabaseAuthClient.SignUpResult result = client.signUp(normalizedEmail, password);
-                    if (result.emailConfirmationRequired || result.session == null) {
-                        new SupabaseSyncStatusStore(MainActivity.this).clearError();
-                        runOnUiThread(() -> {
-                            setSupabaseControlsEnabled(true);
-                            refreshSupabaseBackupUi();
-                            Toast.makeText(MainActivity.this,
-                                    "Account created. Check your email to confirm it, then sign in.",
-                                    Toast.LENGTH_LONG).show();
-                        });
-                        return;
-                    }
-                    completeSupabaseConnection(result.session);
-                } else {
-                    completeSupabaseConnection(client.signIn(normalizedEmail, password));
-                }
+                new SupabaseAuthClient().sendEmailOtp(normalizedEmail);
+                new SupabaseSyncStatusStore(MainActivity.this).clearError();
+                runOnUiThread(() -> {
+                    setSupabaseControlsEnabled(true);
+                    supabaseSyncStatus.setText("Code requested for " + normalizedEmail + " • enter it to finish sign-in");
+                    showSupabaseOtpDialog(normalizedEmail);
+                });
             } catch (Exception e) {
                 String message = safeMessage(e);
                 new SupabaseSyncStatusStore(MainActivity.this).markError(message, false);
-                AppLogger.e("Supabase account authentication failed", e);
+                AppLogger.e("Supabase email code request failed", e);
                 runOnUiThread(() -> {
                     setSupabaseControlsEnabled(true);
                     refreshSupabaseBackupUi();
                     Toast.makeText(MainActivity.this,
-                            "Supabase sign-in failed: " + message, Toast.LENGTH_LONG).show();
+                            "Could not send Supabase sign-in code: " + message, Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+    }
+
+    private void showSupabaseOtpDialog(String email) {
+        EditText code = new EditText(this);
+        code.setHint("6-digit code");
+        code.setSingleLine(true);
+        code.setInputType(InputType.TYPE_CLASS_NUMBER);
+
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(22), dp(8), dp(22), 0);
+        content.addView(code, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Enter Supabase code")
+                .setMessage("Enter the 6-digit code sent to " + email
+                        + ". If the email contains only a sign-in link, Supabase email delivery is not configured for numeric OTP codes yet.")
+                .setView(content)
+                .setNegativeButton("Cancel", null)
+                .setNeutralButton("Resend code", null)
+                .setPositiveButton("Verify", null)
+                .create();
+        dialog.setOnShowListener(ignored -> {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                String token = code.getText().toString().trim();
+                if (!token.matches("\\d{6}")) {
+                    Toast.makeText(this, "Enter the 6-digit Supabase code", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                dialog.dismiss();
+                verifySupabaseEmailCode(email, token);
+            });
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+                dialog.dismiss();
+                requestSupabaseEmailCode(email);
+            });
+        });
+        dialog.show();
+    }
+
+    private void verifySupabaseEmailCode(String email, String token) {
+        setSupabaseControlsEnabled(false);
+        supabaseSyncStatus.setText("Verifying Supabase sign-in code…");
+        supabaseExecutor.execute(() -> {
+            try {
+                completeSupabaseConnection(new SupabaseAuthClient().verifyEmailOtp(email, token));
+            } catch (Exception e) {
+                String message = safeMessage(e);
+                new SupabaseSyncStatusStore(MainActivity.this).markError(message, false);
+                AppLogger.e("Supabase email code verification failed", e);
+                runOnUiThread(() -> {
+                    setSupabaseControlsEnabled(true);
+                    refreshSupabaseBackupUi();
+                    Toast.makeText(MainActivity.this,
+                            "Supabase code verification failed: " + message, Toast.LENGTH_LONG).show();
                 });
             }
         });
@@ -841,8 +884,8 @@ public final class MainActivity extends Activity {
 
         supabaseConnectedActions.setVisibility(connection.connected ? View.VISIBLE : View.GONE);
         supabaseConnectButton.setText(connection.connected
-                ? (status.reauthRequired ? "Sign in again" : "Change / sign in again")
-                : "Sign in / create account");
+                ? (status.reauthRequired ? "Send a new code" : "Change Supabase account")
+                : "Sign in with email code");
 
         if (!configured) {
             supabaseConnectionStatus.setText("Not configured in this APK");
@@ -862,7 +905,7 @@ public final class MainActivity extends Activity {
             if (!status.lastError.isEmpty()) {
                 supabaseSyncStatus.setText("Last sign-in issue: " + status.lastError);
             } else {
-                supabaseSyncStatus.setText("DietLog stays local-first. Sign in to add Supabase backup and multi-device merge.");
+                supabaseSyncStatus.setText("DietLog stays local-first. Sign in with a Supabase email code to add backup and multi-device merge.");
             }
             return;
         }
