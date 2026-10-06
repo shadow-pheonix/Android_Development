@@ -686,7 +686,7 @@ public final class MainActivity extends Activity {
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Enter Supabase code")
                 .setMessage("Enter the 6-digit code sent to " + email
-                        + ". If the email contains only a sign-in link, the Supabase project email template must be configured for OTP codes.")
+                        + ". If the email contains only a sign-in link, Supabase email delivery is not configured for numeric OTP codes yet.")
                 .setView(content)
                 .setNegativeButton("Cancel", null)
                 .setNeutralButton("Resend code", null)

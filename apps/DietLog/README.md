@@ -31,7 +31,7 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 - Tap a search result to populate the logger and view product/nutrition details.
 - SQLite meal history with micronutrient snapshots for new logs and offline-catalog enrichment for older compatible entries.
 - Optional Google Drive `appDataFolder` backup/sync: local-first writes, background upload/merge, per-device snapshots, deletion tombstones, and rolling recovery history.
-- Optional Supabase cloud sync alongside Drive: email/password accounts, Android-Keystore-encrypted refresh sessions, RLS-protected per-user snapshots, background merge/upload, manual restore, and rolling recovery history.
+- Optional Supabase cloud sync alongside Drive: passwordless email-code accounts, Android-Keystore-encrypted refresh sessions, RLS-protected per-user snapshots, background merge/upload, manual restore, and rolling recovery history.
 - Mandatory bounded logs, crash capture and `Export diagnostics`.
 
 Barcode decoding uses ZXing Core under the Apache License 2.0; camera capture uses Android Camera2 directly so scanning has no runtime network/service dependency.
@@ -63,13 +63,21 @@ Debug builds currently use the `.debug` application ID suffix, so OAuth registra
 ## Supabase cloud sync setup
 
 Supabase is an optional second cloud provider; Google Drive remains available independently. DietLog
-uses Supabase Auth email/password sign-in and the Data API with a public publishable key. The app never
-stores the password, never includes a `service_role`/secret key, and encrypts the refresh token at rest
-using Android Keystore AES-GCM. Access tokens stay in memory only.
+uses Supabase Auth passwordless email sign-in and the Data API with a public publishable key. The user
+enters an email address, receives a six-digit one-time code, and verifies that code in DietLog. No
+password is created or stored by the app. The app never includes a `service_role`/secret key, encrypts
+the refresh token at rest using Android Keystore AES-GCM, and keeps access tokens in memory only.
 
 The backend schema and RLS policies are documented in `SUPABASE_BACKEND.md`. Apply them only to the
 dedicated DietLog Supabase project. Each authenticated user can access only rows where
 `user_id = auth.uid()`.
+
+For numeric email codes, Supabase's **Magic Link** email template must include `{{ .Token }}` rather
+than only `{{ .ConfirmationURL }}`. As of October 2026, new Free-plan Supabase projects using the
+default SMTP service cannot customize auth email templates, so they send a magic link instead. Numeric
+OTP delivery on those projects requires configuring custom SMTP (or another Supabase plan/configuration
+that permits editing the auth template). This is a Supabase email-delivery limitation; DietLog does not
+need GitHub, Google, another OAuth provider, or an Android signing SHA-1 for Supabase email-code auth.
 
 Android builds receive the public project configuration from these environment variables:
 

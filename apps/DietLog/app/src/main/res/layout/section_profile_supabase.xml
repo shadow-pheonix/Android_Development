@@ -92,7 +92,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="Supabase stores private per-account DietLog snapshots behind row-level security. No password is created or stored; the refresh token is encrypted with Android Keystore. Google Drive remains available separately."
+        android:text="Supabase stores private per-account DietLog snapshots behind row-level security. Sign-in uses a one-time email code; the refresh token is encrypted with Android Keystore. Google Drive remains available separately."
         android:textColor="@color/text_tertiary"
         android:textSize="11sp" />
 </LinearLayout>
