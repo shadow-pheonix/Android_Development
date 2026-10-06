@@ -23,11 +23,12 @@ Rules:
 1. **MUST use the chat-local workspace for the repository's local-first development and validation steps.**
 2. **MUST NOT search for, connect to, invoke, or modify `windows-bridge` merely to satisfy a requirement to work “locally”.**
 3. `windows-bridge` is **opt-in only**. Use it only when the user explicitly asks to use their Windows machine or explicitly asks to use `windows-bridge` for the current task.
-4. For an existing repository/app task, the normal source handoff is a **ZIP uploaded by the user containing the latest GitHub commit**. If no current trusted chat-local snapshot exists, **MUST ask the user to upload that latest-commit ZIP before editing**.
-5. After upload, **MUST extract the ZIP into the chat-local workspace and develop from those extracted files**. Do not use `git clone`, the user's Windows checkout, or GitHub-file-by-file reconstruction as the normal source-ingest path.
-6. **MUST record the base commit SHA associated with the uploaded ZIP and verify the target GitHub branch still points to that commit before publishing changes.** If the branch has advanced, request a fresh ZIP of the new latest commit rather than silently merging or rebuilding the source snapshot from GitHub.
-7. The GitHub connector/API may be used to verify repository/commit state and to publish the finalized, locally developed change. It is **not** the normal development workspace and is **not** a substitute for the user-uploaded source ZIP.
-8. A phrase such as “current local checkout” below therefore means the repository snapshot/worktree extracted into the **chat-local workspace**, not a checkout on the user's computer.
+4. For an existing repository/app task, **MUST first inspect whether the required repository files already exist in the chat-local workspace**. If they do, **MUST verify that the existing chat-local repository snapshot matches the latest intended GitHub branch commit byte-for-byte**. Verification may use Git tree/blob metadata plus locally calculated hashes or an equivalent byte-accurate method. If it matches, **MUST reuse those existing files and MUST NOT ask the user for another ZIP**. Record that matching commit SHA as the base commit.
+5. Only when the required chat-local files are missing, incomplete, cannot be verified byte-for-byte, or do not match the latest intended GitHub commit, **MUST ask the user to upload a ZIP of that exact latest commit before editing**. Whenever asking for the ZIP, **MUST include a direct exact-commit archive link in the same message**, using `https://github.com/shadow-pheonix/Android_Development/archive/<COMMIT_SHA>.zip`. Do not use `git clone`, GitHub file-by-file reconstruction, individual-file downloads, or alternate repository-import methods as a substitute for requesting the ZIP.
+6. After a required ZIP is uploaded, **MUST extract it into the chat-local workspace and develop from those extracted files**.
+7. **MUST record the base commit SHA for the verified chat-local snapshot, whether it was reused or extracted from a ZIP, and verify the target GitHub branch still points to that commit both before editing and before publishing changes.** If the branch has advanced, request a fresh ZIP of the new latest commit and include the direct exact-commit archive link rather than silently merging, cloning, reconstructing, or importing the newer files from GitHub.
+8. The GitHub connector/API may be used to verify repository/commit/tree/blob state and to publish the finalized, locally developed change. It is **not** the normal development workspace and is **not** a substitute for either a verified matching chat-local snapshot or, when needed, the user-uploaded source ZIP.
+9. A phrase such as “current local checkout” below therefore means a verified matching repository snapshot/worktree in the **chat-local workspace**, including one extracted from a user-uploaded ZIP, not a checkout on the user's computer.
 
 These definitions apply in fresh chats as well as continuing chats unless the user explicitly overrides them.
 
@@ -63,11 +64,11 @@ Use this route when the requested app does not yet exist in the repository.
 
 **Required order:**
 
-**read root `AGENTS.md` → obtain the latest-commit ZIP from the user → extract it into the chat-local workspace → create `apps/<AppName>/` in that workspace → complete development there (including mandatory diagnostics) → validate locally → review final diff → publish one coherent commit → GitHub Actions build/test → APK/artifact**
+**read root `AGENTS.md` → inspect the chat-local workspace → verify any existing repository snapshot byte-for-byte against the latest intended GitHub commit → reuse it if it matches, otherwise request the exact latest-commit ZIP with its direct download link and extract it → create `apps/<AppName>/` in that workspace → complete development there (including mandatory diagnostics) → validate locally → review final diff → publish one coherent commit → GitHub Actions build/test → APK/artifact**
 
 Rules:
 
-1. **MUST start from the user's ZIP of the latest repository commit when modifying this existing monorepo.**
+1. **MUST start from an existing chat-local repository snapshot only when it has been verified byte-for-byte against the latest intended GitHub commit; otherwise MUST request and use the user's ZIP of that exact commit, including the direct download link when requesting it.**
 2. **MUST develop the app in the chat-local workspace first.**
 3. **MUST complete and verify the intended development batch in the chat-local workspace before committing app files to GitHub.**
 4. **MUST implement the mandatory diagnostics baseline before the first APK handoff.**
@@ -80,26 +81,27 @@ Use this route when the app already exists in `apps/<AppName>/` or as an explici
 
 **Required order:**
 
-**read root `AGENTS.md` → obtain the user-uploaded ZIP of the latest GitHub commit → extract it into the chat-local workspace → verify the ZIP's base commit is still current → identify exact target app → read app-level instructions → verify diagnostics baseline exists → develop locally → validate locally → review final diff → publish one coherent commit → GitHub Actions build/test → APK/artifact**
+**read root `AGENTS.md` → inspect the chat-local workspace → verify any existing repository snapshot byte-for-byte against the latest intended GitHub commit → reuse it if it matches, otherwise request the exact latest-commit ZIP with its direct download link and extract it → verify the recorded base commit is still current → identify exact target app → read app-level instructions → verify diagnostics baseline exists → develop locally → validate locally → review final diff → publish one coherent commit → GitHub Actions build/test → APK/artifact**
 
 Rules:
 
-1. If no current trusted chat-local snapshot exists, **MUST request the latest-commit repository ZIP from the user before editing**.
-2. **MUST extract and use that ZIP as the source working tree.** Do not `git clone` or reconstruct the repository through the GitHub connector as the normal workflow.
-3. If a chat-local snapshot already exists, **MUST verify its recorded base commit still matches the intended GitHub branch before editing**. If it does not, request a fresh latest-commit ZIP.
-4. **MUST inspect the existing app, its build files, README, app-level `AGENTS.md` if present, and diagnostics implementation before modifying it.**
-5. If the app lacks the mandatory diagnostics baseline, **MUST add it as part of active development unless the user explicitly requests otherwise.**
-6. **MUST continue from the extracted existing source.** Do not recreate the app from memory or start a disconnected replacement project.
-7. **MUST complete and verify changes in the chat-local workspace before publishing them.**
-8. Direct GitHub editing is not a substitute for the required chat-local workflow.
-9. **MUST NOT use `windows-bridge` to obtain a checkout or run validation unless the user explicitly requested `windows-bridge` or their Windows machine for this task.**
+1. **MUST first inspect for an existing chat-local repository snapshot and verify it byte-for-byte against the latest intended GitHub branch commit.** If it matches, reuse it and do not request another ZIP.
+2. If the required chat-local files are missing, incomplete, unverifiable, or mismatched, **MUST request the exact latest-commit repository ZIP from the user before editing and include its direct GitHub archive link in the same message**.
+3. **MUST extract and use a required uploaded ZIP as the source working tree.** Do not `git clone`, reconstruct the repository through the GitHub connector, download files individually, or try alternate import paths as a substitute for the ZIP.
+4. For either a reused verified snapshot or an uploaded ZIP, **MUST record the base commit and verify it still matches the intended GitHub branch before editing and again before publishing**. If the branch advances, request a fresh exact-commit ZIP and include its direct archive link.
+5. **MUST inspect the existing app, its build files, README, app-level `AGENTS.md` if present, and diagnostics implementation before modifying it.**
+6. If the app lacks the mandatory diagnostics baseline, **MUST add it as part of active development unless the user explicitly requests otherwise.**
+7. **MUST continue from the extracted existing source.** Do not recreate the app from memory or start a disconnected replacement project.
+8. **MUST complete and verify changes in the chat-local workspace before publishing them.**
+9. Direct GitHub editing is not a substitute for the required chat-local workflow.
+10. **MUST NOT use `windows-bridge` to obtain a checkout or run validation unless the user explicitly requested `windows-bridge` or their Windows machine for this task.**
 
 ### Route C — shared code, CI, docs, or repository infrastructure
 
 Use this route when the task targets `shared/`, `.github/`, root documentation, or repository-wide infrastructure rather than one app.
 
-1. **MUST start from the user-uploaded ZIP of the latest GitHub commit when no current trusted chat-local snapshot exists.**
-2. **MUST work in the extracted chat-local workspace first and inspect the current repository state before editing.**
+1. **MUST first inspect for an existing chat-local repository snapshot and verify it byte-for-byte against the latest intended GitHub commit.** Reuse it when it matches; otherwise request the exact latest-commit ZIP from the user and include its direct archive link.
+2. **MUST work in the verified chat-local workspace first and inspect the current repository state before editing.**
 3. Determine which apps are affected before running validation.
 4. Validate only affected apps unless a shared change legitimately requires broader testing.
 5. Do not restructure unrelated apps as a side effect.
@@ -154,8 +156,8 @@ Never commit private signing keys, passwords, tokens, credentials, or secrets in
 A change may be published only when all applicable items are true:
 
 - intended work for the current batch is complete;
-- the source working tree came from the user's latest-commit ZIP (or from a still-current trusted ZIP snapshot already present in this chat);
-- the recorded base commit was verified against the intended GitHub branch before publishing;
+- the source working tree is a chat-local repository snapshot verified byte-for-byte against the recorded latest intended GitHub commit, whether reused directly or extracted from a required user-uploaded ZIP;
+- the recorded base commit was verified against the intended GitHub branch before editing and again before publishing;
 - mandatory diagnostics support is present for app-development work;
 - checks available in the chat-local workspace passed;
 - final diff was reviewed;

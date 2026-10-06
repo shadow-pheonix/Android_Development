@@ -6,13 +6,15 @@ Use this document after reading the root `AGENTS.md`.
 
 For AI/assistant tasks in ChatGPT, **local means the chat-local workspace attached to the current chat/agent session**. It does not mean the user's Windows PC and does not authorize `windows-bridge`.
 
-For an existing repository/app, the normal ChatGPT source handoff is a **ZIP uploaded by the user containing the latest GitHub commit**.
+For an existing repository/app, first inspect whether the required repository files already exist in the chat-local workspace. Reuse them when the local repository snapshot can be verified byte-for-byte against the latest intended GitHub commit. Request a ZIP only when the required local files are missing, incomplete, unverifiable, or mismatched.
 
 - Do not search for, connect to, or invoke `windows-bridge` merely to satisfy a “local” or “local-first” instruction.
 - Use `windows-bridge` only when the user explicitly asks for it or explicitly asks to perform the current task on their Windows machine.
 - Do not use `git clone` as the normal source-ingest path for ChatGPT development.
-- Do not reconstruct the repository file-by-file through the GitHub connector when the user can provide the latest-commit ZIP.
-- Extract the user's ZIP into the chat-local workspace, record its base commit SHA, and verify the intended GitHub branch still matches that commit before editing/publishing.
+- Do not reconstruct the repository file-by-file through the GitHub connector, download individual files as a substitute, or try alternate import methods merely to avoid requesting a required ZIP.
+- If the existing chat-local snapshot matches the latest intended commit byte-for-byte, record that commit SHA and use the existing files without asking for another ZIP.
+- If a ZIP is required, ask the user for the exact latest-commit ZIP and include the direct archive link `https://github.com/shadow-pheonix/Android_Development/archive/<COMMIT_SHA>.zip` in the same message; then extract it into the chat-local workspace and record its base commit SHA.
+- Verify the intended GitHub branch still matches the recorded base commit before editing and again before publishing.
 - Use the GitHub connector/API for repository-state verification, final publication, CI inspection, and artifact retrieval.
 
 ## Decision tree
@@ -22,9 +24,9 @@ For an existing repository/app, the normal ChatGPT source handoff is a **ZIP upl
    - **Yes** → Route B: Existing app.
    - **Task is not app-specific** → Route C: Shared/CI/docs/infrastructure.
 
-2. **Is there a trusted ZIP-derived chat-local repository snapshot for the intended GitHub commit?**
-   - **No** → ask the user to upload a ZIP of the latest intended commit, then extract it into the chat-local workspace before editing.
-   - **Yes** → verify its recorded base commit still matches the intended GitHub branch. If the branch advanced, request a fresh latest-commit ZIP.
+2. **Are the required repository files already present in the chat-local workspace, and do they match the latest intended GitHub commit byte-for-byte?**
+   - **Yes** → record that commit SHA, reuse the existing files, and do not request another ZIP.
+   - **No / missing / incomplete / unverifiable** → ask the user to upload a ZIP of the exact latest intended commit, include its direct GitHub archive link in the same message, then extract it into the chat-local workspace before editing.
 
 3. **Does the target app contain its own `AGENTS.md`?**
    - **Yes** → read it after the root `AGENTS.md` and before editing.
@@ -45,13 +47,13 @@ For an existing repository/app, the normal ChatGPT source handoff is a **ZIP upl
 
 Target path: `apps/<AppName>/`.
 
-Do not create the app piecemeal through GitHub connector writes. Start from the user's latest-commit monorepo ZIP and build the intended batch in the extracted chat-local working environment first.
+Do not create the app piecemeal through GitHub connector writes. Start from an existing chat-local monorepo snapshot only when it matches the latest intended GitHub commit byte-for-byte; otherwise request the exact latest-commit ZIP with its direct archive link and build the intended batch in the extracted chat-local working environment first.
 
 Minimum sequence:
 
 1. Read root `AGENTS.md`.
-2. Obtain the latest-commit monorepo ZIP from the user.
-3. Extract it into the chat-local workspace and record/verify the base commit SHA.
+2. Inspect for an existing chat-local monorepo snapshot and verify it byte-for-byte against the latest intended GitHub commit.
+3. Reuse it if it matches; otherwise request the exact latest-commit ZIP from the user with its direct archive link, extract it, and record/verify the base commit SHA.
 4. Choose a unique app directory and application ID.
 5. Create the complete app in the chat-local workspace.
 6. Implement mandatory diagnostics export to `AppDebug/<AppName>/` according to [DIAGNOSTICS.md](DIAGNOSTICS.md).
@@ -71,8 +73,8 @@ Never reconstruct an existing app from memory in a fresh chat.
 Minimum sequence:
 
 1. Read root `AGENTS.md`.
-2. Obtain from the user a ZIP of the latest intended GitHub commit.
-3. Extract it into the chat-local workspace; record the base commit SHA and verify the intended GitHub branch still matches it.
+2. Inspect for an existing chat-local repository snapshot and verify it byte-for-byte against the latest intended GitHub commit.
+3. Reuse it if it matches; otherwise request the exact latest-commit ZIP from the user with its direct archive link, extract it into the chat-local workspace, and record the base commit SHA. Verify the intended GitHub branch still matches that SHA before editing.
 4. Locate the exact target app.
 5. Read its README, app-level `AGENTS.md`, build files, and relevant source.
 6. Inspect whether the mandatory diagnostics baseline exists; add it during active development if missing unless explicitly deferred.
@@ -104,8 +106,8 @@ Examples:
 
 Minimum sequence:
 
-1. Obtain the latest-commit repository ZIP from the user if no trusted current chat-local snapshot exists.
-2. Extract it into the chat-local workspace and record/verify the base commit SHA.
+1. Inspect for an existing chat-local repository snapshot and verify it byte-for-byte against the latest intended GitHub commit.
+2. Reuse it if it matches; otherwise request the exact latest-commit ZIP from the user with its direct archive link, extract it into the chat-local workspace, and record/verify the base commit SHA.
 3. Identify affected apps/workflows.
 4. Make the change in the chat-local workspace.
 5. Run narrow validation there first.

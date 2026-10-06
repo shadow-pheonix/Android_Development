@@ -10,23 +10,30 @@ Throughout this document, words such as **local**, **locally**, **local checkout
 
 **Do not search for or invoke `windows-bridge` merely because this workflow requires local development.** `windows-bridge` may be used only when the user explicitly asks to use their Windows machine or explicitly requests `windows-bridge` for the current task.
 
-## 1. Start from the user-uploaded latest-commit ZIP
+## 1. Reuse a matching chat-local snapshot; otherwise request the latest-commit ZIP
 
-For an existing repository/app, the normal source handoff is a **ZIP uploaded by the user containing the latest GitHub commit**.
+For an existing repository/app, first inspect whether the required repository files already exist in the chat-local workspace.
 
-When no current trusted chat-local snapshot exists:
+When an existing chat-local repository snapshot is present:
 
-1. Ask the user to upload the ZIP for the latest intended GitHub commit.
-2. Record the exact base commit SHA supplied in the handoff or otherwise established for that ZIP.
-3. Extract the ZIP into the chat-local workspace.
+1. Determine the latest commit SHA of the intended GitHub branch.
+2. Verify that the chat-local repository snapshot matches that commit **byte-for-byte**, using Git tree/blob metadata plus locally calculated hashes or an equivalent byte-accurate method.
+3. If it matches, record that commit SHA as the base commit and reuse the existing chat-local files. **Do not ask the user to upload another ZIP.**
 4. Confirm the target app/path before editing.
-5. Verify through GitHub that the intended branch still points to the recorded base commit.
+5. Verify again immediately before editing that the intended branch still points to the recorded base commit.
 
-If the GitHub branch has advanced since the ZIP was created, **do not silently merge, clone, or reconstruct the newer repository state**. Ask the user to upload a fresh ZIP of the new latest commit.
+Only when the required chat-local files are missing, incomplete, cannot be verified byte-for-byte, or do not match the latest intended GitHub commit:
 
-If a trusted ZIP-derived chat-local snapshot already exists in the current conversation, it may be reused only after verifying its recorded base commit is still current for the intended branch.
+1. Ask the user to upload the ZIP for that exact latest commit.
+2. In the same message, provide the direct exact-commit archive link: `https://github.com/shadow-pheonix/Android_Development/archive/<COMMIT_SHA>.zip`.
+3. Record the exact base commit SHA for the ZIP.
+4. Extract the ZIP into the chat-local workspace.
+5. Confirm the target app/path before editing.
+6. Verify through GitHub that the intended branch still points to the recorded base commit.
 
-**Do not use `git clone` as the normal ChatGPT source-ingest workflow. Do not reconstruct the working tree file-by-file through the GitHub connector when the user can provide the ZIP.** The GitHub connector is for verification and final publication, not the primary development filesystem.
+If the GitHub branch advances after the chat-local source snapshot was verified, **do not silently merge, clone, reconstruct, or import the newer repository state**. Ask the user to upload a fresh ZIP of the new latest commit and include the direct exact-commit archive link in the same message.
+
+**Do not use `git clone` as the normal ChatGPT source-ingest workflow. Do not reconstruct the working tree file-by-file through the GitHub connector, download individual repository files as a substitute, or try alternate import methods merely to avoid requesting the ZIP.** The GitHub connector is for verification and final publication, not the primary development filesystem.
 
 Do not substitute a checkout on the user's Windows machine for this step unless the user explicitly requested Windows-machine access.
 
@@ -40,7 +47,7 @@ For app development, verify that the mandatory diagnostics baseline from [DIAGNO
 
 ## 3. Develop in the chat-local workspace
 
-Make source, resource, script, workflow, and configuration changes in the ZIP-derived chat-local working copy.
+Make source, resource, script, workflow, and configuration changes in the verified chat-local working copy, whether it was reused directly or extracted from a required ZIP.
 
 Prefer a small number of coherent changes over a large matrix of speculative experiments.
 
@@ -80,7 +87,7 @@ Before publishing, verify:
 
 Publish only when the current batch is internally complete and verified in the chat-local workspace.
 
-Before publishing, verify again that the intended GitHub branch still points to the ZIP's recorded base commit. If it has advanced, stop and obtain a fresh latest-commit ZIP from the user rather than overwriting or merging blindly.
+Before publishing, verify again that the intended GitHub branch still points to the recorded base commit. If it has advanced, stop and obtain a fresh latest-commit ZIP from the user, including the direct exact-commit archive link in the request, rather than overwriting, merging, cloning, or reconstructing blindly.
 
 Prefer one focused commit with a clear message for one coherent batch.
 
