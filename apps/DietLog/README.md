@@ -31,6 +31,7 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 - Tap a search result to populate the logger and view product/nutrition details.
 - SQLite meal history with micronutrient snapshots for new logs and offline-catalog enrichment for older compatible entries.
 - Optional Google Drive `appDataFolder` backup/sync: local-first writes, background upload/merge, per-device snapshots, deletion tombstones, and rolling recovery history.
+- Optional Supabase cloud sync alongside Drive: email/password accounts, Android-Keystore-encrypted refresh sessions, RLS-protected per-user snapshots, background merge/upload, manual restore, and rolling recovery history.
 - Mandatory bounded logs, crash capture and `Export diagnostics`.
 
 Barcode decoding uses ZXing Core under the Apache License 2.0; camera capture uses Android Camera2 directly so scanning has no runtime network/service dependency.
@@ -58,6 +59,28 @@ The SQLite schema preserves the useful structured fields (barcode, brand, catego
 Drive backup uses Google Identity Services authorization and the narrow `drive.appdata` scope. The Android distribution must be registered in a Google Cloud project with its package name and SHA-1 signing certificate, and the Google Drive API must be enabled for that project. No OAuth access token is persisted by DietLog.
 
 Debug builds currently use the `.debug` application ID suffix, so OAuth registration for CI/debug APKs must match `com.shadowphoenix.dietlog.debug` and the SHA-1 of the signing certificate used for that APK. The exact certificate SHA-1 is included in `app-info.txt` inside an exported diagnostics ZIP. Authorization failures are logged with the Google status code so OAuth configuration errors are actionable.
+
+## Supabase cloud sync setup
+
+Supabase is an optional second cloud provider; Google Drive remains available independently. DietLog
+uses Supabase Auth email/password sign-in and the Data API with a public publishable key. The app never
+stores the password, never includes a `service_role`/secret key, and encrypts the refresh token at rest
+using Android Keystore AES-GCM. Access tokens stay in memory only.
+
+The backend schema and RLS policies are documented in `SUPABASE_BACKEND.md`. Apply them only to the
+dedicated DietLog Supabase project. Each authenticated user can access only rows where
+`user_id = auth.uid()`.
+
+Android builds receive the public project configuration from these environment variables:
+
+```text
+DIETLOG_SUPABASE_URL=https://<project-ref>.supabase.co
+DIETLOG_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+For GitHub Actions, configure repository **Variables** with those two names. The workflow never prints
+their values. If either variable is absent, the APK still builds and all local/Google Drive features keep
+working, while the Supabase Profile card clearly reports that cloud sync is not configured in that build.
 
 ## Build
 

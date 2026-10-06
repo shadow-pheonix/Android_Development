@@ -19,6 +19,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DIETLOG_SUPABASE_URL: ${{ vars.DIETLOG_SUPABASE_URL }}
+      DIETLOG_SUPABASE_PUBLISHABLE_KEY: ${{ vars.DIETLOG_SUPABASE_PUBLISHABLE_KEY }}
     defaults:
       run:
         working-directory: apps/DietLog
@@ -40,6 +43,14 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Check optional Supabase build configuration
+        shell: bash
+        run: |
+          if [[ -n "$DIETLOG_SUPABASE_URL" && -n "$DIETLOG_SUPABASE_PUBLISHABLE_KEY" ]]; then
+            echo "Supabase cloud sync configuration is present."
+          else
+            echo "Supabase cloud sync configuration is not set; this APK will keep Supabase disabled while local and Google Drive features remain available."
+          fi
       - name: Prepare offline food database dependencies
         run: |
           python -m pip install --disable-pip-version-check openpyxl==3.1.5

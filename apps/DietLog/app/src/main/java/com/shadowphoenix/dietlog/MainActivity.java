@@ -7,6 +7,7 @@ import android.content.res.ColorStateList;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
@@ -40,6 +41,11 @@ import com.shadowphoenix.dietlog.sync.DriveRestoreManager;
 import com.shadowphoenix.dietlog.sync.DriveSyncStatusStore;
 import com.shadowphoenix.dietlog.sync.SyncCoordinator;
 import com.shadowphoenix.dietlog.sync.SupabaseBackupScheduler;
+import com.shadowphoenix.dietlog.sync.SupabaseRestoreManager;
+import com.shadowphoenix.dietlog.sync.SupabaseSyncStatusStore;
+import com.shadowphoenix.dietlog.sync.supabase.SupabaseAuthClient;
+import com.shadowphoenix.dietlog.sync.supabase.SupabaseConfig;
+import com.shadowphoenix.dietlog.sync.supabase.SupabaseConnectionStore;
 import com.shadowphoenix.dietlog.sync.drive.DriveConnectionStore;
 import com.shadowphoenix.dietlog.sync.drive.GoogleDriveAuthorization;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
@@ -72,6 +78,7 @@ public final class MainActivity extends Activity {
     private ProfileController profileController;
     private ProgressController progressController;
     private final ExecutorService driveExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService supabaseExecutor = Executors.newSingleThreadExecutor();
 
     private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
@@ -80,6 +87,9 @@ public final class MainActivity extends Activity {
     private TextView driveConnectionStatus, driveSyncStatus, driveConnectButton;
     private TextView driveSyncNowButton, driveRestoreButton, driveDisconnectButton;
     private View driveConnectedActions;
+    private TextView supabaseConnectionStatus, supabaseSyncStatus, supabaseConnectButton;
+    private TextView supabaseSyncNowButton, supabaseRestoreButton, supabaseDisconnectButton;
+    private View supabaseConnectedActions;
 
     private RingProgressView caloriesRing, proteinRing, carbsRing, fatRing;
     private TextView calorieValue, calorieGoalText, calorieLeft, proteinValue, carbsValue, fatValue;
@@ -141,6 +151,7 @@ public final class MainActivity extends Activity {
         configureDetail();
         configureManualEntry();
         configureDriveBackup();
+        configureSupabaseBackup();
         configureDiagnostics();
         configureWeekStrip();
 
@@ -161,6 +172,7 @@ public final class MainActivity extends Activity {
         DriveBackupScheduler.schedulePeriodic(this);
         SupabaseBackupScheduler.schedulePeriodic(this);
         refreshDriveBackupUi();
+        refreshSupabaseBackupUi();
         refreshHome();
         showScreen(homeScreen, 0);
     }
@@ -219,6 +231,13 @@ public final class MainActivity extends Activity {
         driveSyncNowButton = findViewById(R.id.driveSyncNowButton);
         driveRestoreButton = findViewById(R.id.driveRestoreButton);
         driveDisconnectButton = findViewById(R.id.driveDisconnectButton);
+        supabaseConnectionStatus = findViewById(R.id.supabaseConnectionStatus);
+        supabaseSyncStatus = findViewById(R.id.supabaseSyncStatus);
+        supabaseConnectButton = findViewById(R.id.supabaseConnectButton);
+        supabaseConnectedActions = findViewById(R.id.supabaseConnectedActions);
+        supabaseSyncNowButton = findViewById(R.id.supabaseSyncNowButton);
+        supabaseRestoreButton = findViewById(R.id.supabaseRestoreButton);
+        supabaseDisconnectButton = findViewById(R.id.supabaseDisconnectButton);
         searchSectionTitle = findViewById(R.id.searchSectionTitle);
         shortcutAll = findViewById(R.id.shortcutAll);
         shortcutRecent = findViewById(R.id.shortcutRecent);
@@ -290,6 +309,7 @@ public final class MainActivity extends Activity {
         });
         navProfile.setOnClickListener(v -> {
             refreshDriveBackupUi();
+            refreshSupabaseBackupUi();
             showScreen(profileScreen, 3);
         });
         findViewById(R.id.homeSeeAll).setOnClickListener(v -> {
@@ -545,7 +565,7 @@ public final class MainActivity extends Activity {
         } else if (!status.lastError.isEmpty()) {
             driveSyncStatus.setText("Last sync issue: " + status.lastError);
         } else if (status.lastSuccessAt > 0L) {
-            String text = "Last synced " + formatDriveTime(status.lastSuccessAt)
+            String text = "Last synced " + formatCloudTime(status.lastSuccessAt)
                     + " • revision " + status.lastSuccessRevision;
             if (sync.dirty) text += " • newer changes waiting";
             driveSyncStatus.setText(text);
@@ -563,7 +583,327 @@ public final class MainActivity extends Activity {
         if (driveDisconnectButton != null) driveDisconnectButton.setEnabled(enabled);
     }
 
-    private String formatDriveTime(long timestamp) {
+    private static String safeMessage(Throwable error) {
+        String message = error == null ? null : error.getMessage();
+        if (message == null || message.trim().isEmpty()) return "unknown error";
+        String flattened = message.replace('\n', ' ').replace('\r', ' ').trim();
+        return flattened.length() <= 160 ? flattened : flattened.substring(0, 160);
+    }
+
+    private void configureSupabaseBackup() {
+        supabaseConnectButton.setOnClickListener(v -> showSupabaseAuthDialog());
+        supabaseSyncNowButton.setOnClickListener(v -> syncSupabaseNow());
+        supabaseRestoreButton.setOnClickListener(v -> confirmSupabaseRestore());
+        supabaseDisconnectButton.setOnClickListener(v -> confirmSupabaseDisconnect());
+    }
+
+    private void showSupabaseAuthDialog() {
+        if (!SupabaseConfig.isConfigured()) {
+            Toast.makeText(this,
+                    "Supabase is not configured in this APK yet. Local data and Google Drive are unaffected.",
+                    Toast.LENGTH_LONG).show();
+            refreshSupabaseBackupUi();
+            return;
+        }
+
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(22), dp(8), dp(22), 0);
+
+        EditText email = new EditText(this);
+        email.setHint("Email");
+        email.setSingleLine(true);
+        email.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        SupabaseConnectionStore.State previous = new SupabaseConnectionStore(this).getState();
+        if (!previous.email.isEmpty()) email.setText(previous.email);
+        content.addView(email, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        EditText password = new EditText(this);
+        password.setHint("Password (6+ characters)");
+        password.setSingleLine(true);
+        password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        LinearLayout.LayoutParams passwordParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        passwordParams.topMargin = dp(8);
+        content.addView(password, passwordParams);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Supabase cloud sync")
+                .setMessage("Sign in to an existing account or create one. DietLog never stores your password.")
+                .setView(content)
+                .setNegativeButton("Cancel", null)
+                .setNeutralButton("Create account", (dialog, which) ->
+                        authenticateSupabase(email.getText().toString(), password.getText().toString(), true))
+                .setPositiveButton("Sign in", (dialog, which) ->
+                        authenticateSupabase(email.getText().toString(), password.getText().toString(), false))
+                .show();
+    }
+
+    private void authenticateSupabase(String email, String password, boolean createAccount) {
+        String normalizedEmail = email == null ? "" : email.trim();
+        if (normalizedEmail.isEmpty() || !normalizedEmail.contains("@")) {
+            Toast.makeText(this, "Enter a valid email address", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (password == null || password.length() < 6) {
+            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        setSupabaseControlsEnabled(false);
+        supabaseSyncStatus.setText(createAccount ? "Creating Supabase account…" : "Signing in to Supabase…");
+        supabaseExecutor.execute(() -> {
+            try {
+                SupabaseAuthClient client = new SupabaseAuthClient();
+                if (createAccount) {
+                    SupabaseAuthClient.SignUpResult result = client.signUp(normalizedEmail, password);
+                    if (result.emailConfirmationRequired || result.session == null) {
+                        new SupabaseSyncStatusStore(MainActivity.this).clearError();
+                        runOnUiThread(() -> {
+                            setSupabaseControlsEnabled(true);
+                            refreshSupabaseBackupUi();
+                            Toast.makeText(MainActivity.this,
+                                    "Account created. Check your email to confirm it, then sign in.",
+                                    Toast.LENGTH_LONG).show();
+                        });
+                        return;
+                    }
+                    completeSupabaseConnection(result.session);
+                } else {
+                    completeSupabaseConnection(client.signIn(normalizedEmail, password));
+                }
+            } catch (Exception e) {
+                String message = safeMessage(e);
+                new SupabaseSyncStatusStore(MainActivity.this).markError(message, false);
+                AppLogger.e("Supabase account authentication failed", e);
+                runOnUiThread(() -> {
+                    setSupabaseControlsEnabled(true);
+                    refreshSupabaseBackupUi();
+                    Toast.makeText(MainActivity.this,
+                            "Supabase sign-in failed: " + message, Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+    }
+
+    private void completeSupabaseConnection(SupabaseAuthClient.Session session) throws Exception {
+        if (session == null || session.userId.isEmpty()) {
+            throw new IllegalStateException("Supabase returned no account identity");
+        }
+        new SupabaseConnectionStore(this).saveSession(
+                session.email, session.userId, session.refreshToken);
+        new SupabaseSyncStatusStore(this).clearError();
+        SyncCoordinator.forceDirty(this, "supabase-connect");
+        SupabaseBackupScheduler.schedulePeriodic(this);
+        SupabaseBackupScheduler.scheduleImmediate(this);
+        runOnUiThread(() -> {
+            setSupabaseControlsEnabled(true);
+            refreshSupabaseBackupUi();
+            toast("Supabase cloud sync connected");
+        });
+    }
+
+    private void syncSupabaseNow() {
+        if (!SupabaseConfig.isConfigured()) {
+            refreshSupabaseBackupUi();
+            Toast.makeText(this, "Supabase is not configured in this APK", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (!new SupabaseConnectionStore(this).getState().connected) {
+            showSupabaseAuthDialog();
+            return;
+        }
+        SyncCoordinator.forceDirty(this, "supabase-manual-sync");
+        SupabaseBackupScheduler.scheduleImmediate(this);
+        supabaseSyncStatus.setText("Sync queued • will run when network is available");
+        toast("Supabase sync queued");
+    }
+
+    private void confirmSupabaseRestore() {
+        if (!new SupabaseConnectionStore(this).getState().connected) {
+            showSupabaseAuthDialog();
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Restore from Supabase?")
+                .setMessage("DietLog will merge the newest valid snapshot from each device. Newer records win and local-only records are kept.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Restore / merge", (dialog, which) -> restoreFromSupabase())
+                .show();
+    }
+
+    private void restoreFromSupabase() {
+        if (!SupabaseConfig.isConfigured()) {
+            refreshSupabaseBackupUi();
+            Toast.makeText(this, "Supabase is not configured in this APK", Toast.LENGTH_LONG).show();
+            return;
+        }
+        setSupabaseControlsEnabled(false);
+        supabaseSyncStatus.setText("Restoring from Supabase…");
+        supabaseExecutor.execute(() -> {
+            try {
+                SupabaseAuthClient.Session session = refreshSupabaseSession();
+                String localDeviceId = SyncCoordinator.getState(MainActivity.this).deviceId;
+                SupabaseRestoreManager.MergeResult result = new SupabaseRestoreManager()
+                        .mergeSupabaseSnapshots(MainActivity.this, session.accessToken, localDeviceId, true);
+                SupabaseSyncStatusStore restoreStatus = new SupabaseSyncStatusStore(MainActivity.this);
+                restoreStatus.clearError();
+                if (result.snapshotsApplied > 0) {
+                    restoreStatus.markRemoteMerge(result.snapshotsApplied);
+                }
+                if (result.changed) {
+                    SupabaseBackupScheduler.scheduleImmediate(MainActivity.this);
+                    DriveBackupScheduler.scheduleImmediate(MainActivity.this);
+                }
+                runOnUiThread(() -> {
+                    if (profileController != null) profileController.reloadFromPreferences();
+                    if (progressController != null) progressController.refresh();
+                    refreshHome();
+                    setSupabaseControlsEnabled(true);
+                    refreshSupabaseBackupUi();
+                    toast(result.changed
+                            ? "Supabase snapshot merged into DietLog"
+                            : "Supabase backup is already up to date");
+                });
+            } catch (Exception e) {
+                boolean reauth = isSupabaseReauthFailure(e);
+                String message = safeMessage(e);
+                new SupabaseSyncStatusStore(MainActivity.this).markError(message, reauth);
+                AppLogger.e("Manual Supabase restore failed", e);
+                runOnUiThread(() -> {
+                    setSupabaseControlsEnabled(true);
+                    refreshSupabaseBackupUi();
+                    Toast.makeText(MainActivity.this,
+                            "Supabase restore failed: " + message, Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+    }
+
+    private SupabaseAuthClient.Session refreshSupabaseSession() throws Exception {
+        SupabaseConnectionStore store = new SupabaseConnectionStore(this);
+        SupabaseConnectionStore.State previous = store.getState();
+        SupabaseAuthClient.Session session = new SupabaseAuthClient().refresh(store.loadRefreshToken());
+        String userId = session.userId.isEmpty() ? previous.userId : session.userId;
+        String email = session.email.isEmpty() ? previous.email : session.email;
+        if (userId.isEmpty()) throw new IllegalStateException("Supabase account identity is unavailable. Sign in again.");
+        store.saveSession(email, userId, session.refreshToken);
+        return session;
+    }
+
+    private void confirmSupabaseDisconnect() {
+        new AlertDialog.Builder(this)
+                .setTitle("Sign out of Supabase?")
+                .setMessage("Automatic Supabase sync will stop on this device. Existing cloud snapshots remain available after you sign in again.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Sign out", (dialog, which) -> disconnectSupabase())
+                .show();
+    }
+
+    private void disconnectSupabase() {
+        setSupabaseControlsEnabled(false);
+        supabaseExecutor.execute(() -> {
+            boolean remoteSignedOut = false;
+            if (SupabaseConfig.isConfigured()) {
+                try {
+                    SupabaseAuthClient.Session session = refreshSupabaseSession();
+                    new SupabaseAuthClient().signOut(session.accessToken);
+                    remoteSignedOut = true;
+                } catch (Exception e) {
+                    AppLogger.e("Supabase remote sign-out failed; clearing local session", e);
+                }
+            }
+            SupabaseBackupScheduler.cancel(MainActivity.this);
+            new SupabaseConnectionStore(MainActivity.this).clear();
+            new SupabaseSyncStatusStore(MainActivity.this).clear();
+            boolean signedOutEverywhere = remoteSignedOut;
+            runOnUiThread(() -> {
+                setSupabaseControlsEnabled(true);
+                refreshSupabaseBackupUi();
+                if (signedOutEverywhere) {
+                    toast("Signed out of Supabase");
+                } else {
+                    Toast.makeText(MainActivity.this,
+                            "Signed out locally. The remote session could not be revoked.",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+        });
+    }
+
+    private void refreshSupabaseBackupUi() {
+        if (supabaseConnectionStatus == null) return;
+        boolean configured = SupabaseConfig.isConfigured();
+        SupabaseConnectionStore.State connection = new SupabaseConnectionStore(this).getState();
+        SupabaseSyncStatusStore.State status = new SupabaseSyncStatusStore(this).getState();
+        SyncCoordinator.State sync = SyncCoordinator.getState(this);
+
+        supabaseConnectedActions.setVisibility(connection.connected ? View.VISIBLE : View.GONE);
+        supabaseConnectButton.setText(connection.connected
+                ? (status.reauthRequired ? "Sign in again" : "Change / sign in again")
+                : "Sign in / create account");
+
+        if (!configured) {
+            supabaseConnectionStatus.setText("Not configured in this APK");
+            supabaseSyncStatus.setText("This build is missing the Supabase project URL/publishable key. Local data and Google Drive continue to work.");
+            supabaseConnectButton.setEnabled(false);
+            supabaseSyncNowButton.setEnabled(false);
+            supabaseRestoreButton.setEnabled(false);
+            supabaseDisconnectButton.setEnabled(connection.connected);
+            return;
+        }
+
+        supabaseConnectButton.setEnabled(true);
+        supabaseDisconnectButton.setEnabled(true);
+        if (!connection.connected) {
+            supabaseConnectedActions.setVisibility(View.GONE);
+            supabaseConnectionStatus.setText("Not signed in");
+            if (!status.lastError.isEmpty()) {
+                supabaseSyncStatus.setText("Last sign-in issue: " + status.lastError);
+            } else {
+                supabaseSyncStatus.setText("DietLog stays local-first. Sign in to add Supabase backup and multi-device merge.");
+            }
+            return;
+        }
+
+        supabaseConnectedActions.setVisibility(View.VISIBLE);
+        supabaseSyncNowButton.setEnabled(!status.reauthRequired);
+        supabaseRestoreButton.setEnabled(!status.reauthRequired);
+        String account = connection.email.isEmpty()
+                ? "Supabase account connected"
+                : "Connected • " + connection.email;
+        supabaseConnectionStatus.setText(status.reauthRequired ? "Sign in again required" : account);
+
+        if (status.reauthRequired) {
+            supabaseSyncStatus.setText("The Supabase session expired. Sign in again to resume cloud sync.");
+        } else if (!status.lastError.isEmpty()) {
+            supabaseSyncStatus.setText("Last sync issue: " + status.lastError);
+        } else if (status.lastSuccessAt > 0L) {
+            String text = "Last synced " + formatCloudTime(status.lastSuccessAt)
+                    + " • revision " + status.lastSuccessRevision;
+            if (sync.localRevision > status.lastSuccessRevision) text += " • newer changes waiting";
+            supabaseSyncStatus.setText(text);
+        } else {
+            supabaseSyncStatus.setText("Connected • first Supabase backup is waiting to sync");
+        }
+    }
+
+    private void setSupabaseControlsEnabled(boolean enabled) {
+        boolean configured = SupabaseConfig.isConfigured();
+        if (supabaseConnectButton != null) supabaseConnectButton.setEnabled(enabled && configured);
+        if (supabaseSyncNowButton != null) supabaseSyncNowButton.setEnabled(enabled && configured);
+        if (supabaseRestoreButton != null) supabaseRestoreButton.setEnabled(enabled && configured);
+        if (supabaseDisconnectButton != null) supabaseDisconnectButton.setEnabled(enabled);
+    }
+
+    private static boolean isSupabaseReauthFailure(Throwable error) {
+        if (!(error instanceof SupabaseAuthClient.AuthHttpException)) return false;
+        int status = ((SupabaseAuthClient.AuthHttpException) error).statusCode;
+        return status == 400 || status == 401 || status == 403;
+    }
+
+    private String formatCloudTime(long timestamp) {
         try {
             return Instant.ofEpochMilli(timestamp)
                     .atZone(ZoneId.systemDefault())
@@ -571,13 +911,6 @@ public final class MainActivity extends Activity {
         } catch (RuntimeException ignored) {
             return "recently";
         }
-    }
-
-    private static String safeMessage(Throwable error) {
-        String message = error == null ? null : error.getMessage();
-        if (message == null || message.trim().isEmpty()) return "unknown error";
-        String flattened = message.replace('\n', ' ').replace('\r', ' ').trim();
-        return flattened.length() <= 160 ? flattened : flattened.substring(0, 160);
     }
 
     private void configureDiagnostics() {
@@ -1829,6 +2162,7 @@ public final class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         refreshDriveBackupUi();
+        refreshSupabaseBackupUi();
     }
 
     @Override
@@ -1870,6 +2204,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         driveExecutor.shutdownNow();
+        supabaseExecutor.shutdownNow();
         if (catalog != null) catalog.close();
         diary.close();
         super.onDestroy();

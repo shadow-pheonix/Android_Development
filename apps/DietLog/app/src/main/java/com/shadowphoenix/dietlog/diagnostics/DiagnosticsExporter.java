@@ -15,6 +15,9 @@ import com.shadowphoenix.dietlog.BuildConfig;
 import com.shadowphoenix.dietlog.data.DiaryDbHelper;
 import com.shadowphoenix.dietlog.sync.DriveSyncStatusStore;
 import com.shadowphoenix.dietlog.sync.SyncCoordinator;
+import com.shadowphoenix.dietlog.sync.SupabaseSyncStatusStore;
+import com.shadowphoenix.dietlog.sync.supabase.SupabaseConfig;
+import com.shadowphoenix.dietlog.sync.supabase.SupabaseConnectionStore;
 import com.shadowphoenix.dietlog.sync.drive.DriveConnectionStore;
 
 import java.io.ByteArrayOutputStream;
@@ -199,13 +202,19 @@ public final class DiagnosticsExporter {
         double[] totals = db.getTodayTotals();
         DriveConnectionStore.State connection = new DriveConnectionStore(context).getState();
         DriveSyncStatusStore.State drive = new DriveSyncStatusStore(context).getState();
+        SupabaseConnectionStore.State supabaseConnection = new SupabaseConnectionStore(context).getState();
+        SupabaseSyncStatusStore.State supabase = new SupabaseSyncStatusStore(context).getState();
         SyncCoordinator.State sync = SyncCoordinator.getState(context);
         return String.format(Locale.US,
-                "{\n  \"entryCount\": %d,\n  \"todayCalories\": %.1f,\n  \"todayProtein\": %.1f,\n  \"todayCarbs\": %.1f,\n  \"todayFat\": %.1f,\n  \"driveConnected\": %s,\n  \"driveDirty\": %s,\n  \"driveLocalRevision\": %d,\n  \"driveLastSuccessAt\": %d,\n  \"driveLastSuccessRevision\": %d,\n  \"driveReauthRequired\": %s\n}\n",
+                "{\n  \"entryCount\": %d,\n  \"todayCalories\": %.1f,\n  \"todayProtein\": %.1f,\n  \"todayCarbs\": %.1f,\n  \"todayFat\": %.1f,\n  \"driveConnected\": %s,\n  \"driveDirty\": %s,\n  \"driveLocalRevision\": %d,\n  \"driveLastSuccessAt\": %d,\n  \"driveLastSuccessRevision\": %d,\n  \"driveReauthRequired\": %s,\n  \"supabaseConfigured\": %s,\n  \"supabaseConnected\": %s,\n  \"supabaseLastSuccessAt\": %d,\n  \"supabaseLastSuccessRevision\": %d,\n  \"supabaseReauthRequired\": %s\n}\n",
                 db.getEntryCount(), totals[0], totals[1], totals[2], totals[3],
                 Boolean.toString(connection.connected), Boolean.toString(sync.dirty),
                 sync.localRevision, drive.lastSuccessAt, drive.lastSuccessRevision,
-                Boolean.toString(drive.reauthRequired));
+                Boolean.toString(drive.reauthRequired),
+                Boolean.toString(SupabaseConfig.isConfigured()),
+                Boolean.toString(supabaseConnection.connected),
+                supabase.lastSuccessAt, supabase.lastSuccessRevision,
+                Boolean.toString(supabase.reauthRequired));
     }
 
     private static String utcStamp() {
