@@ -13,6 +13,7 @@ public final class DriveConnectionStore {
     private static final String PREFS = "dietlog_drive_connection";
     private static final String KEY_CONNECTED = "connected";
     private static final String KEY_ACCOUNT_NAME = "accountName";
+    private static final String KEY_DISPLAY_NAME = "displayName";
     private static final String KEY_CONNECTED_AT = "connectedAt";
     private static final String KEY_LAST_AUTH_AT = "lastAuthAt";
 
@@ -26,11 +27,12 @@ public final class DriveConnectionStore {
         return new State(
                 prefs.getBoolean(KEY_CONNECTED, false),
                 prefs.getString(KEY_ACCOUNT_NAME, ""),
+                prefs.getString(KEY_DISPLAY_NAME, ""),
                 prefs.getLong(KEY_CONNECTED_AT, 0L),
                 prefs.getLong(KEY_LAST_AUTH_AT, 0L));
     }
 
-    public void markConnected(String accountName) {
+    public void markConnected(String accountName, String displayName) {
         long now = System.currentTimeMillis();
         SharedPreferences.Editor editor = prefs.edit()
                 .putBoolean(KEY_CONNECTED, true)
@@ -40,6 +42,9 @@ public final class DriveConnectionStore {
         }
         if (accountName != null && !accountName.trim().isEmpty()) {
             editor.putString(KEY_ACCOUNT_NAME, accountName.trim());
+        }
+        if (displayName != null && !displayName.trim().isEmpty()) {
+            editor.putString(KEY_DISPLAY_NAME, displayName.trim());
         }
         editor.apply();
     }
@@ -55,12 +60,14 @@ public final class DriveConnectionStore {
     public static final class State {
         public final boolean connected;
         public final String accountName;
+        public final String displayName;
         public final long connectedAt;
         public final long lastAuthAt;
 
-        State(boolean connected, String accountName, long connectedAt, long lastAuthAt) {
+        State(boolean connected, String accountName, String displayName, long connectedAt, long lastAuthAt) {
             this.connected = connected;
             this.accountName = accountName == null ? "" : accountName;
+            this.displayName = displayName == null ? "" : displayName;
             this.connectedAt = connectedAt;
             this.lastAuthAt = lastAuthAt;
         }

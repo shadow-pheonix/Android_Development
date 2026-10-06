@@ -35,6 +35,7 @@ import com.shadowphoenix.dietlog.nutrition.Micronutrient;
 import com.shadowphoenix.dietlog.nutrition.MicronutrientTarget;
 import com.shadowphoenix.dietlog.nutrition.MicronutrientTargets;
 import com.shadowphoenix.dietlog.nutrition.MicronutrientValues;
+import com.shadowphoenix.dietlog.profile.AccountIdentity;
 import com.shadowphoenix.dietlog.profile.ProfileController;
 import com.shadowphoenix.dietlog.profile.ProfileSettings;
 import com.shadowphoenix.dietlog.progress.ProgressController;
@@ -387,11 +388,17 @@ public final class MainActivity extends Activity {
                 && profileController.getSettings().displayName != null) {
             nickname = profileController.getSettings().displayName.trim();
         }
-        String googleAccountName = drive.connected && drive.accountName != null
-                ? drive.accountName.trim() : "";
+        String googleAccountName = drive.connected && drive.displayName != null
+                && !drive.displayName.trim().isEmpty()
+                ? drive.displayName.trim()
+                : (drive.connected && drive.accountName != null ? drive.accountName.trim() : "");
         String supabaseEmail = supabase.connected && supabase.email != null
                 ? supabase.email.trim() : "";
-        String accountFallback = !googleAccountName.isEmpty() ? googleAccountName : supabaseEmail;
+        String accountFallback = AccountIdentity.preferredName("", googleAccountName, supabaseEmail);
+
+        if (profileController != null) {
+            profileController.setFallbackDisplayName(accountFallback);
+        }
 
         if (!connected) {
             profileAccountStatus.setText("Not signed in • local data stays on this device");
@@ -400,11 +407,8 @@ public final class MainActivity extends Activity {
             return;
         }
 
-        String identity = !nickname.isEmpty() ? nickname : accountFallback;
-        String providers;
-        if (drive.connected && supabase.connected) providers = "Google Drive + Supabase";
-        else if (drive.connected) providers = "Google Drive";
-        else providers = "Supabase";
+        String identity = AccountIdentity.preferredName(nickname, googleAccountName, supabaseEmail);
+        String providers = AccountIdentity.providerLabel(drive.connected, supabase.connected);
 
         if (identity.isEmpty()) {
             profileAccountStatus.setText(providers + " connected");
