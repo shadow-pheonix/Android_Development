@@ -4,13 +4,22 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="@android:color/transparent"
-        android:pathData="M20,73 C13,58 16,38 30,25 C43,13 62,11 77,18 C92,25 99,42 96,58 C95,64 93,69 90,74"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeLineCap="round"
-        android:strokeWidth="6.5" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M50,85 C40,80 34,71 35,61 C36,51 44,44 50,37 C55,31 57,24 56,18 C67,28 71,40 67,50 C71,48 74,43 75,37 C82,46 83,56 79,65 C75,75 66,82 56,87 C58,80 60,74 61,68 C56,75 53,81 50,85 Z M75,72 L80,72 L80,83 L75,83 Z M83,65 L88,65 L88,83 L83,83 Z M91,57 L96,57 L96,83 L91,83 Z" />
+
+    <!-- Match the colored adaptive icon's safe-zone placement. -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.82"
+        android:scaleY="0.82"
+        android:translateY="4">
+        <path
+            android:fillColor="@android:color/transparent"
+            android:pathData="M20,73 C13,58 16,38 30,25 C43,13 62,11 77,18 C92,25 99,42 96,58 C95,64 93,69 90,74"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeLineCap="round"
+            android:strokeWidth="6.5" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M50,85 C40,80 34,71 35,61 C36,51 44,44 50,37 C55,31 57,24 56,18 C67,28 71,40 67,50 C71,48 74,43 75,37 C82,46 83,56 79,65 C75,75 66,82 56,87 C58,80 60,74 61,68 C56,75 53,81 50,85 Z M75,72 L80,72 L80,83 L75,83 Z M83,65 L88,65 L88,83 L83,83 Z M91,57 L96,57 L96,83 L91,83 Z" />
+    </group>
 </vector>
