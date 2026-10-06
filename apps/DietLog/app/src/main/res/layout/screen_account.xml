@@ -18,15 +18,21 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:gravity="center_vertical">
-            <TextView
+            <FrameLayout
                 android:id="@+id/accountBack"
                 android:layout_width="42dp"
                 android:layout_height="42dp"
-                android:gravity="center"
                 android:background="@drawable/bg_chip"
-                android:text="‹"
-                android:textColor="@color/text_primary"
-                android:textSize="34sp" />
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="Back"
+                    android:src="@drawable/ic_arrow_back_24" />
+            </FrameLayout>
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

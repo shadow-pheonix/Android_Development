@@ -7,6 +7,7 @@
     android:orientation="vertical"
     android:padding="14dp">
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:layout_marginRight="8dp" android:contentDescription="Google Drive" android:src="@drawable/ic_google_drive" />
         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Google Drive" android:textColor="@color/text_primary" android:textSize="16sp" android:textStyle="bold" />
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_chip" android:paddingLeft="8dp" android:paddingTop="4dp" android:paddingRight="8dp" android:paddingBottom="4dp" android:text="Recommended" android:textColor="@color/accent" android:textSize="10sp" android:textStyle="bold" />
     </LinearLayout>
