@@ -6,8 +6,8 @@ import static org.junit.Assert.assertEquals;
 
 public class RevisionPolicyTest {
     @Test
-    public void cleanInstallAdoptRemoteBaseline() {
-        assertEquals(6L , RevisionPolicy.reconcile(0L, false, 6L));
+    public void cleanInstallAdoptsRemoteBaseline() {
+        assertEquals(6L, RevisionPolicy.reconcile(0L, false, 6L));
     }
 
     @Test
