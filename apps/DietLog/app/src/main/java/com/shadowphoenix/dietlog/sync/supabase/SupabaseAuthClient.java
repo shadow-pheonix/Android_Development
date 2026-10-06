@@ -11,41 +11,38 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-/** Minimal Supabase Auth REST client for email/password and refresh-token sessions. */
+/** Minimal Supabase Auth REST client for browser OAuth and refresh-token sessions. */
 public final class SupabaseAuthClient {
     private static final int CONNECT_TIMEOUT_MS = 15_000;
     private static final int READ_TIMEOUT_MS = 30_000;
     private static final int MAX_RESPONSE_BYTES = 512 * 1024;
 
-    public SignUpResult signUp(String email, String password) throws IOException {
-        JSONObject body = new JSONObject();
-        try {
-            body.put("email", normalizeEmail(email));
-            body.put("password", requirePassword(password));
-        } catch (JSONException e) {
-            throw new IOException("Could not prepare Supabase sign-up", e);
-        }
-        JSONObject response = request("POST", "/auth/v1/signup", body, null);
-        Session session = parseSession(response);
-        JSONObject user = response.optJSONObject("user");
-        String userId = user == null ? "" : user.optString("id", "");
-        String returnedEmail = user == null ? normalizeEmail(email) : user.optString("email", normalizeEmail(email));
-        return new SignUpResult(session, userId, returnedEmail, session == null);
+    public boolean isOAuthProviderEnabled(String provider) throws IOException {
+        JSONObject settings = request("GET", "/auth/v1/settings", null, null);
+        JSONObject external = settings.optJSONObject("external");
+        return external != null && external.optBoolean(provider, false);
     }
 
-    public Session signIn(String email, String password) throws IOException {
+    public Session exchangePkceCode(String authCode, String codeVerifier) throws IOException {
+        if (authCode == null || authCode.trim().isEmpty()) {
+            throw new AuthHttpException(400, "Supabase authorization code is missing");
+        }
+        if (codeVerifier == null || codeVerifier.trim().isEmpty()) {
+            throw new AuthHttpException(400, "Supabase PKCE verifier is missing. Start sign-in again.");
+        }
         JSONObject body = new JSONObject();
         try {
-            body.put("email", normalizeEmail(email));
-            body.put("password", requirePassword(password));
+            body.put("auth_code", authCode.trim());
+            body.put("code_verifier", codeVerifier.trim());
         } catch (JSONException e) {
-            throw new IOException("Could not prepare Supabase sign-in", e);
+            throw new IOException("Could not prepare Supabase OAuth exchange", e);
         }
-        JSONObject response = request(
-                "POST", "/auth/v1/token?grant_type=password", body, null);
+        JSONObject response = request("POST", "/auth/v1/token?grant_type=pkce", body, null);
         Session session = parseSession(response);
-        if (session == null) throw new IOException("Supabase returned no login session");
-        return session;
+        if (session == null) throw new IOException("Supabase returned no OAuth session");
+        if (!session.userId.isEmpty()) return session;
+        UserIdentity user = fetchUser(session.accessToken);
+        return new Session(session.accessToken, session.refreshToken, user.userId, user.email, session.expiresAt);
     }
 
     public Session refresh(String refreshToken) throws IOException {
@@ -70,6 +67,11 @@ public final class SupabaseAuthClient {
         request("POST", "/auth/v1/logout", new JSONObject(), accessToken);
     }
 
+    private UserIdentity fetchUser(String accessToken) throws IOException {
+        JSONObject user = request("GET", "/auth/v1/user", null, accessToken);
+        return new UserIdentity(user.optString("id", ""), user.optString("email", ""));
+    }
+
     private static Session parseSession(JSONObject response) {
         String accessToken = response.optString("access_token", "");
         String refreshToken = response.optString("refresh_token", "");
@@ -92,15 +94,17 @@ public final class SupabaseAuthClient {
             connection.setReadTimeout(READ_TIMEOUT_MS);
             connection.setRequestMethod(method);
             connection.setRequestProperty("apikey", SupabaseConfig.publishableKey());
-            connection.setRequestProperty("Content-Type", "application/json");
             connection.setRequestProperty("Accept", "application/json");
             if (accessToken != null && !accessToken.isEmpty()) {
                 connection.setRequestProperty("Authorization", "Bearer " + accessToken);
             }
-            connection.setDoOutput(true);
-            byte[] rawBody = body.toString().getBytes(StandardCharsets.UTF_8);
-            try (OutputStream output = connection.getOutputStream()) {
-                output.write(rawBody);
+            if (body != null) {
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setDoOutput(true);
+                byte[] rawBody = body.toString().getBytes(StandardCharsets.UTF_8);
+                try (OutputStream output = connection.getOutputStream()) {
+                    output.write(rawBody);
+                }
             }
 
             int status = connection.getResponseCode();
@@ -146,24 +150,21 @@ public final class SupabaseAuthClient {
             if (message.isEmpty()) message = json.optString("error_description", "");
             if (message.isEmpty()) message = json.optString("error", "");
             if (message.isEmpty()) return fallback;
-            message = message.replaceAll("[\\r\\n\\t]+", " ").trim();
+            message = message.replaceAll("[\r\n\t]+", " ").trim();
             return message.length() <= 240 ? message : message.substring(0, 240);
         } catch (JSONException ignored) {
             return fallback;
         }
     }
 
-    private static String normalizeEmail(String value) {
-        if (value == null) return "";
-        return value.trim().toLowerCase(java.util.Locale.US);
-    }
+    private static final class UserIdentity {
+        final String userId;
+        final String email;
 
-    private static String requirePassword(String value) {
-        if (value == null || value.length() < 6) {
-            throw new IllegalArgumentException("Password must be at least 6 characters");
+        UserIdentity(String userId, String email) {
+            this.userId = userId == null ? "" : userId;
+            this.email = email == null ? "" : email;
         }
-        if (value.length() > 200) throw new IllegalArgumentException("Password is too long");
-        return value;
     }
 
     public static final class Session {
@@ -179,20 +180,6 @@ public final class SupabaseAuthClient {
             this.userId = userId == null ? "" : userId;
             this.email = email == null ? "" : email;
             this.expiresAt = expiresAt;
-        }
-    }
-
-    public static final class SignUpResult {
-        public final Session session;
-        public final String userId;
-        public final String email;
-        public final boolean emailConfirmationRequired;
-
-        SignUpResult(Session session, String userId, String email, boolean emailConfirmationRequired) {
-            this.session = session;
-            this.userId = userId == null ? "" : userId;
-            this.email = email == null ? "" : email;
-            this.emailConfirmationRequired = emailConfirmationRequired;
         }
     }
 

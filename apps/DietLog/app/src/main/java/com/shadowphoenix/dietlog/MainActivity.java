@@ -3,6 +3,7 @@ package com.shadowphoenix.dietlog;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -46,6 +47,7 @@ import com.shadowphoenix.dietlog.sync.SupabaseSyncStatusStore;
 import com.shadowphoenix.dietlog.sync.supabase.SupabaseAuthClient;
 import com.shadowphoenix.dietlog.sync.supabase.SupabaseConfig;
 import com.shadowphoenix.dietlog.sync.supabase.SupabaseConnectionStore;
+import com.shadowphoenix.dietlog.sync.supabase.SupabaseOAuthFlow;
 import com.shadowphoenix.dietlog.sync.drive.DriveConnectionStore;
 import com.shadowphoenix.dietlog.sync.drive.GoogleDriveAuthorization;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
@@ -152,6 +154,7 @@ public final class MainActivity extends Activity {
         configureManualEntry();
         configureDriveBackup();
         configureSupabaseBackup();
+        handleSupabaseOAuthIntent(getIntent());
         configureDiagnostics();
         configureWeekStrip();
 
@@ -591,13 +594,20 @@ public final class MainActivity extends Activity {
     }
 
     private void configureSupabaseBackup() {
-        supabaseConnectButton.setOnClickListener(v -> showSupabaseAuthDialog());
+        supabaseConnectButton.setOnClickListener(v -> beginSupabaseOAuth());
         supabaseSyncNowButton.setOnClickListener(v -> syncSupabaseNow());
         supabaseRestoreButton.setOnClickListener(v -> confirmSupabaseRestore());
         supabaseDisconnectButton.setOnClickListener(v -> confirmSupabaseDisconnect());
     }
 
-    private void showSupabaseAuthDialog() {
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleSupabaseOAuthIntent(intent);
+    }
+
+    private void beginSupabaseOAuth() {
         if (!SupabaseConfig.isConfigured()) {
             Toast.makeText(this,
                     "Supabase is not configured in this APK yet. Local data and Google Drive are unaffected.",
@@ -606,77 +616,84 @@ public final class MainActivity extends Activity {
             return;
         }
 
-        LinearLayout content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(dp(22), dp(8), dp(22), 0);
-
-        EditText email = new EditText(this);
-        email.setHint("Email");
-        email.setSingleLine(true);
-        email.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-        SupabaseConnectionStore.State previous = new SupabaseConnectionStore(this).getState();
-        if (!previous.email.isEmpty()) email.setText(previous.email);
-        content.addView(email, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        EditText password = new EditText(this);
-        password.setHint("Password (6+ characters)");
-        password.setSingleLine(true);
-        password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        LinearLayout.LayoutParams passwordParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        passwordParams.topMargin = dp(8);
-        content.addView(password, passwordParams);
-
-        new AlertDialog.Builder(this)
-                .setTitle("Supabase cloud sync")
-                .setMessage("Sign in to an existing account or create one. DietLog never stores your password.")
-                .setView(content)
-                .setNegativeButton("Cancel", null)
-                .setNeutralButton("Create account", (dialog, which) ->
-                        authenticateSupabase(email.getText().toString(), password.getText().toString(), true))
-                .setPositiveButton("Sign in", (dialog, which) ->
-                        authenticateSupabase(email.getText().toString(), password.getText().toString(), false))
-                .show();
+        setSupabaseControlsEnabled(false);
+        supabaseSyncStatus.setText("Checking GitHub sign-in…");
+        supabaseExecutor.execute(() -> {
+            try {
+                SupabaseAuthClient client = new SupabaseAuthClient();
+                if (!client.isOAuthProviderEnabled(SupabaseConfig.OAUTH_PROVIDER)) {
+                    throw new IllegalStateException(
+                            "GitHub OAuth is not enabled in the DietLog Supabase project yet.");
+                }
+                Intent browser = SupabaseOAuthFlow.browserIntent(MainActivity.this);
+                runOnUiThread(() -> {
+                    try {
+                        startActivity(browser);
+                        supabaseSyncStatus.setText(
+                                "Complete GitHub sign-in in your browser, then return to DietLog.");
+                    } catch (RuntimeException e) {
+                        new SupabaseConnectionStore(MainActivity.this).clearPendingOAuth();
+                        new SupabaseSyncStatusStore(MainActivity.this).markError(
+                                "No browser is available for Supabase sign-in.", false);
+                        AppLogger.e("Supabase OAuth browser launch failed", e);
+                        Toast.makeText(MainActivity.this,
+                                "No browser is available for Supabase sign-in", Toast.LENGTH_LONG).show();
+                        refreshSupabaseBackupUi();
+                    } finally {
+                        setSupabaseControlsEnabled(true);
+                    }
+                });
+            } catch (Exception e) {
+                String message = safeMessage(e);
+                new SupabaseConnectionStore(MainActivity.this).clearPendingOAuth();
+                new SupabaseSyncStatusStore(MainActivity.this).markError(message, false);
+                AppLogger.e("Supabase OAuth start failed", e);
+                runOnUiThread(() -> {
+                    setSupabaseControlsEnabled(true);
+                    refreshSupabaseBackupUi();
+                    Toast.makeText(MainActivity.this,
+                            "Supabase sign-in unavailable: " + message, Toast.LENGTH_LONG).show();
+                });
+            }
+        });
     }
 
-    private void authenticateSupabase(String email, String password, boolean createAccount) {
-        String normalizedEmail = email == null ? "" : email.trim();
-        if (normalizedEmail.isEmpty() || !normalizedEmail.contains("@")) {
-            Toast.makeText(this, "Enter a valid email address", Toast.LENGTH_LONG).show();
-            return;
-        }
-        if (password == null || password.length() < 6) {
-            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_LONG).show();
+    private void handleSupabaseOAuthIntent(Intent intent) {
+        if (!SupabaseOAuthFlow.isCallback(intent)) return;
+        SupabaseOAuthFlow.Callback callback = SupabaseOAuthFlow.parseCallback(intent);
+        if (intent != null) intent.setData(null);
+
+        if (!callback.isSuccess()) {
+            new SupabaseConnectionStore(this).clearPendingOAuth();
+            String message = callback.errorMessage.isEmpty()
+                    ? "Supabase browser sign-in was not completed."
+                    : callback.errorMessage;
+            new SupabaseSyncStatusStore(this).markError(message, false);
+            AppLogger.i("Supabase OAuth callback failed code=" + callback.errorCode);
+            refreshSupabaseBackupUi();
+            Toast.makeText(this, "Supabase sign-in failed: " + message, Toast.LENGTH_LONG).show();
             return;
         }
 
         setSupabaseControlsEnabled(false);
-        supabaseSyncStatus.setText(createAccount ? "Creating Supabase account…" : "Signing in to Supabase…");
+        supabaseSyncStatus.setText("Finishing Supabase sign-in…");
         supabaseExecutor.execute(() -> {
+            SupabaseConnectionStore store = new SupabaseConnectionStore(MainActivity.this);
             try {
-                SupabaseAuthClient client = new SupabaseAuthClient();
-                if (createAccount) {
-                    SupabaseAuthClient.SignUpResult result = client.signUp(normalizedEmail, password);
-                    if (result.emailConfirmationRequired || result.session == null) {
-                        new SupabaseSyncStatusStore(MainActivity.this).clearError();
-                        runOnUiThread(() -> {
-                            setSupabaseControlsEnabled(true);
-                            refreshSupabaseBackupUi();
-                            Toast.makeText(MainActivity.this,
-                                    "Account created. Check your email to confirm it, then sign in.",
-                                    Toast.LENGTH_LONG).show();
-                        });
-                        return;
-                    }
-                    completeSupabaseConnection(result.session);
-                } else {
-                    completeSupabaseConnection(client.signIn(normalizedEmail, password));
+                SupabaseConnectionStore.PendingOAuth pending = store.loadPendingOAuth();
+                if (!pending.isUsable(System.currentTimeMillis())) {
+                    throw new IllegalStateException(
+                            "The browser sign-in expired. Start GitHub sign-in again.");
                 }
+                SupabaseAuthClient.Session session = new SupabaseAuthClient()
+                        .exchangePkceCode(callback.code, pending.verifier);
+                store.clearPendingOAuth();
+                completeSupabaseConnection(session);
             } catch (Exception e) {
+                store.clearPendingOAuth();
                 String message = safeMessage(e);
                 new SupabaseSyncStatusStore(MainActivity.this).markError(message, false);
-                AppLogger.e("Supabase account authentication failed", e);
+                AppLogger.e("Supabase OAuth callback exchange failed", e);
                 runOnUiThread(() -> {
                     setSupabaseControlsEnabled(true);
                     refreshSupabaseBackupUi();
@@ -711,7 +728,7 @@ public final class MainActivity extends Activity {
             return;
         }
         if (!new SupabaseConnectionStore(this).getState().connected) {
-            showSupabaseAuthDialog();
+            beginSupabaseOAuth();
             return;
         }
         SyncCoordinator.forceDirty(this, "supabase-manual-sync");
@@ -722,7 +739,7 @@ public final class MainActivity extends Activity {
 
     private void confirmSupabaseRestore() {
         if (!new SupabaseConnectionStore(this).getState().connected) {
-            showSupabaseAuthDialog();
+            beginSupabaseOAuth();
             return;
         }
         new AlertDialog.Builder(this)
@@ -841,8 +858,8 @@ public final class MainActivity extends Activity {
 
         supabaseConnectedActions.setVisibility(connection.connected ? View.VISIBLE : View.GONE);
         supabaseConnectButton.setText(connection.connected
-                ? (status.reauthRequired ? "Sign in again" : "Change / sign in again")
-                : "Sign in / create account");
+                ? (status.reauthRequired ? "Reconnect with GitHub" : "Change GitHub account")
+                : "Continue with GitHub");
 
         if (!configured) {
             supabaseConnectionStatus.setText("Not configured in this APK");
@@ -862,7 +879,7 @@ public final class MainActivity extends Activity {
             if (!status.lastError.isEmpty()) {
                 supabaseSyncStatus.setText("Last sign-in issue: " + status.lastError);
             } else {
-                supabaseSyncStatus.setText("DietLog stays local-first. Sign in to add Supabase backup and multi-device merge.");
+                supabaseSyncStatus.setText("DietLog stays local-first. Continue with GitHub in your browser to add Supabase backup and multi-device merge.");
             }
             return;
         }
@@ -876,7 +893,7 @@ public final class MainActivity extends Activity {
         supabaseConnectionStatus.setText(status.reauthRequired ? "Sign in again required" : account);
 
         if (status.reauthRequired) {
-            supabaseSyncStatus.setText("The Supabase session expired. Sign in again to resume cloud sync.");
+            supabaseSyncStatus.setText("The Supabase session expired. Reconnect with GitHub to resume cloud sync.");
         } else if (!status.lastError.isEmpty()) {
             supabaseSyncStatus.setText("Last sync issue: " + status.lastError);
         } else if (status.lastSuccessAt > 0L) {

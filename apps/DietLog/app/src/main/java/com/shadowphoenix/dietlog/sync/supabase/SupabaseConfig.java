@@ -4,6 +4,10 @@ import com.shadowphoenix.dietlog.BuildConfig;
 
 /** Runtime-safe access to the public Supabase project configuration baked in at build time. */
 public final class SupabaseConfig {
+    public static final String OAUTH_PROVIDER = "github";
+    public static final String OAUTH_PROVIDER_LABEL = "GitHub";
+    public static final String OAUTH_REDIRECT_URI = "com.shadowphoenix.dietlog://supabase-auth";
+
     private SupabaseConfig() {}
 
     public static boolean isConfigured() {

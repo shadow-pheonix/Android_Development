@@ -14,7 +14,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
-/** Stores only non-secret account metadata plus a Keystore-encrypted refresh token. */
+/** Stores non-secret account metadata plus Keystore-encrypted refresh/PKCE secrets. */
 public final class SupabaseConnectionStore {
     private static final String PREFS = "dietlog_supabase_connection";
     private static final String KEY_CONNECTED = "connected";
@@ -23,6 +23,9 @@ public final class SupabaseConnectionStore {
     private static final String KEY_CONNECTED_AT = "connectedAt";
     private static final String KEY_REFRESH_CIPHERTEXT = "refreshCiphertext";
     private static final String KEY_REFRESH_IV = "refreshIv";
+    private static final String KEY_OAUTH_VERIFIER_CIPHERTEXT = "oauthVerifierCiphertext";
+    private static final String KEY_OAUTH_VERIFIER_IV = "oauthVerifierIv";
+    private static final String KEY_OAUTH_STARTED_AT = "oauthStartedAt";
     private static final String KEY_ALIAS = "dietlog_supabase_refresh_token_v1";
 
     private final SharedPreferences prefs;
@@ -60,6 +63,37 @@ public final class SupabaseConnectionStore {
         String iv = prefs.getString(KEY_REFRESH_IV, "");
         if (ciphertext == null || ciphertext.isEmpty() || iv == null || iv.isEmpty()) return "";
         return decrypt(ciphertext, iv);
+    }
+
+
+    public void savePendingOAuthVerifier(String verifier) throws Exception {
+        if (verifier == null || verifier.trim().isEmpty()) {
+            throw new IllegalArgumentException("Supabase OAuth verifier is missing");
+        }
+        EncryptedValue encrypted = encrypt(verifier.trim());
+        prefs.edit()
+                .putString(KEY_OAUTH_VERIFIER_CIPHERTEXT, encrypted.ciphertext)
+                .putString(KEY_OAUTH_VERIFIER_IV, encrypted.iv)
+                .putLong(KEY_OAUTH_STARTED_AT, System.currentTimeMillis())
+                .commit();
+    }
+
+    public PendingOAuth loadPendingOAuth() throws Exception {
+        String ciphertext = prefs.getString(KEY_OAUTH_VERIFIER_CIPHERTEXT, "");
+        String iv = prefs.getString(KEY_OAUTH_VERIFIER_IV, "");
+        long startedAt = prefs.getLong(KEY_OAUTH_STARTED_AT, 0L);
+        if (ciphertext == null || ciphertext.isEmpty() || iv == null || iv.isEmpty()) {
+            return new PendingOAuth("", 0L);
+        }
+        return new PendingOAuth(decrypt(ciphertext, iv), startedAt);
+    }
+
+    public void clearPendingOAuth() {
+        prefs.edit()
+                .remove(KEY_OAUTH_VERIFIER_CIPHERTEXT)
+                .remove(KEY_OAUTH_VERIFIER_IV)
+                .remove(KEY_OAUTH_STARTED_AT)
+                .commit();
     }
 
     public void clear() {
@@ -114,6 +148,21 @@ public final class SupabaseConnectionStore {
         EncryptedValue(String ciphertext, String iv) {
             this.ciphertext = ciphertext;
             this.iv = iv;
+        }
+    }
+
+    public static final class PendingOAuth {
+        public final String verifier;
+        public final long startedAt;
+
+        PendingOAuth(String verifier, long startedAt) {
+            this.verifier = verifier == null ? "" : verifier;
+            this.startedAt = startedAt;
+        }
+
+        public boolean isUsable(long now) {
+            return !verifier.isEmpty() && startedAt > 0L && now >= startedAt
+                    && now - startedAt <= 10L * 60L * 1000L;
         }
     }
 
