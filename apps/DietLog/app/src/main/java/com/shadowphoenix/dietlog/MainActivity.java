@@ -39,6 +39,7 @@ import com.shadowphoenix.dietlog.sync.DriveBackupScheduler;
 import com.shadowphoenix.dietlog.sync.DriveRestoreManager;
 import com.shadowphoenix.dietlog.sync.DriveSyncStatusStore;
 import com.shadowphoenix.dietlog.sync.SyncCoordinator;
+import com.shadowphoenix.dietlog.sync.SupabaseBackupScheduler;
 import com.shadowphoenix.dietlog.sync.drive.DriveConnectionStore;
 import com.shadowphoenix.dietlog.sync.drive.GoogleDriveAuthorization;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
@@ -158,6 +159,7 @@ public final class MainActivity extends Activity {
         }
 
         DriveBackupScheduler.schedulePeriodic(this);
+        SupabaseBackupScheduler.schedulePeriodic(this);
         refreshDriveBackupUi();
         refreshHome();
         showScreen(homeScreen, 0);

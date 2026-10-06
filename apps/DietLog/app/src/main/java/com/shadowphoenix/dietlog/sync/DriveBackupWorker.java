@@ -34,9 +34,13 @@ public final class DriveBackupWorker extends Worker {
             DriveRestoreManager.MergeResult merge = new DriveRestoreManager().mergeDriveSnapshots(
                     context, token.accessToken, beforeMerge.deviceId, false);
             if (merge.snapshotsApplied > 0) status.markRemoteMerge(merge.snapshotsApplied);
+            if (merge.changed) SupabaseBackupScheduler.scheduleImmediate(context);
 
             SyncCoordinator.State state = SyncCoordinator.getState(context);
-            if (!state.dirty) return Result.success();
+            DriveSyncStatusStore.State prior = status.getState();
+            if (!state.dirty && state.localRevision <= prior.lastSuccessRevision) {
+                return Result.success();
+            }
 
             byte[] snapshot = BackupSnapshotCodec.create(context, state);
             DriveBackupRepository repository = new DriveBackupRepository();

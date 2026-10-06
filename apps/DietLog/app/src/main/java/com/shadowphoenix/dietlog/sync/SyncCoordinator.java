@@ -48,6 +48,7 @@ public final class SyncCoordinator {
                 .apply();
         AppLogger.i("Backup state dirty revision=" + nextRevision + " reason=" + sanitizeReason(reason));
         DriveBackupScheduler.scheduleDebounced(context);
+        SupabaseBackupScheduler.scheduleDebounced(context);
         return nextRevision;
     }
 
@@ -74,6 +75,7 @@ public final class SyncCoordinator {
                 .putString(KEY_LAST_CHANGE_REASON, sanitizeReason(reason))
                 .apply();
         DriveBackupScheduler.scheduleDebounced(context);
+        SupabaseBackupScheduler.scheduleDebounced(context);
     }
 
     /** Marks one completed remote merge without recursively scheduling the worker already running. */
