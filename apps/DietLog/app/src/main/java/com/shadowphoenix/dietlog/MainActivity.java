@@ -603,8 +603,9 @@ public final class MainActivity extends Activity {
 
         driveConnectedActions.setVisibility(connection.connected ? View.VISIBLE : View.GONE);
         driveConnectButton.setText(connection.connected
-                ? (status.reauthRequired ? "Reconnect Google Drive" : "Change / reconnect account")
+                ? (status.reauthRequired ? "Reconnect Google Drive" : "Change account")
                 : "Connect Google Drive");
+        styleCloudConnectButton(driveConnectButton, !connection.connected || status.reauthRequired);
 
         if (!connection.connected) {
             driveConnectionStatus.setText("Not connected");
@@ -945,8 +946,9 @@ public final class MainActivity extends Activity {
 
         supabaseConnectedActions.setVisibility(connection.connected ? View.VISIBLE : View.GONE);
         supabaseConnectButton.setText(connection.connected
-                ? (status.reauthRequired ? "Send a new code" : "Change Supabase account")
+                ? (status.reauthRequired ? "Send a new code" : "Change account")
                 : "Sign in with email code");
+        styleCloudConnectButton(supabaseConnectButton, !connection.connected || status.reauthRequired);
 
         if (!configured) {
             supabaseConnectionStatus.setText("Not configured in this APK");
@@ -999,6 +1001,12 @@ public final class MainActivity extends Activity {
         if (supabaseSyncNowButton != null) supabaseSyncNowButton.setEnabled(enabled && configured);
         if (supabaseRestoreButton != null) supabaseRestoreButton.setEnabled(enabled && configured);
         if (supabaseDisconnectButton != null) supabaseDisconnectButton.setEnabled(enabled);
+    }
+
+    private void styleCloudConnectButton(TextView button, boolean primary) {
+        if (button == null) return;
+        button.setBackgroundResource(primary ? R.drawable.bg_button_primary : R.drawable.bg_chip);
+        button.setTextColor(getColor(primary ? R.color.background : R.color.accent));
     }
 
     private static boolean isSupabaseReauthFailure(Throwable error) {
@@ -1418,10 +1426,10 @@ public final class MainActivity extends Activity {
 
     private void renderDiaryEntries(List<FoodEntry> entries) {
         entriesContainer.removeAllViews();
-        renderMealSection(FoodEntry.MEAL_BREAKFAST, "☀", entries);
-        renderMealSection(FoodEntry.MEAL_LUNCH, "🍱", entries);
-        renderMealSection(FoodEntry.MEAL_SNACKS, "🍎", entries);
-        renderMealSection(FoodEntry.MEAL_DINNER, "☾", entries);
+        renderMealSection(FoodEntry.MEAL_BREAKFAST, "B", entries);
+        renderMealSection(FoodEntry.MEAL_LUNCH, "L", entries);
+        renderMealSection(FoodEntry.MEAL_SNACKS, "S", entries);
+        renderMealSection(FoodEntry.MEAL_DINNER, "D", entries);
     }
 
     private void renderMealSection(String mealType, String icon, List<FoodEntry> entries) {
@@ -1473,7 +1481,7 @@ public final class MainActivity extends Activity {
             if (!mealType.equals(entry.mealType)) continue;
             hasEntries = true;
             View row = getLayoutInflater().inflate(R.layout.item_diary_entry, section, false);
-            ((TextView) row.findViewById(R.id.entryIcon)).setText(foodEmoji(entry.name));
+            ((TextView) row.findViewById(R.id.entryIcon)).setText(foodGlyph(entry.name));
             ((TextView) row.findViewById(R.id.entryName)).setText(entry.name);
             ((TextView) row.findViewById(R.id.entryAmount)).setText(String.format(Locale.getDefault(), "%.0f g  •  %s", entry.grams, friendlySource(entry.source)));
             ((TextView) row.findViewById(R.id.entryMacros)).setText(String.format(Locale.getDefault(), "P %.0fg    C %.0fg    F %.0fg", entry.protein, entry.carbs, entry.fat));
@@ -1718,7 +1726,7 @@ public final class MainActivity extends Activity {
         for (FoodHistory.Item item : items) {
             FoodEntry entry = item.entry;
             View row = getLayoutInflater().inflate(R.layout.item_food_search, searchResultsContainer, false);
-            ((TextView) row.findViewById(R.id.foodIcon)).setText(foodEmoji(entry.name));
+            ((TextView) row.findViewById(R.id.foodIcon)).setText(foodGlyph(entry.name));
             ((TextView) row.findViewById(R.id.foodName)).setText(entry.name);
             String subtitle;
             if ("favorite".equals(mode)) {
@@ -1798,7 +1806,7 @@ public final class MainActivity extends Activity {
         }
         for (CatalogFood food : results) {
             View row = getLayoutInflater().inflate(R.layout.item_food_search, searchResultsContainer, false);
-            ((TextView) row.findViewById(R.id.foodIcon)).setText(foodEmoji(food.name));
+            ((TextView) row.findViewById(R.id.foodIcon)).setText(foodGlyph(food.name));
             ((TextView) row.findViewById(R.id.foodName)).setText(food.name);
             ((TextView) row.findViewById(R.id.foodSubtitle)).setText(searchSubtitle(food));
             ((TextView) row.findViewById(R.id.foodMacros)).setText(searchMacroLine(food));
@@ -1836,7 +1844,7 @@ public final class MainActivity extends Activity {
     private void openDetail(CatalogFood food) {
         selectedFood = food;
         restoreServingState(food);
-        detailEmoji.setText(foodEmoji(food.name));
+        detailEmoji.setText(foodGlyph(food.name));
         detailName.setText(food.name);
         detailSubtitle.setText(detailSubtitle(food));
         detailSourceChip.setText(friendlySource(food.source));
@@ -2152,20 +2160,19 @@ public final class MainActivity extends Activity {
         }
     }
 
-    private String foodEmoji(String name) {
+    private String foodGlyph(String name) {
         String n = name == null ? "" : name.toLowerCase(Locale.ROOT);
-        if (n.contains("idli")) return "◉";
-        if (n.contains("dosa") || n.contains("chapati") || n.contains("roti")) return "🥙";
-        if (n.contains("biryani") || n.contains("rice") || n.contains("pulao")) return "🍚";
-        if (n.contains("paneer") || n.contains("curry") || n.contains("dal") || n.contains("sambar")) return "🍛";
-        if (n.contains("bread") || n.contains("bun")) return "🍞";
-        if (n.contains("milk") || n.contains("curd") || n.contains("yogurt")) return "🥛";
-        if (n.contains("banana")) return "🍌";
-        if (n.contains("apple")) return "🍎";
-        if (n.contains("egg")) return "🥚";
-        if (n.contains("chicken")) return "🍗";
-        if (n.contains("tea") || n.contains("coffee")) return "☕";
-        return "🍽";
+        if (n.contains("idli")) return "ID";
+        if (n.contains("dosa") || n.contains("chapati") || n.contains("roti")) return "FL";
+        if (n.contains("biryani") || n.contains("rice") || n.contains("pulao")) return "RI";
+        if (n.contains("paneer") || n.contains("curry") || n.contains("dal") || n.contains("sambar")) return "CU";
+        if (n.contains("bread") || n.contains("bun")) return "BR";
+        if (n.contains("milk") || n.contains("curd") || n.contains("yogurt")) return "DA";
+        if (n.contains("banana") || n.contains("apple") || n.contains("fruit")) return "FR";
+        if (n.contains("egg")) return "EG";
+        if (n.contains("chicken")) return "CH";
+        if (n.contains("tea") || n.contains("coffee")) return "DR";
+        return "FO";
     }
 
     private String friendlySource(String source) {

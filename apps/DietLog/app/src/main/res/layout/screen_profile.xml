@@ -18,8 +18,9 @@
         <include layout="@layout/section_profile_summary" />
         <include layout="@layout/section_profile_goal" />
         <include layout="@layout/section_profile_nutrition" />
-        <include layout="@layout/section_profile_supabase" />
+        <include layout="@layout/section_profile_backup_header" />
         <include layout="@layout/section_profile_drive" />
+        <include layout="@layout/section_profile_supabase" />
         <include layout="@layout/section_profile_diagnostics" />
     </LinearLayout>
 </ScrollView>
