@@ -46,6 +46,13 @@ public final class DriveSyncStatusStore {
                 .apply();
     }
 
+    public void clearError() {
+        prefs.edit()
+                .putString(KEY_LAST_ERROR, "")
+                .putBoolean(KEY_REAUTH_REQUIRED, false)
+                .apply();
+    }
+
     public void markRemoteMerge(int snapshotsApplied) {
         prefs.edit()
                 .putLong(KEY_LAST_REMOTE_MERGE_AT, System.currentTimeMillis())

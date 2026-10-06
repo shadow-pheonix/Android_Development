@@ -14,6 +14,7 @@ import com.google.android.gms.auth.api.identity.Identity;
 import com.google.android.gms.auth.api.identity.RevokeAccessRequest;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Tasks;
 import com.shadowphoenix.dietlog.diagnostics.AppLogger;
@@ -38,6 +39,7 @@ public final class GoogleDriveAuthorization {
     private GoogleDriveAuthorization() {}
 
     public static void beginConnect(Activity activity, Callback callback) {
+        AppLogger.i("Drive authorization requested scope=drive.appdata");
         AuthorizationRequest request = AuthorizationRequest.builder()
                 .setRequestedScopes(Collections.singletonList(new Scope(DRIVE_APPDATA_SCOPE)))
                 .setPrompt(AuthorizationRequest.Prompt.SELECT_ACCOUNT)
@@ -116,19 +118,39 @@ public final class GoogleDriveAuthorization {
     public static boolean handleActivityResult(
             Activity activity, int requestCode, int resultCode, Intent data, Callback callback) {
         if (requestCode != REQUEST_CODE) return false;
-        if (resultCode != Activity.RESULT_OK || data == null) {
-            callback.onFailure(Failure.CANCELLED, "Google Drive authorization was cancelled.", null);
-            return true;
+        AppLogger.i("Drive authorization activity result code=" + resultCode
+                + " hasData=" + (data != null));
+
+        // Google returns authorization failures inside the result Intent as ApiException status
+        // codes. Parse any returned Intent even if the Activity result code is not RESULT_OK, so
+        // OAuth configuration errors are not silently misclassified as user cancellation.
+        if (data != null) {
+            AuthorizationClient client = Identity.getAuthorizationClient(activity);
+            try {
+                AuthorizationResult result = client.getAuthorizationResultFromIntent(data);
+                deliverAuthorizedResult(activity, result, callback);
+                return true;
+            } catch (ApiException e) {
+                int statusCode = e.getStatusCode();
+                String statusName = CommonStatusCodes.getStatusCodeString(statusCode);
+                String message = authorizationFailureMessage(statusCode);
+                AppLogger.e("Drive authorization result failed status=" + statusCode
+                        + " name=" + statusName + " resultCode=" + resultCode, e);
+                callback.onFailure(statusCode == CommonStatusCodes.CANCELED
+                                ? Failure.CANCELLED : Failure.AUTHORIZATION_FAILED,
+                        message, e);
+                return true;
+            }
         }
 
-        AuthorizationClient client = Identity.getAuthorizationClient(activity);
-        try {
-            AuthorizationResult result = client.getAuthorizationResultFromIntent(data);
-            deliverAuthorizedResult(activity, result, callback);
-        } catch (ApiException e) {
-            AppLogger.e("Drive authorization result failed status=" + e.getStatusCode(), e);
+        if (resultCode == Activity.RESULT_CANCELED) {
+            AppLogger.i("Drive authorization canceled with no result data");
+            callback.onFailure(Failure.CANCELLED,
+                    "Google Drive authorization was cancelled before Google returned details.", null);
+        } else {
+            AppLogger.e("Drive authorization returned no data resultCode=" + resultCode, null);
             callback.onFailure(Failure.AUTHORIZATION_FAILED,
-                    "Google Drive authorization failed.", e);
+                    "Google Drive authorization returned no result (code " + resultCode + ").", null);
         }
         return true;
     }
@@ -150,10 +172,20 @@ public final class GoogleDriveAuthorization {
                     deliverAuthorizedResult(context, result, callback);
                 })
                 .addOnFailureListener(error -> {
-                    AppLogger.e("Drive authorization request failed: "
-                            + error.getClass().getSimpleName(), error);
-                    callback.onFailure(Failure.AUTHORIZATION_FAILED,
-                            "Could not authorize Google Drive.", error);
+                    if (error instanceof ApiException) {
+                        ApiException api = (ApiException) error;
+                        int statusCode = api.getStatusCode();
+                        AppLogger.e("Drive authorization request failed status=" + statusCode
+                                + " name=" + CommonStatusCodes.getStatusCodeString(statusCode), error);
+                        callback.onFailure(statusCode == CommonStatusCodes.CANCELED
+                                        ? Failure.CANCELLED : Failure.AUTHORIZATION_FAILED,
+                                authorizationFailureMessage(statusCode), error);
+                    } else {
+                        AppLogger.e("Drive authorization request failed: "
+                                + error.getClass().getSimpleName(), error);
+                        callback.onFailure(Failure.AUTHORIZATION_FAILED,
+                                "Could not authorize Google Drive.", error);
+                    }
                 });
     }
 
@@ -165,6 +197,7 @@ public final class GoogleDriveAuthorization {
             return;
         }
         try {
+            AppLogger.i("Drive authorization resolution launched");
             activity.startIntentSenderForResult(
                     pendingIntent.getIntentSender(), REQUEST_CODE, null, 0, 0, 0);
         } catch (IntentSender.SendIntentException e) {
@@ -203,6 +236,27 @@ public final class GoogleDriveAuthorization {
         if (!accountName.isEmpty() || !store.getState().connected) store.markConnected(accountName);
         else store.markAuthorizationRefreshed();
         return new TokenResult(accessToken, accountName);
+    }
+
+    private static String authorizationFailureMessage(int statusCode) {
+        switch (statusCode) {
+            case CommonStatusCodes.DEVELOPER_ERROR:
+                return "Google OAuth is not configured for this DietLog APK. Verify the Android OAuth client package name and signing SHA-1, then try again (status 10).";
+            case CommonStatusCodes.NETWORK_ERROR:
+                return "Google Drive authorization hit a network error. Check your connection and try again (status 7).";
+            case CommonStatusCodes.INVALID_ACCOUNT:
+                return "Google rejected the selected account. Choose another Google account and try again (status 5).";
+            case CommonStatusCodes.CANCELED:
+                return "Google Drive authorization was cancelled (status 16).";
+            case CommonStatusCodes.TIMEOUT:
+                return "Google Drive authorization timed out. Try again (status 15).";
+            case CommonStatusCodes.INTERNAL_ERROR:
+                return "Google Play services returned an internal authorization error. Try again (status 8).";
+            default:
+                return "Google Drive authorization failed ("
+                        + CommonStatusCodes.getStatusCodeString(statusCode)
+                        + ", status " + statusCode + ").";
+        }
     }
 
     public enum Failure {

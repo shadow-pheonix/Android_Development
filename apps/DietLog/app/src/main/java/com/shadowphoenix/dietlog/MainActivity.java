@@ -364,6 +364,7 @@ public final class MainActivity extends Activity {
     }
 
     private void connectGoogleDrive() {
+        new DriveSyncStatusStore(this).clearError();
         setDriveControlsEnabled(false);
         driveSyncStatus.setText("Opening Google authorization…");
         GoogleDriveAuthorization.beginConnect(this, driveAuthorizationCallback());
@@ -373,6 +374,7 @@ public final class MainActivity extends Activity {
         return new GoogleDriveAuthorization.Callback() {
             @Override
             public void onAuthorized(String accessToken, String accountName) {
+                new DriveSyncStatusStore(MainActivity.this).clearError();
                 SyncCoordinator.forceDirty(MainActivity.this, "drive-connect");
                 DriveBackupScheduler.schedulePeriodic(MainActivity.this);
                 DriveBackupScheduler.scheduleImmediate(MainActivity.this);
@@ -385,13 +387,19 @@ public final class MainActivity extends Activity {
 
             @Override
             public void onFailure(GoogleDriveAuthorization.Failure failure, String message, Throwable error) {
-                if (error != null) AppLogger.e("Drive authorization UI failed: " + failure, error);
+                String safeMessage = message == null ? "Google Drive authorization failed" : message;
+                new DriveSyncStatusStore(MainActivity.this).markError(
+                        safeMessage, failure == GoogleDriveAuthorization.Failure.REAUTH_REQUIRED);
+                if (failure == GoogleDriveAuthorization.Failure.CANCELLED && error == null) {
+                    AppLogger.i("Drive authorization UI cancelled: " + safeMessage);
+                } else {
+                    AppLogger.e("Drive authorization UI failed: " + failure
+                            + " message=" + safeMessage, error);
+                }
                 runOnUiThread(() -> {
                     setDriveControlsEnabled(true);
                     refreshDriveBackupUi();
-                    if (failure != GoogleDriveAuthorization.Failure.CANCELLED) {
-                        toast(message == null ? "Google Drive authorization failed" : message);
-                    }
+                    Toast.makeText(MainActivity.this, safeMessage, Toast.LENGTH_LONG).show();
                 });
             }
         };
@@ -517,7 +525,11 @@ public final class MainActivity extends Activity {
 
         if (!connection.connected) {
             driveConnectionStatus.setText("Not connected");
-            driveSyncStatus.setText("DietLog stays local-first. Connect Drive to back up and merge your user data automatically.");
+            if (!status.lastError.isEmpty()) {
+                driveSyncStatus.setText("Last connection issue: " + status.lastError);
+            } else {
+                driveSyncStatus.setText("DietLog stays local-first. Connect Drive to back up and merge your user data automatically.");
+            }
             return;
         }
 

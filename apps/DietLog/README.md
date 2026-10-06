@@ -57,7 +57,7 @@ The SQLite schema preserves the useful structured fields (barcode, brand, catego
 
 Drive backup uses Google Identity Services authorization and the narrow `drive.appdata` scope. The Android distribution must be registered in a Google Cloud project with its package name and SHA-1 signing certificate, and the Google Drive API must be enabled for that project. No OAuth access token is persisted by DietLog.
 
-Debug builds currently use the `.debug` application ID suffix, so OAuth registration for CI/debug APKs must match `com.shadowphoenix.dietlog.debug` and the SHA-1 of the signing certificate used for that APK.
+Debug builds currently use the `.debug` application ID suffix, so OAuth registration for CI/debug APKs must match `com.shadowphoenix.dietlog.debug` and the SHA-1 of the signing certificate used for that APK. The exact certificate SHA-1 is included in `app-info.txt` inside an exported diagnostics ZIP. Authorization failures are logged with the Google status code so OAuth configuration errors are actionable.
 
 ## Build
 

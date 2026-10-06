@@ -3,6 +3,9 @@ package com.shadowphoenix.dietlog.diagnostics;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -20,6 +23,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -162,7 +167,27 @@ public final class DiagnosticsExporter {
                 "applicationId=" + context.getPackageName() + '\n' +
                 "versionName=" + BuildConfig.VERSION_NAME + '\n' +
                 "versionCode=" + BuildConfig.VERSION_CODE + '\n' +
-                "buildType=" + BuildConfig.BUILD_TYPE + '\n';
+                "buildType=" + BuildConfig.BUILD_TYPE + '\n' +
+                "signingSha1=" + signingSha1(context) + '\n';
+    }
+
+    private static String signingSha1(Context context) {
+        try {
+            PackageInfo info = context.getPackageManager().getPackageInfo(
+                    context.getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES);
+            if (info.signingInfo == null) return "unavailable";
+            Signature[] signatures = info.signingInfo.getApkContentsSigners();
+            if (signatures == null || signatures.length == 0) return "unavailable";
+            byte[] digest = MessageDigest.getInstance("SHA-1").digest(signatures[0].toByteArray());
+            StringBuilder out = new StringBuilder();
+            for (byte value : digest) {
+                if (out.length() > 0) out.append(':');
+                out.append(String.format(Locale.US, "%02X", value & 0xff));
+            }
+            return out.toString();
+        } catch (PackageManager.NameNotFoundException | NoSuchAlgorithmException e) {
+            return "unavailable";
+        }
     }
 
     private static String buildInfo() {
