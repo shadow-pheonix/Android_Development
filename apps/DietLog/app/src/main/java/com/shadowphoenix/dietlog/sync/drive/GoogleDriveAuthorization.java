@@ -226,14 +226,20 @@ public final class GoogleDriveAuthorization {
         }
 
         String accountName = "";
+        String displayName = "";
         GoogleSignInAccount signInAccount = result.toGoogleSignInAccount();
         if (signInAccount != null) {
             Account account = signInAccount.getAccount();
             if (account != null && account.name != null) accountName = account.name;
+            if (signInAccount.getDisplayName() != null) {
+                displayName = signInAccount.getDisplayName().trim();
+            }
         }
 
         DriveConnectionStore store = new DriveConnectionStore(context);
-        if (!accountName.isEmpty() || !store.getState().connected) store.markConnected(accountName);
+        if (!accountName.isEmpty() || !displayName.isEmpty() || !store.getState().connected) {
+            store.markConnected(accountName, displayName);
+        }
         else store.markAuthorizationRefreshed();
         return new TokenResult(accessToken, accountName);
     }

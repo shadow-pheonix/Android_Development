@@ -38,6 +38,7 @@ public final class ProfileController {
     private ProfileSettings settings;
     private boolean hasSavedProfile;
     private boolean suppressCallbacks;
+    private String fallbackDisplayName = "";
 
     private EditText nameInput, ageInput, heightInput, weightInput, targetWeightInput, weeklyInput, manualCaloriesInput;
     private EditText proteinInput, carbsInput, fatInput, proteinPctInput, carbsPctInput, fatPctInput;
@@ -78,6 +79,11 @@ public final class ProfileController {
     public double getFatGoal() { return hasSavedProfile ? positiveOr(settings.fatGoalG, LEGACY_FAT_GOAL) : LEGACY_FAT_GOAL; }
     public ProfileSettings getSettings() { return settings; }
     public boolean hasSavedProfile() { return hasSavedProfile; }
+
+    public void setFallbackDisplayName(String value) {
+        fallbackDisplayName = value == null ? "" : value.trim();
+        if (headerName != null) updateHeader(readDraft(false));
+    }
 
     public void reloadFromPreferences() {
         hasSavedProfile = preferences.hasSavedProfile();
@@ -455,7 +461,9 @@ public final class ProfileController {
     }
 
     private void updateHeader(ProfileSettings draft) {
-        headerName.setText(draft.displayName.isEmpty() ? "Your profile" : draft.displayName);
+        String displayName = draft.displayName == null ? "" : draft.displayName.trim();
+        if (displayName.isEmpty()) displayName = fallbackDisplayName;
+        headerName.setText(displayName.isEmpty() ? "Your profile" : displayName);
         String summary = String.format(Locale.getDefault(), "%.0f kg  •  %.0f cm  •  %s  •  %s",
                 draft.currentWeightKg, draft.heightCm, draft.goal.label, draft.activityLevel.label);
         headerSummary.setText(summary);
