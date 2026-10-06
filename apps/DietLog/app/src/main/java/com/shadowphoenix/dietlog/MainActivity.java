@@ -1247,6 +1247,7 @@ public final class MainActivity extends Activity {
                 .putFloat(servingMemoryKey(selectedFood) + ".base", (float) baseServingGrams)
                 .putFloat(servingMemoryKey(selectedFood) + ".multiplier", (float) servingMultiplier)
                 .putString(servingMemoryKey(selectedFood) + ".label", selectedServingLabel)
+                .putLong(servingMemoryKey(selectedFood) + ".updatedAt", System.currentTimeMillis())
                 .apply();
         SyncCoordinator.markUserDataChanged(this, "serving-memory");
     }

@@ -25,17 +25,29 @@ public final class DriveBackupWorker extends Worker {
     @Override
     public Result doWork() {
         Context context = getApplicationContext();
-        SyncCoordinator.State state = SyncCoordinator.getState(context);
-        if (!state.dirty) return Result.success();
-
         DriveSyncStatusStore status = new DriveSyncStatusStore(context);
         status.markAttempt();
         try {
             GoogleDriveAuthorization.TokenResult token =
                     GoogleDriveAuthorization.requestSilentTokenBlocking(context);
+            SyncCoordinator.State beforeMerge = SyncCoordinator.getState(context);
+            DriveRestoreManager.MergeResult merge = new DriveRestoreManager().mergeDriveSnapshots(
+                    context, token.accessToken, beforeMerge.deviceId, false);
+            if (merge.snapshotsApplied > 0) status.markRemoteMerge(merge.snapshotsApplied);
+
+            SyncCoordinator.State state = SyncCoordinator.getState(context);
+            if (!state.dirty) return Result.success();
+
             byte[] snapshot = BackupSnapshotCodec.create(context, state);
-            DriveFileMetadata uploaded = new DriveBackupRepository().uploadDeviceSnapshot(
+            DriveBackupRepository repository = new DriveBackupRepository();
+            DriveFileMetadata uploaded = repository.uploadDeviceSnapshot(
                     token.accessToken, state, snapshot, status.getRemoteFileId());
+            try {
+                repository.createHistoryIfDue(token.accessToken, state, snapshot);
+            } catch (IOException historyError) {
+                // Current sync remains authoritative; history is an additional recovery layer.
+                AppLogger.e("Drive history snapshot failed", historyError);
+            }
             boolean exactRevision = SyncCoordinator.markRevisionSynced(context, state.localRevision);
             status.markSuccess(state.localRevision, uploaded.id);
             AppLogger.i("Drive backup uploaded revision=" + state.localRevision

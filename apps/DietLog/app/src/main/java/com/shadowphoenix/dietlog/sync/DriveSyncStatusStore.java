@@ -12,6 +12,8 @@ public final class DriveSyncStatusStore {
     private static final String KEY_LAST_ERROR = "lastError";
     private static final String KEY_REAUTH_REQUIRED = "reauthRequired";
     private static final String KEY_REMOTE_FILE_ID = "remoteFileId";
+    private static final String KEY_LAST_REMOTE_MERGE_AT = "lastRemoteMergeAt";
+    private static final String KEY_REMOTE_SNAPSHOTS_APPLIED = "remoteSnapshotsApplied";
 
     private final SharedPreferences prefs;
 
@@ -44,6 +46,13 @@ public final class DriveSyncStatusStore {
                 .apply();
     }
 
+    public void markRemoteMerge(int snapshotsApplied) {
+        prefs.edit()
+                .putLong(KEY_LAST_REMOTE_MERGE_AT, System.currentTimeMillis())
+                .putInt(KEY_REMOTE_SNAPSHOTS_APPLIED, Math.max(0, snapshotsApplied))
+                .apply();
+    }
+
     public String getRemoteFileId() {
         return prefs.getString(KEY_REMOTE_FILE_ID, "");
     }
@@ -54,7 +63,9 @@ public final class DriveSyncStatusStore {
                 prefs.getLong(KEY_LAST_SUCCESS_AT, 0L),
                 prefs.getLong(KEY_LAST_SUCCESS_REVISION, 0L),
                 prefs.getString(KEY_LAST_ERROR, ""),
-                prefs.getBoolean(KEY_REAUTH_REQUIRED, false));
+                prefs.getBoolean(KEY_REAUTH_REQUIRED, false),
+                prefs.getLong(KEY_LAST_REMOTE_MERGE_AT, 0L),
+                prefs.getInt(KEY_REMOTE_SNAPSHOTS_APPLIED, 0));
     }
 
     public void clear() {
@@ -67,14 +78,19 @@ public final class DriveSyncStatusStore {
         public final long lastSuccessRevision;
         public final String lastError;
         public final boolean reauthRequired;
+        public final long lastRemoteMergeAt;
+        public final int remoteSnapshotsApplied;
 
         State(long lastAttemptAt, long lastSuccessAt, long lastSuccessRevision,
-              String lastError, boolean reauthRequired) {
+              String lastError, boolean reauthRequired, long lastRemoteMergeAt,
+              int remoteSnapshotsApplied) {
             this.lastAttemptAt = lastAttemptAt;
             this.lastSuccessAt = lastSuccessAt;
             this.lastSuccessRevision = lastSuccessRevision;
             this.lastError = lastError == null ? "" : lastError;
             this.reauthRequired = reauthRequired;
+            this.lastRemoteMergeAt = lastRemoteMergeAt;
+            this.remoteSnapshotsApplied = remoteSnapshotsApplied;
         }
     }
 }

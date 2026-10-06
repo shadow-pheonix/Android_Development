@@ -73,6 +73,7 @@ public final class ProfilePreferences {
         putDouble(e, "fibreGoalG", s.fibreGoalG);
         putDouble(e, "sugarLimitG", s.sugarLimitG);
         putDouble(e, "sodiumLimitMg", s.sodiumLimitMg);
+        e.putLong("_sync_updated_at", System.currentTimeMillis());
         e.apply();
         SyncCoordinator.markUserDataChanged(appContext, "profile-save");
     }

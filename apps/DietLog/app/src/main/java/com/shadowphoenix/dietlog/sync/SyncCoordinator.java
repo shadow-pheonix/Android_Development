@@ -76,6 +76,20 @@ public final class SyncCoordinator {
         DriveBackupScheduler.scheduleDebounced(context);
     }
 
+    /** Marks one completed remote merge without recursively scheduling the worker already running. */
+    public static long markRemoteMergeApplied(Context context, int snapshotCount) {
+        SharedPreferences prefs = prefs(context);
+        long nextRevision = prefs.getLong(KEY_LOCAL_REVISION, 0L) + 1L;
+        prefs.edit()
+                .putLong(KEY_LOCAL_REVISION, nextRevision)
+                .putBoolean(KEY_DIRTY, true)
+                .putLong(KEY_LAST_CHANGE_AT, System.currentTimeMillis())
+                .putString(KEY_LAST_CHANGE_REASON,
+                        "remote-merge:" + Math.max(0, snapshotCount))
+                .apply();
+        return nextRevision;
+    }
+
     private static SharedPreferences prefs(Context context) {
         return context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
