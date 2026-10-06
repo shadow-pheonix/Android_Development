@@ -33,7 +33,9 @@ public final class DriveBackupWorker extends Worker {
             SyncCoordinator.State beforeMerge = SyncCoordinator.getState(context);
             DriveRestoreManager.MergeResult merge = new DriveRestoreManager().mergeDriveSnapshots(
                     context, token.accessToken, beforeMerge.deviceId, false);
-            if (merge.snapshotsApplied > 0) status.markRemoteMerge(merge.snapshotsApplied);
+            if (merge.snapshotsApplied > 0) {
+                status.markRemoteMerge(merge.snapshotsApplied, merge.changed);
+            }
             if (merge.changed) SupabaseBackupScheduler.scheduleImmediate(context);
 
             SyncCoordinator.State state = SyncCoordinator.getState(context);
