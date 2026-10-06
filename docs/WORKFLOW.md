@@ -45,7 +45,23 @@ For substantial, risky, or performance-sensitive changes, establish a known-good
 
 For app development, verify that the mandatory diagnostics baseline from [DIAGNOSTICS.md](DIAGNOSTICS.md) exists. New apps must include it before the first normal APK handoff; existing apps that lack it should gain it during active development unless explicitly deferred by the user.
 
-## 3. Develop in the chat-local workspace
+## 3. Classify task weight and plan GitHub checkpoints
+
+Before substantial implementation, classify the task by weight.
+
+- **Very light / light**: no checkpoint branch is required. Complete the small change in the verified chat-local workspace, validate it, review the diff, and publish one coherent commit to `main`.
+- **Anything heavier than light**: create a checkpoint plan and use a dedicated feature branch.
+
+For medium/heavy/very-heavy work:
+
+1. Define the natural implementation checkpoints before substantial coding. The checkpoint count must scale with task weight and recoverable milestones rather than a fixed number. Rough guidance: medium tasks commonly need about 2–3 checkpoints, heavy tasks about 3–5, and very heavy or multi-phase tasks may need more.
+2. Create a dedicated feature branch from the verified base commit before publishing the first checkpoint.
+3. Keep `main` unchanged while work is in progress.
+4. After each coherent milestone, run the narrow relevant chat-local checks, review that checkpoint's diff, and publish the checkpoint commit to the feature branch.
+5. Do not publish broken, placeholder, or speculative checkpoint states merely for safekeeping. The checkpoint itself must be coherent and locally validated.
+6. The purpose of checkpoint commits is durable recovery: if the chat-local workspace is lost, completed checkpoints remain available on GitHub without exposing incomplete work on `main`.
+
+## 4. Develop in the chat-local workspace
 
 Make source, resource, script, workflow, and configuration changes in the verified chat-local working copy, whether it was reused directly or extracted from a required ZIP.
 
@@ -53,7 +69,7 @@ Prefer a small number of coherent changes over a large matrix of speculative exp
 
 Do not use GitHub commits as scratch storage or CI as a syntax checker when the issue can be resolved in the chat-local workspace.
 
-## 4. Validate in the chat-local workspace
+## 5. Validate in the chat-local workspace
 
 Run the narrowest useful checks available in the chat-local workspace, for example:
 
@@ -70,7 +86,7 @@ The chat-local workspace may not contain the full Android SDK, emulator, NDK, or
 
 Lack of an Android SDK in the chat-local workspace is **not** a reason to invoke `windows-bridge`. Use GitHub Actions for authoritative Android-specific checks after the local batch is ready, unless the user explicitly asked to use their Windows machine.
 
-## 5. Review the final diff
+## 6. Review the final diff
 
 Before publishing, verify:
 
@@ -83,21 +99,28 @@ Before publishing, verify:
 - generated artifacts that should not be committed are absent;
 - app/version/build changes are deliberate.
 
-## 6. Publish the finalized change to GitHub
+## 7. Publish checkpoints and finalize to GitHub
 
-Publish only when the current batch is internally complete and verified in the chat-local workspace.
+For a very-light/light task, publish only when the small batch is internally complete and verified in the chat-local workspace, then use one focused commit on `main`.
 
-Before publishing, verify again that the intended GitHub branch still points to the recorded base commit. If it has advanced, stop and obtain a fresh latest-commit ZIP from the user, including the direct exact-commit archive link in the request, rather than overwriting, merging, cloning, or reconstructing blindly.
+For anything heavier than light:
 
-Prefer one focused commit with a clear message for one coherent batch.
+1. Publish each completed, coherent, locally validated checkpoint to the dedicated feature branch.
+2. Do not advance `main` for intermediate checkpoints.
+3. After all planned checkpoints are complete, run cumulative local validation and review the full feature-branch diff against the recorded base.
+4. Run the relevant authoritative CI on the feature branch when the workflow supports branch/PR/manual execution.
+5. Only when the complete task is verified good may the feature branch be merged or fast-forwarded into `main`. Prefer preserving checkpoint history unless repository policy or the user explicitly requests another merge method.
+6. Immediately before merging, verify that `main` still matches the expected base lineage. If it advanced outside this task, stop and follow the fresh-source/base-verification rules rather than merging blindly.
 
-When direct `git push` is unavailable from the chat runtime, the authorized GitHub connector/API may publish the exact local diff by creating the required Git objects/commit and advancing the target branch. This is an acceptable publication mechanism because development and review already happened in the chat-local workspace.
+For either workflow, if the intended base branch has advanced unexpectedly, obtain a fresh latest-commit ZIP from the user when required, including the direct exact-commit archive link in the request, rather than overwriting, merging, cloning, or reconstructing blindly.
+
+When direct `git push` is unavailable from the chat runtime, the authorized GitHub connector/API may publish the exact validated checkpoint/final diff by creating the required Git objects/commits and advancing the appropriate feature branch or `main`. This is an acceptable publication mechanism because development and review already happened in the chat-local workspace.
 
 GitHub-side file edits are not the development workspace.
 
-## 7. Run authoritative Android CI
+## 8. Run authoritative Android CI
 
-Use GitHub Actions for checks that require the Android build environment.
+Use GitHub Actions for checks that require the Android build environment. For checkpointed work, prefer running the final authoritative CI against the feature branch before merging to `main` when the workflow supports it.
 
 CI should:
 
@@ -106,7 +129,7 @@ CI should:
 - create clearly named APK artifacts;
 - avoid rebuilding unrelated apps.
 
-## 8. Handle CI failures
+## 9. Handle CI failures
 
 When CI fails:
 
@@ -115,11 +138,11 @@ When CI fails:
 3. Reproduce or reason about it in the chat-local workspace where possible.
 4. Fix it in the same chat-local working copy.
 5. Run chat-local checks again.
-6. Publish a focused correction.
+6. For checkpointed work, publish the focused correction to the same feature branch and re-run the relevant validation before merging; for an already-merged/direct light task, use a new focused correction path as appropriate.
 
 Do not repeatedly make blind CI-only edits.
 
-## 9. Device debugging
+## 10. Device debugging
 
 Every app must support the diagnostics export defined in [DIAGNOSTICS.md](DIAGNOSTICS.md).
 
@@ -136,7 +159,7 @@ Device access is a separate, explicit workflow. It is not implied by the term �
 
 Keep diagnostics bounded and avoid logging credentials, tokens, signing material, or unnecessary sensitive user content.
 
-## 10. APK delivery
+## 11. APK delivery
 
 Deliver an APK only after the relevant build completes successfully.
 

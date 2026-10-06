@@ -117,6 +117,25 @@ These rules apply to every route:
 5. **Use short, bounded, resumable validation cycles.** Preserve successful intermediate work and do not repeat expensive steps without reason.
 6. For substantial work, establish a known-good baseline and then change incrementally.
 
+## Mandatory checkpoint branch policy
+
+Before implementation, classify the task by weight.
+
+- **Very light / light tasks**: a small, low-risk, narrowly scoped change such as a typo, simple documentation edit, tiny configuration adjustment, or similarly bounded change. These do **not** require a checkpoint feature branch and may follow the normal verified workflow to one coherent commit on `main`.
+- **Anything heavier than light**: medium, heavy, very heavy, multi-phase, risky, or otherwise substantial work. These **MUST use a dedicated feature branch with planned checkpoint commits** so completed work is preserved on GitHub even if the chat-local workspace is lost or deleted.
+
+For checkpointed work:
+
+1. **MUST plan the checkpoint milestones before substantial implementation begins.** The number of checkpoints must scale with task weight and natural implementation boundaries. Use enough checkpoints to bound potential work loss, but do not create meaningless micro-commits. As guidance, medium work will often need about 2–3 checkpoints, heavy work about 3–5, and very heavy/multi-phase work may need more; these are guidance, not fixed quotas.
+2. **MUST create a dedicated feature branch from the verified base commit before publishing the first checkpoint.** Keep `main` unchanged while the checkpointed implementation is in progress.
+3. Each checkpoint **MUST represent a coherent, recoverable milestone**. Before publishing a checkpoint, run the narrow relevant chat-local checks available for that milestone and review its diff.
+4. **MUST publish each completed checkpoint to the feature branch** after it is locally validated. The purpose is durable progress preservation, not using GitHub as scratch storage or CI as a syntax checker.
+5. **MUST NOT intentionally checkpoint known-broken, placeholder, or trial-and-error states** merely to save them. Fix ordinary failures locally first.
+6. After all planned checkpoints are complete, **MUST validate the complete cumulative change**, review the full feature-branch diff against its base, verify no unrelated files/secrets/temp files are present, and run the relevant authoritative CI on the feature branch when the workflow supports it.
+7. Only after the complete checkpointed task is verified good may the feature branch be **merged or fast-forwarded into `main`**. Prefer a merge method that preserves the checkpoint history unless repository policy or the user explicitly requires otherwise.
+8. Immediately before merging, verify that `main` still matches the expected base lineage. If `main` advanced outside this task, **do not merge blindly**; follow the repository's fresh-source/base-verification rules and reconcile only with explicit, verified source state.
+9. A feature-branch checkpoint is an intentional exception to the rule that unfinished work should not be published to `main`; checkpoint commits are allowed only on the dedicated feature branch and only when the checkpoint itself is coherent and validated.
+
 ## GitHub and CI role
 
 GitHub is the repository of record for finalized changes. GitHub Actions is the authoritative environment for Android SDK/NDK-dependent compilation, lint, tests, and APK generation when those checks are not available in the chat-local workspace.
@@ -124,7 +143,7 @@ GitHub is the repository of record for finalized changes. GitHub Actions is the 
 The GitHub connector/API may be used to:
 
 - verify the target branch and base commit before development/publishing;
-- publish the finalized local diff as a coherent commit;
+- publish a verified very-light/light change directly when appropriate, or publish validated checkpoint commits to a dedicated feature branch for heavier work and merge that branch only after final verification;
 - inspect GitHub Actions status/logs and retrieve build artifacts.
 
 It should **not** be used to reconstruct the repository file-by-file as the normal development source when the user can provide the latest-commit ZIP.
@@ -155,7 +174,7 @@ Never commit private signing keys, passwords, tokens, credentials, or secrets in
 
 A change may be published only when all applicable items are true:
 
-- intended work for the current batch is complete;
+- for a direct-to-`main` very-light/light task, the intended work for the batch is complete; for checkpointed work, the current checkpoint is coherent and validated before a feature-branch push, and the entire task is complete before merging to `main`;
 - the source working tree is a chat-local repository snapshot verified byte-for-byte against the recorded latest intended GitHub commit, whether reused directly or extracted from a required user-uploaded ZIP;
 - the recorded base commit was verified against the intended GitHub branch before editing and again before publishing;
 - mandatory diagnostics support is present for app-development work;
@@ -163,6 +182,6 @@ A change may be published only when all applicable items are true:
 - final diff was reviewed;
 - target app boundaries were respected;
 - no accidental files, secrets, or unrelated changes are present;
-- the batch is ready for authoritative CI validation.
+- the batch/checkpoint is ready for the next permitted publication stage, and checkpointed work has completed full validation before any merge to `main`.
 
 If any applicable item is false, continue in the chat-local workspace instead of publishing.

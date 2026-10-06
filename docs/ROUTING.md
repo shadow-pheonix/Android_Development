@@ -37,11 +37,16 @@ For an existing repository/app, first inspect whether the required repository fi
    - **Existing app without it** → add it during active development unless the user explicitly defers it.
    - See [DIAGNOSTICS.md](DIAGNOSTICS.md).
 
-5. **Which CI workflow should run?**
+5. **How heavy is the task?**
+   - **Very light / light** → no checkpoint feature branch is required; complete, validate, and publish as one coherent direct batch.
+   - **Anything heavier than light** → plan checkpoints proportional to task weight, create a dedicated feature branch from the verified base, publish each coherent validated checkpoint there, keep `main` unchanged during implementation, and merge only after all checkpoints and final validation are complete.
+
+6. **Which CI workflow should run?**
    - App-only change → only that app's workflow.
    - Shared dependency change → affected apps only.
    - Docs-only change → no Android build by default.
    - Workflow change → run the workflow(s) being modified or otherwise affected.
+   - Checkpointed work → prefer final authoritative CI on the feature branch before merging when supported.
 
 ## Route A — new app
 
@@ -58,13 +63,14 @@ Minimum sequence:
 5. Create the complete app in the chat-local workspace.
 6. Implement mandatory diagnostics export to `AppDebug/<AppName>/` according to [DIAGNOSTICS.md](DIAGNOSTICS.md).
 7. Add app documentation and app-level `AGENTS.md` when useful.
-8. Run all validation available in the chat-local workspace.
-9. Review the complete diff.
-10. Verify the GitHub branch still points to the recorded base commit.
-11. Publish one coherent commit.
-12. Run the app-specific GitHub Actions workflow.
-13. Inspect build/test results.
-14. Produce the APK artifact.
+8. Classify task weight. If heavier than light, plan checkpoints and create a dedicated feature branch from the verified base.
+9. Implement and validate locally; for checkpointed work, publish each coherent validated checkpoint to the feature branch.
+10. Review the complete cumulative diff.
+11. Verify the expected base/`main` lineage is still valid.
+12. For a light task, publish one coherent commit; for checkpointed work, run final branch validation/CI and merge the feature branch to `main` only after all checkpoints are complete and verified.
+13. Run/confirm the app-specific GitHub Actions workflow.
+14. Inspect build/test results.
+15. Produce the APK artifact.
 
 ## Route B — existing app
 
@@ -79,12 +85,12 @@ Minimum sequence:
 5. Read its README, app-level `AGENTS.md`, build files, and relevant source.
 6. Inspect whether the mandatory diagnostics baseline exists; add it during active development if missing unless explicitly deferred.
 7. Establish a baseline when the change is substantial or risky.
-8. Implement in the chat-local workspace.
-9. Validate in the chat-local workspace.
-10. Review the diff.
-11. Verify the GitHub branch still points to the recorded base commit.
-12. Publish the coherent batch.
-13. Run only the relevant CI workflow.
+8. Classify task weight. If heavier than light, plan checkpoints and create a dedicated feature branch from the verified base.
+9. Implement and validate in the chat-local workspace; publish each coherent validated checkpoint to the feature branch when checkpointing applies.
+10. Review the cumulative diff.
+11. Verify the expected base/`main` lineage is still valid.
+12. For a light task, publish the coherent batch directly; for checkpointed work, complete all checkpoints, run final validation/CI, then merge the feature branch to `main`.
+13. Run/confirm only the relevant CI workflow.
 14. Produce the APK artifact after successful validation.
 
 **Do not use the user's Windows checkout or `windows-bridge` for steps 2, 3, 8, or 9 unless the user explicitly requested that environment.**
@@ -109,12 +115,13 @@ Minimum sequence:
 1. Inspect for an existing chat-local repository snapshot and verify it byte-for-byte against the latest intended GitHub commit.
 2. Reuse it if it matches; otherwise request the exact latest-commit ZIP from the user with its direct archive link, extract it into the chat-local workspace, and record/verify the base commit SHA.
 3. Identify affected apps/workflows.
-4. Make the change in the chat-local workspace.
-5. Run narrow validation there first.
-6. Expand validation only when the shared impact requires it.
-7. Review the final diff.
-8. Verify the GitHub branch still points to the recorded base commit.
-9. Publish the coherent change.
+4. Classify task weight. If heavier than light, plan checkpoints and create a dedicated feature branch from the verified base.
+5. Make the change in the chat-local workspace; for checkpointed work, publish each coherent validated checkpoint to the feature branch.
+6. Run narrow validation there first.
+7. Expand validation only when the shared impact requires it.
+8. Review the final cumulative diff.
+9. Verify the expected base/`main` lineage is still valid.
+10. For a light task, publish the coherent change directly; for checkpointed work, merge the feature branch to `main` only after all checkpoints and final validation are complete.
 
 ## CI routing convention
 
