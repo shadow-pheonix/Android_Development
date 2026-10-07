@@ -137,3 +137,13 @@ illustrations share that policy. There are no network effects or animation libra
 In 0.7.15, the grain texture is removed from all glass surfaces, including cards,
 controls and navigation, for a smooth finish. Backdrop blur, edge highlights and
 animations are retained.
+
+### Sliding navigation selection (0.7.16)
+
+One rounded frosted pill slides behind the selected Home, Search, Progress or Profile
+tab over 320 ms. The active icon and label use the teal accent; labels are bold when
+selected. Rapid taps retarget the pill from its current position. Initial layout,
+size/RTL changes and disabled motion place it directly on the selected tab. Pausing,
+hiding or detaching navigation settles the pill and cancels its animator. The center
+Add button remains a separate action, and tab ripple and accessibility selection
+feedback are preserved.

@@ -152,6 +152,7 @@ public final class UiMotion implements AutoCloseable {
     }
 
     private void setIndicatorPolicy(View view, boolean enabled) {
+        if (view instanceof FrostedNavigationView) ((FrostedNavigationView) view).setUiMotionAllowed(enabled);
         if (view instanceof RingProgressView) ((RingProgressView) view).setUiMotionAllowed(enabled);
         if (view instanceof ProgressTrendView) ((ProgressTrendView) view).setUiMotionAllowed(enabled);
         if (view instanceof MealIllustrationView) ((MealIllustrationView) view).setUiMotionAllowed(enabled);
