@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -1139,12 +1140,13 @@ public final class MainActivity extends Activity {
 
         LinearLayout controls = new LinearLayout(this);
         controls.setOrientation(LinearLayout.HORIZONTAL);
+        controls.setBaselineAligned(false);
         controls.setGravity(android.view.Gravity.CENTER_VERTICAL);
         LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(48));
         controls.setLayoutParams(controlsParams);
 
-        TextView previous = dateControl("‹", 48);
+        ImageButton previous = dateArrowControl(R.drawable.ic_date_previous);
         previous.setContentDescription(getString(R.string.previous_day));
         previous.setOnClickListener(v -> selectDate(selectedDate.minusDays(1)));
         controls.addView(previous);
@@ -1169,7 +1171,7 @@ public final class MainActivity extends Activity {
         homeTodayButton.setOnClickListener(v -> selectDate(LocalDate.now()));
         controls.addView(homeTodayButton);
 
-        TextView next = dateControl("›", 48);
+        ImageButton next = dateArrowControl(R.drawable.ic_date_next);
         next.setContentDescription(getString(R.string.next_day));
         next.setOnClickListener(v -> selectDate(selectedDate.plusDays(1)));
         controls.addView(next);
@@ -1178,10 +1180,26 @@ public final class MainActivity extends Activity {
         renderDateNavigation();
     }
 
+    private ImageButton dateArrowControl(int iconResource) {
+        ImageButton control = new ImageButton(this);
+        control.setImageResource(iconResource);
+        control.setImageTintList(ColorStateList.valueOf(getColor(R.color.accent)));
+        control.setScaleType(ImageView.ScaleType.CENTER);
+        control.setPadding(0, 0, 0, 0);
+        FrostedUi.surface(control, Material.CONTROL);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(48), dp(48));
+        params.gravity = android.view.Gravity.CENTER_VERTICAL;
+        params.setMarginStart(dp(2));
+        params.setMarginEnd(dp(2));
+        control.setLayoutParams(params);
+        return control;
+    }
+
     private TextView dateControl(String text, int widthDp) {
         TextView control = new TextView(this);
         control.setText(text);
         control.setGravity(android.view.Gravity.CENTER);
+        control.setIncludeFontPadding(false);
         control.setTextColor(getColor(R.color.accent));
         control.setTextSize("Today".equals(text) ? 12f : 24f);
         control.setTypeface(control.getTypeface(), android.graphics.Typeface.BOLD);

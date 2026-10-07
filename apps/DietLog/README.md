@@ -174,3 +174,10 @@ native gray header is replaced with a transparent header over the same surface.
 Dates, weekdays and the active header use the app's text colors with a teal selected
 day. The theme is also the default for other app date pickers. Relog remains limited
 to days before today; confirmation and cancellation behavior are unchanged.
+
+### Home summary and date alignment (0.7.21)
+
+The summary is titled “Daily nutrition” to cover calories and all three macros.
+Both date arrows use the same 48 × 48 dp frosted control with centered, mirrored
+vector chevrons. The date row centers controls vertically instead of aligning
+their different text baselines.

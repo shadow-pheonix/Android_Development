@@ -5,6 +5,7 @@
     <string name="choose_diary_date">Choose diary date</string>
     <string name="previous_day">Previous day</string>
     <string name="next_day">Next day</string>
+    <string name="daily_nutrition">Daily nutrition</string>
     <string name="food_search">Search foods, brands, dishes</string>
     <string name="search">Search</string>
     <string name="database_status">Offline food database</string>
