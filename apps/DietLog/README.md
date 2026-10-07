@@ -26,6 +26,7 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 - Tap the Home nutrition progress card for the selected day's vitamins and minerals, with profile-adjusted Indian targets and explicit source-data coverage.
 - Manual logging by grams and per-100 g nutrition.
 - Fully offline food search after installation; no runtime food API and no API keys.
+- Bundled food photos in search, recent/frequent/favorite foods, diary entries and food details; exact product photos or labelled representative food photos with source credits.
 - Camera barcode scanning for EAN-13, EAN-8, UPC-A and UPC-E with exact offline catalogue lookup.
 - Numeric barcode lookup remains available through normal search.
 - Tap a search result to populate the logger and view product/nutrition details.
@@ -53,6 +54,14 @@ The SQLite schema preserves the useful structured fields (barcode, brand, catego
 ## Rebuilding the database
 
 `tools/build_food_db.py` accepts local source files and produces the SQLite asset. It uses Python stdlib plus `openpyxl` only for INDB `.xlsx` parsing. Fixtures and `tools/test_builder.py` validate the transform locally without network access.
+
+## Food photos
+
+The 7 October 2026 snapshot covers **21,456 of 28,102 foods (76.4%)**: 14,516 exact packaged-product matches and 6,940 representative ingredient/dish matches. It bundles 14,844 distinct images totaling about 65 MB.
+
+Photos are committed as compressed offline WebP assets, with per-image source and license credits in `app/src/main/assets/food_photos.json`. Food details provide a Photo credits action. Foods without a usable match retain their food symbol. The credit manifest is streamed to keep memory use small; loading and decoding run in the background with an 8 MiB bitmap cache, and product packages fit within their thumbnails. Nutrition values and logging behavior are unchanged.
+
+See `tools/PHOTO_PIPELINE.md` for acquisition/rebuild instructions and `NOTICE_DATA.md` for licensing. CI validates every asset hash, image dimensions, catalogue link and product barcode. It does not scrape images during a build.
 
 ## Google Drive backup setup
 

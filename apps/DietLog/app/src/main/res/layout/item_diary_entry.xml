@@ -7,7 +7,10 @@
     android:gravity="center_vertical"
     android:padding="8dp"
     android:background="@drawable/bg_card_alt">
-    <TextView android:id="@+id/entryIcon" android:layout_width="52dp" android:layout_height="52dp" android:gravity="center" android:background="@drawable/bg_food_thumb" android:text="FO" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" />
+    <FrameLayout android:layout_width="52dp" android:layout_height="52dp" android:background="@drawable/bg_food_thumb" android:clipToOutline="true">
+        <TextView android:id="@+id/entryIcon" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:background="@drawable/bg_food_thumb" android:text="FO" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" />
+        <ImageView android:id="@+id/entryImage" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:importantForAccessibility="no" android:visibility="gone" />
+    </FrameLayout>
     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="9dp" android:orientation="vertical">
         <TextView android:id="@+id/entryName" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary" android:textSize="15sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end" />
         <TextView android:id="@+id/entryAmount" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:textColor="@color/text_secondary" android:textSize="12sp" />

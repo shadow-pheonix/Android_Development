@@ -3,6 +3,8 @@ package com.shadowphoenix.dietlog;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.Intent;
+import android.net.Uri;
 import android.content.res.ColorStateList;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -16,6 +18,7 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -28,6 +31,7 @@ import com.shadowphoenix.dietlog.diagnostics.AppLogger;
 import com.shadowphoenix.dietlog.diagnostics.CrashHandler;
 import com.shadowphoenix.dietlog.diagnostics.DiagnosticsExporter;
 import com.shadowphoenix.dietlog.food.CatalogFood;
+import com.shadowphoenix.dietlog.food.FoodPhotoLoader;
 import com.shadowphoenix.dietlog.food.FoodCatalogDb;
 import com.shadowphoenix.dietlog.food.ServingOption;
 import com.shadowphoenix.dietlog.nutrition.DailyMicronutrientSummary;
@@ -77,6 +81,9 @@ public final class MainActivity extends Activity {
 
     private DiaryDbHelper diary;
     private FoodCatalogDb catalog;
+    private FoodPhotoLoader photoLoader;
+    private ImageView detailImage;
+    private TextView detailPhotoCredit;
     private ProfileController profileController;
     private ProgressController progressController;
     private final ExecutorService driveExecutor = Executors.newSingleThreadExecutor();
@@ -139,6 +146,7 @@ public final class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         configureSystemBarInsets();
 
+        photoLoader = new FoodPhotoLoader(this);
         diary = new DiaryDbHelper(this);
         if (savedInstanceState != null) {
             String savedDate = savedInstanceState.getString("selected_date");
@@ -288,6 +296,8 @@ public final class MainActivity extends Activity {
         searchResultsContainer = findViewById(R.id.searchResultsContainer);
 
         detailEmoji = findViewById(R.id.detailEmoji);
+        detailImage = findViewById(R.id.detailImage);
+        detailPhotoCredit = findViewById(R.id.detailPhotoCredit);
         detailName = findViewById(R.id.detailName);
         detailSubtitle = findViewById(R.id.detailSubtitle);
         detailSourceChip = findViewById(R.id.detailSourceChip);
@@ -1563,7 +1573,8 @@ public final class MainActivity extends Activity {
             if (!mealType.equals(entry.mealType)) continue;
             hasEntries = true;
             View row = getLayoutInflater().inflate(R.layout.item_diary_entry, section, false);
-            ((TextView) row.findViewById(R.id.entryIcon)).setText(foodGlyph(entry.name));
+            photoLoader.bind(row.findViewById(R.id.entryImage), row.findViewById(R.id.entryIcon),
+                    entry.sourceFoodId, foodGlyph(entry.name), null);
             ((TextView) row.findViewById(R.id.entryName)).setText(entry.name);
             ((TextView) row.findViewById(R.id.entryAmount)).setText(String.format(Locale.getDefault(), "%.0f g  •  %s", entry.grams, friendlySource(entry.source)));
             ((TextView) row.findViewById(R.id.entryMacros)).setText(String.format(Locale.getDefault(), "P %.0fg    C %.0fg    F %.0fg", entry.protein, entry.carbs, entry.fat));
@@ -1808,7 +1819,8 @@ public final class MainActivity extends Activity {
         for (FoodHistory.Item item : items) {
             FoodEntry entry = item.entry;
             View row = getLayoutInflater().inflate(R.layout.item_food_search, searchResultsContainer, false);
-            ((TextView) row.findViewById(R.id.foodIcon)).setText(foodGlyph(entry.name));
+            photoLoader.bind(row.findViewById(R.id.foodImage), row.findViewById(R.id.foodIcon),
+                    entry.sourceFoodId, foodGlyph(entry.name), null);
             ((TextView) row.findViewById(R.id.foodName)).setText(entry.name);
             String subtitle;
             if ("favorite".equals(mode)) {
@@ -1888,7 +1900,8 @@ public final class MainActivity extends Activity {
         }
         for (CatalogFood food : results) {
             View row = getLayoutInflater().inflate(R.layout.item_food_search, searchResultsContainer, false);
-            ((TextView) row.findViewById(R.id.foodIcon)).setText(foodGlyph(food.name));
+            photoLoader.bind(row.findViewById(R.id.foodImage), row.findViewById(R.id.foodIcon),
+                    food.code, foodGlyph(food.name), null);
             ((TextView) row.findViewById(R.id.foodName)).setText(food.name);
             ((TextView) row.findViewById(R.id.foodSubtitle)).setText(searchSubtitle(food));
             ((TextView) row.findViewById(R.id.foodMacros)).setText(searchMacroLine(food));
@@ -1926,7 +1939,13 @@ public final class MainActivity extends Activity {
     private void openDetail(CatalogFood food) {
         selectedFood = food;
         restoreServingState(food);
-        detailEmoji.setText(foodGlyph(food.name));
+        detailPhotoCredit.setVisibility(View.GONE);
+        detailPhotoCredit.setOnClickListener(null);
+        photoLoader.bind(detailImage, detailEmoji, food.code, foodGlyph(food.name), photo -> {
+            detailPhotoCredit.setText(("product".equals(photo.kind) ? "Product photo" : "Representative photo") + " • Photo credits ›");
+            detailPhotoCredit.setVisibility(View.VISIBLE);
+            detailPhotoCredit.setOnClickListener(v -> showPhotoCredits(photo));
+        });
         detailName.setText(food.name);
         detailSubtitle.setText(detailSubtitle(food));
         detailSourceChip.setText(friendlySource(food.source));
@@ -1944,6 +1963,27 @@ public final class MainActivity extends Activity {
         updateFavoriteButton();
         AppLogger.i("Catalog food selected source=" + food.source + " code=" + food.code + " meal=" + activeMealType);
         showScreen(detailScreen, -1);
+    }
+
+    private void showPhotoCredits(FoodPhotoLoader.Photo photo) {
+        new AlertDialog.Builder(this)
+                .setTitle("Photo credits")
+                .setMessage(photo.credit + "\n\n" + photo.license +
+                        "\n\nResized and compressed for offline use." +
+                        ("representative".equals(photo.kind) ? "\nThis is a representative food photo; preparation may vary." : ""))
+                .setPositiveButton("Source", (dialog, which) -> openPhotoLink(photo.sourceUrl))
+                .setNeutralButton("License", (dialog, which) -> openPhotoLink(photo.licenseUrl))
+                .setNegativeButton("Close", null).show();
+    }
+
+    private void openPhotoLink(String url) {
+        Uri uri = Uri.parse(url);
+        if (!"https".equals(uri.getScheme())) return;
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, uri));
+        } catch (android.content.ActivityNotFoundException error) {
+            toast("No browser available");
+        }
     }
 
     private String detailSubtitle(CatalogFood food) {
@@ -2435,6 +2475,7 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (photoLoader != null) photoLoader.close();
         driveExecutor.shutdownNow();
         supabaseExecutor.shutdownNow();
         if (catalog != null) catalog.close();

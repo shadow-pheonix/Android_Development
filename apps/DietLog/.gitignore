@@ -4,3 +4,4 @@ app/build/
 .dataset-cache/
 app/src/main/assets/offline_foods.db
 local.properties
+__pycache__/
