@@ -64,8 +64,8 @@ public final class FrostedNavigationView extends LinearLayout {
         }
         selectionStart.set(selectionBounds);
         selectionAnimator = ValueAnimator.ofFloat(0, 1);
-        selectionAnimator.setDuration(320);
-        selectionAnimator.setInterpolator(new PathInterpolator(0.22f, 1f, 0.36f, 1f));
+        selectionAnimator.setDuration(450);
+        selectionAnimator.setInterpolator(new PathInterpolator(0.25f, 0.1f, 0.25f, 1f));
         selectionAnimator.addUpdateListener(animation -> {
             if (!uiMotionAllowed || !UiMotion.preferencesAllowMotion(getContext())) {
                 finishSelectionAnimation();
