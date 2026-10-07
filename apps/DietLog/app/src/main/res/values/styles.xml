@@ -13,15 +13,41 @@
         <item name="android:windowBackground">@color/background</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:alertDialogTheme">@style/FrostedDialogTheme</item>
+        <item name="android:datePickerDialogTheme">@style/DiaryDatePickerDialog</item>
     </style>
 
     <style name="DiaryDatePickerDialog" parent="FrostedDialogTheme">
+        <item name="android:windowBackground">@drawable/bg_calendar_dialog</item>
+        <item name="android:fontFamily">sans-serif</item>
         <item name="android:colorAccent">@color/accent</item>
         <item name="android:datePickerStyle">@style/DiaryCalendarDatePicker</item>
+        <item name="android:calendarViewStyle">@style/DiaryCalendarView</item>
     </style>
 
     <style name="DiaryCalendarDatePicker" parent="android:style/Widget.Material.DatePicker">
         <item name="android:datePickerMode">calendar</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:headerBackground">@android:color/transparent</item>
+        <item name="android:headerMonthTextAppearance">@style/DiaryCalendarHeaderText</item>
+        <item name="android:calendarTextColor">@color/text_primary</item>
+    </style>
+
+    <style name="DiaryCalendarView" parent="android:style/Widget.Material.CalendarView">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:dateTextAppearance">@style/DiaryCalendarDayText</item>
+        <item name="android:weekDayTextAppearance">@style/DiaryCalendarWeekText</item>
+    </style>
+
+    <style name="DiaryCalendarHeaderText" parent="android:style/TextAppearance.Material.Headline">
+        <item name="android:textColor">@color/calendar_header_text</item>
+    </style>
+
+    <style name="DiaryCalendarDayText" parent="android:style/TextAppearance.Material.Body1">
+        <item name="android:textColor">@color/calendar_day_text</item>
+    </style>
+
+    <style name="DiaryCalendarWeekText" parent="android:style/TextAppearance.Material.Caption">
+        <item name="android:textColor">@color/text_secondary</item>
     </style>
 
     <style name="Text.Title">

@@ -1502,7 +1502,7 @@ public final class MainActivity extends Activity {
         LocalDate safeInitial = initialDate == null || !initialDate.isBefore(today)
                 ? today.minusDays(1) : initialDate;
         DatePickerDialog picker = new DatePickerDialog(
-                this,
+                this, R.style.DiaryDatePickerDialog,
                 (view, year, month, dayOfMonth) ->
                         confirmRelogDate(LocalDate.of(year, month + 1, dayOfMonth)),
                 safeInitial.getYear(),

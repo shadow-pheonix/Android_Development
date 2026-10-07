@@ -165,3 +165,12 @@ result counts without recording the search text.
 The five bottom buttons no longer shrink and spring back when pressed. Page fade
 and entrance animations, the 450 ms sliding selection pill and native click feedback
 remain available. Other buttons keep their existing press feedback.
+
+### Consistent calendars (0.7.20)
+
+Diary and Relog date selection share the rounded dark glass calendar theme. Its
+opaque gradient keeps the diary behind the dialog from showing through, and the
+native gray header is replaced with a transparent header over the same surface.
+Dates, weekdays and the active header use the app's text colors with a teal selected
+day. The theme is also the default for other app date pickers. Relog remains limited
+to days before today; confirmation and cancellation behavior are unchanged.
