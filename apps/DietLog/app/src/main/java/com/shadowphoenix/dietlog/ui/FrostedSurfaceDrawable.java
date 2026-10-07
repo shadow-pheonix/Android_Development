@@ -19,7 +19,7 @@ import java.util.Random;
 
 /** Tinted frost, fine grain and a directional rim. Foreground content is never blurred. */
 public final class FrostedSurfaceDrawable extends Drawable {
-    public enum Material { CARD, FEATURE, CONTROL, INPUT, NAVIGATION, TAB, ACTION, BADGE }
+    public enum Material { CARD, FEATURE, CONTROL, INPUT, NAVIGATION, TAB, ACTION, BADGE, THUMBNAIL }
 
     private static Bitmap grain;
     private final Material material;
@@ -59,6 +59,7 @@ public final class FrostedSurfaceDrawable extends Drawable {
             case ACTION: case BADGE: return Math.max(0, Math.min(rect.width(), rect.height()) / 2);
             case CONTROL: return 24 * density;
             case INPUT: return 18 * density;
+            case THUMBNAIL: return 14 * density;
             case TAB: return 18 * density;
             default: return 24 * density;
         }

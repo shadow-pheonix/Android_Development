@@ -119,3 +119,17 @@ their animated artwork. Profile actions have their own row and calorie tiles pla
 the unit below the value. Progress charts use a subtle area fill for single-series
 trends and leave gaps for missing data. Existing calendar selection, profile editor,
 offline photos, nutrition calculations and diagnostics export remain available.
+
+### Frosted glass and motion (0.7.14)
+
+The app uses a dark, softly lit backdrop with translucent frost, fine grain, rounded
+surfaces and directional edge highlights. The floating navigation bar captures only
+the content behind the bar: Android 12+ uses hardware backdrop blur, while Android
+10/11 blur a small quarter-resolution crop at a bounded refresh rate. Labels, food
+photos and controls remain sharp. Scroll padding keeps the final items above the bar.
+
+Page content enters with a short stagger, controls respond with a gentle press and
+release, and calorie/macro rings and progress charts animate to their displayed values.
+Motion stops when the app is paused or battery saver is enabled, respects Android's
+animation setting, and restores the final state when cancelled or detached. Meal
+illustrations share that policy. There are no network effects or animation libraries.

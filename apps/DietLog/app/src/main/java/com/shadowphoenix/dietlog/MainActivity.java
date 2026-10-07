@@ -58,6 +58,7 @@ import com.shadowphoenix.dietlog.sync.drive.GoogleDriveAuthorization;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
 import com.shadowphoenix.dietlog.ui.MealIllustrationView;
 import com.shadowphoenix.dietlog.ui.FrostedUi;
+import com.shadowphoenix.dietlog.ui.UiMotion;
 import com.shadowphoenix.dietlog.ui.FrostedSurfaceDrawable.Material;
 import com.shadowphoenix.dietlog.ui.FrostedNavigationView;
 
@@ -98,6 +99,8 @@ public final class MainActivity extends Activity {
 
     private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, editProfileScreen, accountScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
+    private UiMotion uiMotion;
+    private int selectedNavIndex = -1;
     private ImageView navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon;
     private TextView navHomeLabel, navSearchLabel;
     private TextView navProgressLabel, navProfileLabel;
@@ -162,6 +165,7 @@ public final class MainActivity extends Activity {
         }
         bindViews();
         ((FrostedNavigationView) bottomNav).setBackdropSource(findViewById(R.id.screenContainer));
+        uiMotion = new UiMotion(findViewById(R.id.appRoot));
         profileController = new ProfileController(this, this::refreshTargetsAndProgress);
         profileController.bind();
         progressController = new ProgressController(this, diary, profileController);
@@ -1239,6 +1243,7 @@ public final class MainActivity extends Activity {
         bottomNav.removeCallbacks(refreshFrostedNavigation);
         if (!immersive) bottomNav.postDelayed(refreshFrostedNavigation, 450);
         if (!immersive) updateNavColors(navIndex);
+        uiMotion.enterScreen(target);
     }
 
     private final Runnable refreshFrostedNavigation = () -> {
@@ -1254,9 +1259,11 @@ public final class MainActivity extends Activity {
             int color = i == selected ? getColor(R.color.accent) : getColor(R.color.text_secondary);
             icons[i].setImageTintList(android.content.res.ColorStateList.valueOf(color));
             ((View) icons[i].getParent()).setSelected(i == selected);
+            if (i == selected && selectedNavIndex != selected) uiMotion.emphasize(icons[i]);
             labels[i].setTextColor(color);
             labels[i].setTypeface(labels[i].getTypeface(), i == selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         }
+        selectedNavIndex = selected;
     }
 
     private void refreshTargetsAndProgress() {
@@ -1288,6 +1295,8 @@ public final class MainActivity extends Activity {
                 "Food Log • " + selectedDate.format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())));
         relogButton.setVisibility(viewingToday ? View.VISIBLE : View.GONE);
         renderDiaryEntries(diary.getEntriesForDate(selectedDate));
+        uiMotion.bindPressTree(homeScreen);
+        ((FrostedNavigationView) bottomNav).refreshBackdrop();
     }
 
     private void openNutritionDetails() {
@@ -1629,6 +1638,7 @@ public final class MainActivity extends Activity {
             row.setOnClickListener(v -> showEntryActions(entry));
             row.setContentDescription("Edit " + entry.name);
             FrostedUi.applyTree(row);
+            uiMotion.bindPressTree(row);
             section.addView(row);
         }
 
@@ -1886,7 +1896,9 @@ public final class MainActivity extends Activity {
             action.setOnClickListener(v -> quickRelog(entry));
             row.setOnClickListener(v -> openHistoryFood(entry));
             FrostedUi.applyTree(row);
+            uiMotion.bindPressTree(row);
             searchResultsContainer.addView(row);
+            ((FrostedNavigationView) bottomNav).refreshBackdrop();
         }
     }
 
@@ -1954,7 +1966,9 @@ public final class MainActivity extends Activity {
             row.findViewById(R.id.foodAdd).setContentDescription("Add " + food.name);
             row.findViewById(R.id.foodAdd).setOnClickListener(v -> openDetail(food));
             FrostedUi.applyTree(row);
+            uiMotion.bindPressTree(row);
             searchResultsContainer.addView(row);
+            ((FrostedNavigationView) bottomNav).refreshBackdrop();
         }
     }
 
@@ -2484,6 +2498,8 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (uiMotion != null) uiMotion.setForeground(true);
+        if (bottomNav != null) ((FrostedNavigationView) bottomNav).refreshBackdrop();
         refreshAfterDriveDataChangeIfNeeded();
         refreshDriveBackupUi();
         refreshSupabaseBackupUi();
@@ -2539,7 +2555,14 @@ public final class MainActivity extends Activity {
     }
 
     @Override
+    protected void onPause() {
+        if (uiMotion != null) uiMotion.setForeground(false);
+        super.onPause();
+    }
+
+    @Override
     protected void onDestroy() {
+        if (uiMotion != null) uiMotion.close();
         if (bottomNav != null) bottomNav.removeCallbacks(refreshFrostedNavigation);
         if (photoLoader != null) photoLoader.close();
         driveExecutor.shutdownNow();
