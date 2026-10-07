@@ -100,7 +100,6 @@ public final class MainActivity extends Activity {
     private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, editProfileScreen, accountScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
     private UiMotion uiMotion;
-    private int selectedNavIndex = -1;
     private ImageView navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon;
     private TextView navHomeLabel, navSearchLabel;
     private TextView navProgressLabel, navProfileLabel;
@@ -1255,15 +1254,15 @@ public final class MainActivity extends Activity {
     private void updateNavColors(int selected) {
         ImageView[] icons = {navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon};
         TextView[] labels = {navHomeLabel, navSearchLabel, navProgressLabel, navProfileLabel};
+        View[] tabs = {navHome, navSearch, navProgress, navProfile};
+        ((FrostedNavigationView) bottomNav).setSelectedTab(tabs[selected]);
         for (int i = 0; i < icons.length; i++) {
             int color = i == selected ? getColor(R.color.accent) : getColor(R.color.text_secondary);
             icons[i].setImageTintList(android.content.res.ColorStateList.valueOf(color));
             ((View) icons[i].getParent()).setSelected(i == selected);
-            if (i == selected && selectedNavIndex != selected) uiMotion.emphasize(icons[i]);
             labels[i].setTextColor(color);
             labels[i].setTypeface(labels[i].getTypeface(), i == selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         }
-        selectedNavIndex = selected;
     }
 
     private void refreshTargetsAndProgress() {

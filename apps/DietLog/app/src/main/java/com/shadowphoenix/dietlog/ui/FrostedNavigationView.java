@@ -1,6 +1,7 @@
 package com.shadowphoenix.dietlog.ui;
 
 import android.annotation.TargetApi;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -16,6 +17,7 @@ import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.animation.PathInterpolator;
 import android.widget.LinearLayout;
 
 /** Blurs only the backdrop crop behind the floating bar, never the bar's icons/labels. */
@@ -30,10 +32,112 @@ public final class FrostedNavigationView extends LinearLayout {
     private int[] pixels;
     private long lastCapture;
     private boolean dirty = true;
+    private final RectF selectionBounds = new RectF();
+    private final RectF selectionStart = new RectF();
+    private final RectF selectionTarget = new RectF();
+    private final FrostedSurfaceDrawable selection;
+    private View selectedTab;
+    private ValueAnimator selectionAnimator;
+    private boolean uiMotionAllowed;
 
     public FrostedNavigationView(Context context, AttributeSet attrs) {
         super(context, attrs);
         setWillNotDraw(false);
+        selection = new FrostedSurfaceDrawable(context, FrostedSurfaceDrawable.Material.SELECTION);
+    }
+
+    /** The target must be a direct tab child; Add remains a separate action. */
+    public void setSelectedTab(View tab) {
+        if (tab == null || tab.getParent() != this) throw new IllegalArgumentException("Tab must belong to navigation");
+        if (selectedTab == tab) return;
+        selectedTab = tab;
+        cancelSelectionAnimation();
+        if (tab.getWidth() == 0 || tab.getHeight() == 0) {
+            requestLayout();
+            return;
+        }
+        updateSelectionTarget();
+        if (selectionBounds.isEmpty() || !uiMotionAllowed || !isShown() || !isAttachedToWindow()
+                || !UiMotion.preferencesAllowMotion(getContext())) {
+            finishSelectionAnimation();
+            return;
+        }
+        selectionStart.set(selectionBounds);
+        selectionAnimator = ValueAnimator.ofFloat(0, 1);
+        selectionAnimator.setDuration(320);
+        selectionAnimator.setInterpolator(new PathInterpolator(0.22f, 1f, 0.36f, 1f));
+        selectionAnimator.addUpdateListener(animation -> {
+            if (!uiMotionAllowed || !UiMotion.preferencesAllowMotion(getContext())) {
+                finishSelectionAnimation();
+                return;
+            }
+            float fraction = (float) animation.getAnimatedValue();
+            selectionBounds.set(
+                    selectionStart.left + (selectionTarget.left - selectionStart.left) * fraction,
+                    selectionStart.top + (selectionTarget.top - selectionStart.top) * fraction,
+                    selectionStart.right + (selectionTarget.right - selectionStart.right) * fraction,
+                    selectionStart.bottom + (selectionTarget.bottom - selectionStart.bottom) * fraction);
+            invalidate();
+        });
+        selectionAnimator.start();
+    }
+
+    public void setUiMotionAllowed(boolean allowed) {
+        uiMotionAllowed = allowed;
+        if (!allowed) finishSelectionAnimation();
+    }
+
+    private void updateSelectionTarget() {
+        if (selectedTab != null) selectionTarget.set(selectedTab.getLeft(), selectedTab.getTop(),
+                selectedTab.getRight(), selectedTab.getBottom());
+    }
+
+    private void cancelSelectionAnimation() {
+        if (selectionAnimator != null) {
+            selectionAnimator.cancel();
+            selectionAnimator.removeAllUpdateListeners();
+            selectionAnimator = null;
+        }
+    }
+
+    private void finishSelectionAnimation() {
+        // View's constructor can dispatch visibility callbacks before field initialization.
+        if (selectionBounds == null) return;
+        cancelSelectionAnimation();
+        updateSelectionTarget();
+        selectionBounds.set(selectionTarget);
+        invalidate();
+    }
+
+    @Override protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        // Size, insets and RTL changes use actual laid-out tab bounds.
+        if (changed || selectionBounds.isEmpty() || (selectedTab != null
+                && (selectionTarget.left != selectedTab.getLeft() || selectionTarget.top != selectedTab.getTop()
+                || selectionTarget.right != selectedTab.getRight() || selectionTarget.bottom != selectedTab.getBottom()))) {
+            finishSelectionAnimation();
+        }
+    }
+
+    @Override protected void dispatchDraw(Canvas canvas) {
+        if (!selectionBounds.isEmpty()) {
+            int save = canvas.save();
+            canvas.translate(selectionBounds.left, selectionBounds.top);
+            selection.setBounds(0, 0, Math.round(selectionBounds.width()), Math.round(selectionBounds.height()));
+            selection.draw(canvas);
+            canvas.restoreToCount(save);
+        }
+        super.dispatchDraw(canvas);
+    }
+
+    @Override protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        if (visibility != VISIBLE) finishSelectionAnimation();
+    }
+
+    @Override protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        if (visibility != VISIBLE) finishSelectionAnimation();
     }
 
     public void setBackdropSource(View source) { this.source = source; refreshBackdrop(); }
@@ -122,6 +226,7 @@ public final class FrostedNavigationView extends LinearLayout {
     }
 
     @Override protected void onDetachedFromWindow() {
+        finishSelectionAnimation();
         if (getViewTreeObserver().isAlive()) getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
         if (node != null) node.discardDisplayList();
         node = null;

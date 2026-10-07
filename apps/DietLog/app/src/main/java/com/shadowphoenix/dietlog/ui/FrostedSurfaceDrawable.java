@@ -15,7 +15,7 @@ import android.graphics.drawable.Drawable;
 
 /** Smooth tinted frost and a directional rim. Foreground content is never blurred. */
 public final class FrostedSurfaceDrawable extends Drawable {
-    public enum Material { CARD, FEATURE, CONTROL, INPUT, NAVIGATION, TAB, ACTION, BADGE, THUMBNAIL }
+    public enum Material { CARD, FEATURE, CONTROL, INPUT, NAVIGATION, TAB, SELECTION, ACTION, BADGE, THUMBNAIL }
 
     private final Material material;
     private final float density;
@@ -37,7 +37,8 @@ public final class FrostedSurfaceDrawable extends Drawable {
     private float radius() {
         switch (material) {
             case NAVIGATION: return 30 * density;
-            case ACTION: case BADGE: return Math.max(0, Math.min(rect.width(), rect.height()) / 2);
+            case ACTION: case BADGE: case SELECTION:
+                return Math.max(0, Math.min(rect.width(), rect.height()) / 2);
             case CONTROL: return 24 * density;
             case INPUT: return 18 * density;
             case THUMBNAIL: return 14 * density;
@@ -61,6 +62,7 @@ public final class FrostedSurfaceDrawable extends Drawable {
             case CONTROL: top = 0xA7354B53; bottom = 0xB91A3038; break;
             case INPUT: top = 0xD2223740; bottom = 0xD016252E; break;
             case NAVIGATION: top = 0xE72B3D46; bottom = 0xEF13242D; break;
+            case SELECTION: top = 0xAB426A66; bottom = 0xAA1F4542; break;
             case TAB:
                 top = selected ? 0xAB426A66 : 0x102D454E;
                 bottom = selected ? 0xAA1F4542 : 0x08203038;
