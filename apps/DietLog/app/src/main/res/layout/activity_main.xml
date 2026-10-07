@@ -22,40 +22,25 @@
         <include android:id="@+id/accountScreen" layout="@layout/screen_account" android:visibility="gone" />
     </FrameLayout>
 
-    <LinearLayout
-        android:id="@+id/bottomNav"
-        android:layout_width="match_parent"
-        android:layout_height="74dp"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:paddingLeft="12dp"
-        android:paddingTop="2dp"
-        android:paddingRight="12dp"
-        android:paddingBottom="2dp"
-        android:background="@drawable/bg_bottom_nav">
-
-        <LinearLayout android:id="@+id/navHome" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-            <TextView android:id="@+id/navHomeIcon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⌂" android:textColor="@color/accent" android:textSize="24sp" android:textStyle="bold" />
-            <TextView android:id="@+id/navHomeLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Home" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" />
+    <LinearLayout android:id="@+id/bottomNav" android:layout_width="match_parent" android:layout_height="80dp" android:orientation="horizontal" android:gravity="center" android:padding="8dp" android:background="@drawable/bg_bottom_nav">
+        <LinearLayout android:id="@+id/navHome" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center" android:background="@drawable/bg_nav_item" android:foreground="?android:attr/selectableItemBackground" android:focusable="true" android:contentDescription="Home">
+            <ImageView android:id="@+id/navHomeIcon" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_ui_home" android:tint="@color/text_secondary" android:importantForAccessibility="no" />
+            <TextView android:id="@+id/navHomeLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Home" android:textColor="@color/text_secondary" android:textSize="11sp" android:importantForAccessibility="no" />
         </LinearLayout>
-
-        <LinearLayout android:id="@+id/navSearch" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-            <TextView android:id="@+id/navSearchIcon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⌕" android:textColor="@color/text_secondary" android:textSize="24sp" />
-            <TextView android:id="@+id/navSearchLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Search" android:textColor="@color/text_secondary" android:textSize="12sp" />
+        <LinearLayout android:id="@+id/navSearch" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center" android:background="@drawable/bg_nav_item" android:foreground="?android:attr/selectableItemBackground" android:focusable="true" android:contentDescription="Search">
+            <ImageView android:id="@+id/navSearchIcon" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_ui_search" android:tint="@color/text_secondary" android:importantForAccessibility="no" />
+            <TextView android:id="@+id/navSearchLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Search" android:textColor="@color/text_secondary" android:textSize="11sp" android:importantForAccessibility="no" />
         </LinearLayout>
-
-        <FrameLayout android:id="@+id/navAdd" android:layout_width="58dp" android:layout_height="58dp" android:layout_marginLeft="8dp" android:layout_marginRight="8dp" android:background="@drawable/bg_fab">
-            <TextView android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="+" android:textColor="@color/text_primary" android:textSize="30sp" />
+        <FrameLayout android:id="@+id/navAdd" android:layout_width="56dp" android:layout_height="56dp" android:layout_marginHorizontal="8dp" android:background="@drawable/bg_fab" android:contentDescription="Add food" android:focusable="true">
+            <ImageView android:layout_width="26dp" android:layout_height="26dp" android:layout_gravity="center" android:src="@drawable/ic_ui_add" android:tint="@color/background" android:importantForAccessibility="no" />
         </FrameLayout>
-
-        <LinearLayout android:id="@+id/navProgress" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-            <TextView android:id="@+id/navProgressIcon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="▥" android:textColor="@color/text_secondary" android:textSize="24sp" />
-            <TextView android:id="@+id/navProgressLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Progress" android:textColor="@color/text_secondary" android:textSize="12sp" />
+        <LinearLayout android:id="@+id/navProgress" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center" android:background="@drawable/bg_nav_item" android:foreground="?android:attr/selectableItemBackground" android:focusable="true" android:contentDescription="Progress">
+            <ImageView android:id="@+id/navProgressIcon" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_ui_progress" android:tint="@color/text_secondary" android:importantForAccessibility="no" />
+            <TextView android:id="@+id/navProgressLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Progress" android:textColor="@color/text_secondary" android:textSize="11sp" android:importantForAccessibility="no" />
         </LinearLayout>
-
-        <LinearLayout android:id="@+id/navProfile" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-            <TextView android:id="@+id/navProfileIcon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="○" android:textColor="@color/text_secondary" android:textSize="24sp" />
-            <TextView android:id="@+id/navProfileLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Profile" android:textColor="@color/text_secondary" android:textSize="12sp" />
+        <LinearLayout android:id="@+id/navProfile" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center" android:background="@drawable/bg_nav_item" android:foreground="?android:attr/selectableItemBackground" android:focusable="true" android:contentDescription="Profile">
+            <ImageView android:id="@+id/navProfileIcon" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_ui_profile" android:tint="@color/text_secondary" android:importantForAccessibility="no" />
+            <TextView android:id="@+id/navProfileLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Profile" android:textColor="@color/text_secondary" android:textSize="11sp" android:importantForAccessibility="no" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

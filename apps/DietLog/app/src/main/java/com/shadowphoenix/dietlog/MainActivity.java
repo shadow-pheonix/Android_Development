@@ -95,8 +95,9 @@ public final class MainActivity extends Activity {
 
     private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, editProfileScreen, accountScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
-    private TextView navHomeIcon, navHomeLabel, navSearchIcon, navSearchLabel;
-    private TextView navProgressIcon, navProgressLabel, navProfileIcon, navProfileLabel;
+    private ImageView navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon;
+    private TextView navHomeLabel, navSearchLabel;
+    private TextView navProgressLabel, navProfileLabel;
     private TextView driveConnectionStatus, driveSyncStatus, driveConnectButton;
     private TextView driveSyncNowButton, driveRestoreButton, driveDisconnectButton;
     private View driveConnectedActions;
@@ -1225,11 +1226,12 @@ public final class MainActivity extends Activity {
     }
 
     private void updateNavColors(int selected) {
-        TextView[] icons = {navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon};
+        ImageView[] icons = {navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon};
         TextView[] labels = {navHomeLabel, navSearchLabel, navProgressLabel, navProfileLabel};
         for (int i = 0; i < icons.length; i++) {
             int color = i == selected ? getColor(R.color.accent) : getColor(R.color.text_secondary);
-            icons[i].setTextColor(color);
+            icons[i].setImageTintList(android.content.res.ColorStateList.valueOf(color));
+            ((View) icons[i].getParent()).setSelected(i == selected);
             labels[i].setTextColor(color);
             labels[i].setTypeface(labels[i].getTypeface(), i == selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         }

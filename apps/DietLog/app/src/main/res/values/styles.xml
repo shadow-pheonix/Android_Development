@@ -3,7 +3,7 @@
     <style name="Text" />
     <style name="Input" />
     <style name="AppTheme" parent="android:style/Theme.Material.NoActionBar">
-        <item name="android:fontFamily">sans</item>
+        <item name="android:fontFamily">sans-serif</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:statusBarColor">@color/background</item>
@@ -25,7 +25,7 @@
 
     <style name="Text.Title">
         <item name="android:textColor">@color/text_primary</item>
-        <item name="android:textSize">26sp</item>
+        <item name="android:textSize">28sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
@@ -36,6 +36,7 @@
     </style>
 
     <style name="Text.Body">
+        <item name="android:lineSpacingExtra">3dp</item>
         <item name="android:textColor">@color/text_secondary</item>
         <item name="android:textSize">14sp</item>
     </style>
@@ -49,5 +50,17 @@
         <item name="android:paddingTop">11dp</item>
         <item name="android:paddingBottom">11dp</item>
         <item name="android:textSize">15sp</item>
+    </style>
+    <style name="Action" parent="Text.Body">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:textColor">@color/accent</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">@drawable/bg_chip</item>
+        <item name="android:focusable">true</item>
     </style>
 </resources>
