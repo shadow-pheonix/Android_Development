@@ -57,6 +57,10 @@ import com.shadowphoenix.dietlog.sync.drive.DriveConnectionStore;
 import com.shadowphoenix.dietlog.sync.drive.GoogleDriveAuthorization;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
 import com.shadowphoenix.dietlog.ui.MealIllustrationView;
+import com.shadowphoenix.dietlog.ui.FrostedUi;
+import com.shadowphoenix.dietlog.ui.UiMotion;
+import com.shadowphoenix.dietlog.ui.FrostedSurfaceDrawable.Material;
+import com.shadowphoenix.dietlog.ui.FrostedNavigationView;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -95,6 +99,8 @@ public final class MainActivity extends Activity {
 
     private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, editProfileScreen, accountScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
+    private UiMotion uiMotion;
+    private int selectedNavIndex = -1;
     private ImageView navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon;
     private TextView navHomeLabel, navSearchLabel;
     private TextView navProgressLabel, navProfileLabel;
@@ -158,6 +164,8 @@ public final class MainActivity extends Activity {
             activeMealType = FoodEntry.normalizeMealType(savedInstanceState.getString("active_meal", activeMealType));
         }
         bindViews();
+        ((FrostedNavigationView) bottomNav).setBackdropSource(findViewById(R.id.screenContainer));
+        uiMotion = new UiMotion(findViewById(R.id.appRoot));
         profileController = new ProfileController(this, this::refreshTargetsAndProgress);
         profileController.bind();
         progressController = new ProgressController(this, diary, profileController);
@@ -189,6 +197,7 @@ public final class MainActivity extends Activity {
         refreshSupabaseBackupUi();
         refreshAccountUi();
         refreshHome();
+        FrostedUi.applyTree(findViewById(R.id.appRoot));
         showScreen(homeScreen, 0);
     }
 
@@ -1098,7 +1107,7 @@ public final class MainActivity extends Activity {
 
     private void styleCloudConnectButton(TextView button, boolean primary) {
         if (button == null) return;
-        button.setBackgroundResource(primary ? R.drawable.bg_button_primary : R.drawable.bg_chip);
+        FrostedUi.surface(button, primary ? Material.ACTION : Material.CONTROL);
         button.setTextColor(getColor(primary ? R.color.background : R.color.accent));
     }
 
@@ -1143,7 +1152,7 @@ public final class MainActivity extends Activity {
         dateText.setGravity(android.view.Gravity.CENTER);
         dateText.setTextColor(getColor(R.color.text_primary));
         dateText.setTextSize(15f);
-        dateText.setBackgroundResource(R.drawable.bg_chip);
+        FrostedUi.surface(dateText, Material.CONTROL);
         dateText.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_ui_calendar, 0, 0, 0);
         dateText.setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(getColor(R.color.accent)));
         dateText.setCompoundDrawablePadding(dp(6));
@@ -1175,7 +1184,7 @@ public final class MainActivity extends Activity {
         control.setTextColor(getColor(R.color.accent));
         control.setTextSize("Today".equals(text) ? 12f : 24f);
         control.setTypeface(control.getTypeface(), android.graphics.Typeface.BOLD);
-        control.setBackgroundResource("Today".equals(text) ? R.drawable.bg_chip : R.drawable.bg_date_control);
+        FrostedUi.surface(control, Material.CONTROL);
         control.setFocusable(true);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(widthDp), dp(48));
         params.setMarginStart(dp(2));
@@ -1227,8 +1236,21 @@ public final class MainActivity extends Activity {
         boolean immersive = target == detailScreen || target == manualScreen || target == nutritionScreen
                 || target == accountScreen || target == editProfileScreen;
         bottomNav.setVisibility(immersive ? View.GONE : View.VISIBLE);
+        target.setPadding(target.getPaddingLeft(), target.getPaddingTop(), target.getPaddingRight(),
+                immersive ? 0 : dp(100));
+        FrostedUi.applyTree(target);
+        ((FrostedNavigationView) bottomNav).refreshBackdrop();
+        bottomNav.removeCallbacks(refreshFrostedNavigation);
+        if (!immersive) bottomNav.postDelayed(refreshFrostedNavigation, 750);
         if (!immersive) updateNavColors(navIndex);
+        uiMotion.enterScreen(target);
     }
+
+    private final Runnable refreshFrostedNavigation = () -> {
+        if (bottomNav != null && bottomNav.isAttachedToWindow()) {
+            ((FrostedNavigationView) bottomNav).refreshBackdrop();
+        }
+    };
 
     private void updateNavColors(int selected) {
         ImageView[] icons = {navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon};
@@ -1237,9 +1259,11 @@ public final class MainActivity extends Activity {
             int color = i == selected ? getColor(R.color.accent) : getColor(R.color.text_secondary);
             icons[i].setImageTintList(android.content.res.ColorStateList.valueOf(color));
             ((View) icons[i].getParent()).setSelected(i == selected);
+            if (i == selected && selectedNavIndex != selected) uiMotion.emphasize(icons[i]);
             labels[i].setTextColor(color);
             labels[i].setTypeface(labels[i].getTypeface(), i == selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         }
+        selectedNavIndex = selected;
     }
 
     private void refreshTargetsAndProgress() {
@@ -1271,6 +1295,8 @@ public final class MainActivity extends Activity {
                 "Food Log • " + selectedDate.format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())));
         relogButton.setVisibility(viewingToday ? View.VISIBLE : View.GONE);
         renderDiaryEntries(diary.getEntriesForDate(selectedDate));
+        uiMotion.bindPressTree(homeScreen);
+        ((FrostedNavigationView) bottomNav).refreshBackdrop();
     }
 
     private void openNutritionDetails() {
@@ -1331,7 +1357,7 @@ public final class MainActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
         row.setPadding(dp(13), dp(12), dp(13), dp(12));
-        row.setBackgroundResource(R.drawable.bg_card);
+        FrostedUi.surface(row, Material.CARD);
         LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         rowParams.bottomMargin = dp(8);
@@ -1591,7 +1617,7 @@ public final class MainActivity extends Activity {
         add.setTypeface(add.getTypeface(), android.graphics.Typeface.BOLD);
         add.setGravity(android.view.Gravity.CENTER);
         add.setPadding(dp(12), 0, dp(12), 0);
-        add.setBackgroundResource(R.drawable.bg_chip);
+        FrostedUi.surface(add, Material.CONTROL);
         add.setOnClickListener(v -> openMealSearch(mealType));
         add.setContentDescription("Add food to " + FoodEntry.mealDisplayName(mealType));
         add.setFocusable(true);
@@ -1611,6 +1637,8 @@ public final class MainActivity extends Activity {
             ((TextView) row.findViewById(R.id.entryCalories)).setText(String.format(Locale.getDefault(), "%.0f kcal", entry.calories));
             row.setOnClickListener(v -> showEntryActions(entry));
             row.setContentDescription("Edit " + entry.name);
+            FrostedUi.applyTree(row);
+            uiMotion.bindPressTree(row);
             section.addView(row);
         }
 
@@ -1821,7 +1849,7 @@ public final class MainActivity extends Activity {
         TextView[] tabs = {shortcutAll, shortcutRecent, shortcutFrequent, shortcutFavorites};
         for (TextView tab : tabs) {
             boolean active = tab == selected;
-            tab.setBackgroundResource(active ? R.drawable.bg_chip_selected : R.drawable.bg_chip);
+            FrostedUi.surface(tab, active ? Material.ACTION : Material.CONTROL);
             tab.setTextColor(getColor(active ? R.color.black : R.color.text_secondary));
             tab.setTypeface(tab.getTypeface(), active ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         }
@@ -1867,7 +1895,10 @@ public final class MainActivity extends Activity {
             action.setContentDescription("Quick log " + entry.name);
             action.setOnClickListener(v -> quickRelog(entry));
             row.setOnClickListener(v -> openHistoryFood(entry));
+            FrostedUi.applyTree(row);
+            uiMotion.bindPressTree(row);
             searchResultsContainer.addView(row);
+            ((FrostedNavigationView) bottomNav).refreshBackdrop();
         }
     }
 
@@ -1934,7 +1965,10 @@ public final class MainActivity extends Activity {
             row.setOnClickListener(v -> openDetail(food));
             row.findViewById(R.id.foodAdd).setContentDescription("Add " + food.name);
             row.findViewById(R.id.foodAdd).setOnClickListener(v -> openDetail(food));
+            FrostedUi.applyTree(row);
+            uiMotion.bindPressTree(row);
             searchResultsContainer.addView(row);
+            ((FrostedNavigationView) bottomNav).refreshBackdrop();
         }
     }
 
@@ -2464,6 +2498,8 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (uiMotion != null) uiMotion.setForeground(true);
+        if (bottomNav != null) ((FrostedNavigationView) bottomNav).refreshBackdrop();
         refreshAfterDriveDataChangeIfNeeded();
         refreshDriveBackupUi();
         refreshSupabaseBackupUi();
@@ -2519,7 +2555,15 @@ public final class MainActivity extends Activity {
     }
 
     @Override
+    protected void onPause() {
+        if (uiMotion != null) uiMotion.setForeground(false);
+        super.onPause();
+    }
+
+    @Override
     protected void onDestroy() {
+        if (uiMotion != null) uiMotion.close();
+        if (bottomNav != null) bottomNav.removeCallbacks(refreshFrostedNavigation);
         if (photoLoader != null) photoLoader.close();
         driveExecutor.shutdownNow();
         supabaseExecutor.shutdownNow();

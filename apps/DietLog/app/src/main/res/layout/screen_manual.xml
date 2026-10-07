@@ -1,25 +1,22 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true">
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp">
         <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center_vertical">
-            <TextView android:id="@+id/manualBack" android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="‹" android:textColor="@color/text_primary" android:textSize="34sp" />
+            <TextView android:id="@+id/manualBack" android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="‹" android:textColor="@color/text_primary" android:textSize="34sp" android:tag="glass:CONTROL" />
             <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="Manual Food" android:textColor="@color/text_primary" android:textSize="20sp" android:textStyle="bold" />
             <View android:layout_width="42dp" android:layout_height="42dp" />
         </LinearLayout>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="vertical" android:padding="16dp" android:background="@drawable/bg_card_alt">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="vertical" android:padding="16dp" android:background="@drawable/bg_card_alt" android:tag="glass:FEATURE">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Add any food manually" android:textColor="@color/text_primary" android:textSize="22sp" android:textStyle="bold" />
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Enter nutrition per 100 g. FuelNote will scale it to the amount you ate." android:textColor="@color/text_secondary" android:textSize="13sp" />
-            <TextView android:id="@+id/manualContextText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:background="@drawable/bg_chip" android:padding="10dp" android:textColor="@color/accent" android:textSize="12sp" android:visibility="gone" />
+            <TextView android:id="@+id/manualContextText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:background="@drawable/bg_chip" android:padding="10dp" android:textColor="@color/accent" android:textSize="12sp" android:visibility="gone" android:tag="glass:CONTROL" />
             <EditText android:id="@+id/nameInput" style="@style/Input.Dark" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="16dp" android:hint="@string/food_name" android:inputType="textCapSentences" />
             <EditText android:id="@+id/gramsInput" style="@style/Input.Dark" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:hint="@string/grams" android:inputType="numberDecimal" />
             <EditText android:id="@+id/caloriesInput" style="@style/Input.Dark" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:hint="@string/calories_100g" android:inputType="numberDecimal" />
             <EditText android:id="@+id/proteinInput" style="@style/Input.Dark" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:hint="@string/protein_100g" android:inputType="numberDecimal" />
             <EditText android:id="@+id/carbsInput" style="@style/Input.Dark" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:hint="@string/carbs_100g" android:inputType="numberDecimal" />
             <EditText android:id="@+id/fatInput" style="@style/Input.Dark" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:hint="@string/fat_100g" android:inputType="numberDecimal" />
-            <TextView android:id="@+id/addButton" android:layout_width="match_parent" android:layout_height="58dp" android:layout_marginTop="14dp" android:gravity="center" android:background="@drawable/bg_button_primary" android:text="+  Add to Diary" android:textColor="@color/black" android:textSize="16sp" android:textStyle="bold" />
+            <TextView android:id="@+id/addButton" android:layout_width="match_parent" android:layout_height="58dp" android:layout_marginTop="14dp" android:gravity="center" android:background="@drawable/bg_button_primary" android:text="+  Add to Diary" android:textColor="@color/black" android:textSize="16sp" android:textStyle="bold" android:tag="glass:ACTION" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

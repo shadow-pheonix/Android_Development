@@ -1,6 +1,8 @@
 package com.shadowphoenix.dietlog.ui;
 
 import android.content.Context;
+import android.animation.ValueAnimator;
+import android.view.animation.PathInterpolator;
 import android.graphics.Canvas;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
@@ -29,6 +31,9 @@ public final class ProgressTrendView extends View {
     private double referenceValue = Double.NaN;
     private boolean zeroBaseline;
     private String unit = "";
+    private float reveal = 1;
+    private ValueAnimator motion;
+    private boolean uiMotionAllowed = true;
 
     public ProgressTrendView(Context context) {
         this(context, null);
@@ -63,7 +68,44 @@ public final class ProgressTrendView extends View {
         this.referenceValue = referenceValue;
         this.zeroBaseline = zeroBaseline;
         this.unit = unit == null ? "" : unit;
+        replay();
+    }
+
+    public void replay() {
+        if (motion != null) motion.cancel();
+        if (!uiMotionAllowed || !isAttachedToWindow() || !isShown()
+                || !UiMotion.preferencesAllowMotion(getContext()) || labels.length == 0) {
+            finishAnimation();
+            return;
+        }
+        reveal = 0;
+        motion = ValueAnimator.ofFloat(0, 1);
+        motion.setDuration(520);
+        motion.setInterpolator(new PathInterpolator(0.2f, 0.8f, 0.2f, 1));
+        motion.addUpdateListener(value -> { reveal = (float) value.getAnimatedValue(); invalidate(); });
+        motion.start();
+    }
+
+    public void setUiMotionAllowed(boolean enabled) {
+        uiMotionAllowed = enabled;
+        if (!enabled) finishAnimation();
+    }
+
+    public void finishAnimation() {
+        if (motion != null) motion.cancel();
+        motion = null;
+        reveal = 1;
         invalidate();
+    }
+
+    @Override public void onVisibilityAggregated(boolean visible) {
+        super.onVisibilityAggregated(visible);
+        if (!visible) finishAnimation();
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        finishAnimation();
+        super.onDetachedFromWindow();
     }
 
     @Override
@@ -131,6 +173,8 @@ public final class ProgressTrendView extends View {
             canvas.drawLine(left, y, right, y, referencePaint);
         }
 
+        int seriesSave = canvas.save();
+        canvas.clipRect(left - dp(4), top - dp(4), left + chartWidth * reveal + dp(4), bottom + dp(4));
         int pointCount = labels.length;
         for (int s = 0; s < series.length; s++) {
             double[] values = series[s];
@@ -190,6 +234,8 @@ public final class ProgressTrendView extends View {
             }
             canvas.drawPath(path, linePaint);
         }
+
+        canvas.restoreToCount(seriesSave);
 
         int labelSlots = Math.min(chartWidth < dp(280) ? 3 : 5, labels.length);
         for (int slot = 0; slot < labelSlots; slot++) {

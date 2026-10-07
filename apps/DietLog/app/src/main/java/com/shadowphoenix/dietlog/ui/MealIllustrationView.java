@@ -16,12 +16,13 @@ public final class MealIllustrationView extends FrameLayout {
     private final ImageView illustration;
     private final ValueAnimator motion;
     private final long phaseOffset;
+    private boolean uiMotionAllowed = true;
     private boolean attached;
     private boolean visibleToUser;
 
     public MealIllustrationView(Context context, String mealType) {
         super(context);
-        setBackgroundResource(R.drawable.bg_meal_badge);
+        FrostedUi.surface(this, FrostedSurfaceDrawable.Material.BADGE);
         setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
         setClipChildren(false);
         illustration = new ImageView(context);
@@ -91,11 +92,16 @@ public final class MealIllustrationView extends FrameLayout {
         super.onDetachedFromWindow();
     }
 
+    public void setUiMotionAllowed(boolean allowed) {
+        uiMotionAllowed = allowed;
+        updateMotion();
+    }
+
     private void updateMotion() {
         // Visibility callbacks may arrive during the superclass constructor.
         if (motion == null) return;
         PowerManager power = getContext().getSystemService(PowerManager.class);
-        boolean allowed = attached && visibleToUser && isShown() && hasWindowFocus()
+        boolean allowed = uiMotionAllowed && attached && visibleToUser && isShown() && hasWindowFocus()
                 && getWindowVisibility() == View.VISIBLE && ValueAnimator.areAnimatorsEnabled()
                 && (power == null || !power.isPowerSaveMode());
         if (allowed && !motion.isStarted()) {

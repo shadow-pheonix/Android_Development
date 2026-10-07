@@ -1,26 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:clipToPadding="false">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingLeft="18dp"
-        android:paddingTop="14dp"
-        android:paddingRight="18dp"
-        android:paddingBottom="24dp">
-
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:clipToPadding="false">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingLeft="18dp" android:paddingTop="14dp" android:paddingRight="18dp" android:paddingBottom="24dp">
         <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center_vertical">
-            <TextView android:id="@+id/detailBack" android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="‹" android:textColor="@color/text_primary" android:textSize="34sp" />
+            <TextView android:id="@+id/detailBack" android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="‹" android:textColor="@color/text_primary" android:textSize="34sp" android:tag="glass:CONTROL" />
             <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Food details" android:textColor="@color/text_primary" android:textSize="18sp" android:textStyle="bold" android:gravity="center" />
-            <TextView android:id="@+id/detailFavorite" android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="♡" android:textColor="@color/text_primary" android:textSize="25sp" />
+            <TextView android:id="@+id/detailFavorite" android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="♡" android:textColor="@color/text_primary" android:textSize="25sp" android:tag="glass:CONTROL" />
         </LinearLayout>
-
-        <FrameLayout android:layout_width="match_parent" android:layout_height="232dp" android:layout_marginTop="8dp" android:background="@drawable/bg_hero" android:clipToOutline="true">
+        <FrameLayout android:layout_width="match_parent" android:layout_height="232dp" android:layout_marginTop="8dp" android:background="@drawable/bg_hero" android:clipToOutline="true" android:tag="glass:FEATURE">
             <TextView android:id="@+id/detailEmoji" android:layout_width="match_parent" android:layout_height="150dp" android:gravity="center" android:text="🍽" android:textSize="82sp" />
             <ImageView android:id="@+id/detailImage" android:layout_width="match_parent" android:layout_height="150dp" android:scaleType="centerCrop" android:importantForAccessibility="no" android:visibility="gone" />
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom" android:orientation="vertical" android:padding="16dp">
@@ -28,20 +14,16 @@
                 <TextView android:id="@+id/detailSubtitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Indian food" android:textColor="@color/text_secondary" android:textSize="13sp" />
             </LinearLayout>
         </FrameLayout>
-
         <TextView android:id="@+id/detailPhotoCredit" android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center_vertical" android:textColor="@color/accent" android:textSize="12sp" android:visibility="gone" />
-
         <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:scrollbars="none">
             <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
-                <TextView android:id="@+id/detailSourceChip" android:layout_width="wrap_content" android:layout_height="36dp" android:gravity="center" android:paddingLeft="14dp" android:paddingRight="14dp" android:background="@drawable/bg_chip" android:text="Indian" android:textColor="@color/text_primary" android:textSize="12sp" />
-                <TextView android:id="@+id/detailCategoryChip" android:layout_width="wrap_content" android:layout_height="36dp" android:layout_marginStart="8dp" android:gravity="center" android:paddingLeft="14dp" android:paddingRight="14dp" android:background="@drawable/bg_chip" android:text="Food" android:textColor="@color/text_primary" android:textSize="12sp" />
-                <TextView android:id="@+id/detailBrandChip" android:layout_width="wrap_content" android:layout_height="36dp" android:layout_marginStart="8dp" android:gravity="center" android:paddingLeft="14dp" android:paddingRight="14dp" android:background="@drawable/bg_chip" android:text="Offline" android:textColor="@color/accent" android:textSize="12sp" />
+                <TextView android:id="@+id/detailSourceChip" android:layout_width="wrap_content" android:layout_height="36dp" android:gravity="center" android:paddingLeft="14dp" android:paddingRight="14dp" android:background="@drawable/bg_chip" android:text="Indian" android:textColor="@color/text_primary" android:textSize="12sp" android:tag="glass:CONTROL" />
+                <TextView android:id="@+id/detailCategoryChip" android:layout_width="wrap_content" android:layout_height="36dp" android:layout_marginStart="8dp" android:gravity="center" android:paddingLeft="14dp" android:paddingRight="14dp" android:background="@drawable/bg_chip" android:text="Food" android:textColor="@color/text_primary" android:textSize="12sp" android:tag="glass:CONTROL" />
+                <TextView android:id="@+id/detailBrandChip" android:layout_width="wrap_content" android:layout_height="36dp" android:layout_marginStart="8dp" android:gravity="center" android:paddingLeft="14dp" android:paddingRight="14dp" android:background="@drawable/bg_chip" android:text="Offline" android:textColor="@color/accent" android:textSize="12sp" android:tag="glass:CONTROL" />
             </LinearLayout>
         </HorizontalScrollView>
-
-        <TextView android:id="@+id/detailNutritionStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:background="@drawable/bg_card_alt" android:padding="11dp" android:text="Incomplete nutrition • Some per-100 g values are unavailable in this offline record." android:textColor="@color/fat" android:textSize="12sp" android:textStyle="bold" android:visibility="gone" />
-
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal" android:padding="10dp" android:background="@drawable/bg_card" android:weightSum="4">
+        <TextView android:id="@+id/detailNutritionStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:background="@drawable/bg_card_alt" android:padding="11dp" android:text="Incomplete nutrition • Some per-100 g values are unavailable in this offline record." android:textColor="@color/fat" android:textSize="12sp" android:textStyle="bold" android:visibility="gone" android:tag="glass:FEATURE" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal" android:padding="10dp" android:background="@drawable/bg_card" android:weightSum="4" android:tag="glass:CARD">
             <LinearLayout android:layout_width="0dp" android:layout_height="82dp" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔥" android:textSize="20sp" />
                 <TextView android:id="@+id/detailCalories100" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/text_primary" android:textSize="18sp" android:textStyle="bold" />
@@ -63,17 +45,16 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Fat" android:textColor="@color/text_secondary" android:textSize="10sp" />
             </LinearLayout>
         </LinearLayout>
-
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="vertical" android:padding="14dp" android:background="@drawable/bg_card">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="vertical" android:padding="14dp" android:background="@drawable/bg_card" android:tag="glass:CARD">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Serving Size" android:textColor="@color/text_primary" android:textSize="15sp" android:textStyle="bold" />
-            <TextView android:id="@+id/detailServingLabel" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="8dp" android:gravity="center_vertical" android:paddingLeft="14dp" android:paddingRight="14dp" android:background="@drawable/bg_input" android:text="100 g  ›" android:textColor="@color/text_primary" android:textSize="14sp" />
+            <TextView android:id="@+id/detailServingLabel" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="8dp" android:gravity="center_vertical" android:paddingLeft="14dp" android:paddingRight="14dp" android:background="@drawable/bg_input" android:text="100 g  ›" android:textColor="@color/text_primary" android:textSize="14sp" android:tag="glass:INPUT" />
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:gravity="center_vertical">
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Number of servings" android:textColor="@color/text_secondary" android:textSize="11sp" />
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="46dp" android:layout_marginTop="5dp" android:gravity="center_vertical">
-                        <TextView android:id="@+id/servingMinus" android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="−" android:textColor="@color/text_primary" android:textSize="23sp" />
+                        <TextView android:id="@+id/servingMinus" android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="−" android:textColor="@color/text_primary" android:textSize="23sp" android:tag="glass:CONTROL" />
                         <TextView android:id="@+id/servingCount" android:layout_width="48dp" android:layout_height="42dp" android:gravity="center" android:text="1" android:textColor="@color/text_primary" android:textSize="18sp" android:textStyle="bold" />
-                        <TextView android:id="@+id/servingPlus" android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="+" android:textColor="@color/text_primary" android:textSize="23sp" />
+                        <TextView android:id="@+id/servingPlus" android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="+" android:textColor="@color/text_primary" android:textSize="23sp" android:tag="glass:CONTROL" />
                     </LinearLayout>
                 </LinearLayout>
                 <LinearLayout android:layout_width="132dp" android:layout_height="wrap_content" android:orientation="vertical">
@@ -82,33 +63,24 @@
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
-
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="vertical" android:padding="14dp" android:background="@drawable/bg_card_alt">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="vertical" android:padding="14dp" android:background="@drawable/bg_card_alt" android:tag="glass:FEATURE">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Total Nutrition" android:textColor="@color/text_primary" android:textSize="17sp" android:textStyle="bold" />
                 <TextView android:id="@+id/detailTotalCalories" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0 kcal" android:textColor="@color/accent" android:textSize="22sp" android:textStyle="bold" />
             </LinearLayout>
             <GridLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:columnCount="3" android:rowCount="2">
-                <TextView android:id="@+id/detailTotalProtein" android:layout_width="0dp" android:layout_height="72dp" android:layout_columnWeight="1" android:layout_margin="3dp" android:gravity="center" android:background="@drawable/bg_macro_blue" android:text="Protein
-0g" android:textAlignment="center" android:textColor="@color/text_primary" android:textSize="12sp" />
-                <TextView android:id="@+id/detailTotalCarbs" android:layout_width="0dp" android:layout_height="72dp" android:layout_columnWeight="1" android:layout_margin="3dp" android:gravity="center" android:background="@drawable/bg_macro_yellow" android:text="Carbs
-0g" android:textAlignment="center" android:textColor="@color/text_primary" android:textSize="12sp" />
-                <TextView android:id="@+id/detailTotalFat" android:layout_width="0dp" android:layout_height="72dp" android:layout_columnWeight="1" android:layout_margin="3dp" android:gravity="center" android:background="@drawable/bg_macro_orange" android:text="Fat
-0g" android:textAlignment="center" android:textColor="@color/text_primary" android:textSize="12sp" />
-                <TextView android:id="@+id/detailTotalFiber" android:layout_width="0dp" android:layout_height="72dp" android:layout_columnWeight="1" android:layout_margin="3dp" android:gravity="center" android:background="@drawable/bg_macro_teal" android:text="Fibre
-—" android:textAlignment="center" android:textColor="@color/text_primary" android:textSize="12sp" />
-                <TextView android:id="@+id/detailTotalSugar" android:layout_width="0dp" android:layout_height="72dp" android:layout_columnWeight="1" android:layout_margin="3dp" android:gravity="center" android:background="@drawable/bg_card" android:text="Sugar
-—" android:textAlignment="center" android:textColor="@color/text_primary" android:textSize="12sp" />
-                <TextView android:id="@+id/detailTotalSodium" android:layout_width="0dp" android:layout_height="72dp" android:layout_columnWeight="1" android:layout_margin="3dp" android:gravity="center" android:background="@drawable/bg_card" android:text="Sodium
-—" android:textAlignment="center" android:textColor="@color/text_primary" android:textSize="12sp" />
+                <TextView android:id="@+id/detailTotalProtein" android:layout_width="0dp" android:layout_height="72dp" android:layout_columnWeight="1" android:layout_margin="3dp" android:gravity="center" android:background="@drawable/bg_macro_blue" android:text="Protein 0g" android:textAlignment="center" android:textColor="@color/text_primary" android:textSize="12sp" android:tag="glass:CARD" />
+                <TextView android:id="@+id/detailTotalCarbs" android:layout_width="0dp" android:layout_height="72dp" android:layout_columnWeight="1" android:layout_margin="3dp" android:gravity="center" android:background="@drawable/bg_macro_yellow" android:text="Carbs 0g" android:textAlignment="center" android:textColor="@color/text_primary" android:textSize="12sp" android:tag="glass:CARD" />
+                <TextView android:id="@+id/detailTotalFat" android:layout_width="0dp" android:layout_height="72dp" android:layout_columnWeight="1" android:layout_margin="3dp" android:gravity="center" android:background="@drawable/bg_macro_orange" android:text="Fat 0g" android:textAlignment="center" android:textColor="@color/text_primary" android:textSize="12sp" android:tag="glass:CARD" />
+                <TextView android:id="@+id/detailTotalFiber" android:layout_width="0dp" android:layout_height="72dp" android:layout_columnWeight="1" android:layout_margin="3dp" android:gravity="center" android:background="@drawable/bg_macro_teal" android:text="Fibre —" android:textAlignment="center" android:textColor="@color/text_primary" android:textSize="12sp" android:tag="glass:CARD" />
+                <TextView android:id="@+id/detailTotalSugar" android:layout_width="0dp" android:layout_height="72dp" android:layout_columnWeight="1" android:layout_margin="3dp" android:gravity="center" android:background="@drawable/bg_card" android:text="Sugar —" android:textAlignment="center" android:textColor="@color/text_primary" android:textSize="12sp" android:tag="glass:CARD" />
+                <TextView android:id="@+id/detailTotalSodium" android:layout_width="0dp" android:layout_height="72dp" android:layout_columnWeight="1" android:layout_margin="3dp" android:gravity="center" android:background="@drawable/bg_card" android:text="Sodium —" android:textAlignment="center" android:textColor="@color/text_primary" android:textSize="12sp" android:tag="glass:CARD" />
             </GridLayout>
         </LinearLayout>
-
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="vertical" android:padding="14dp" android:background="@drawable/bg_card">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="vertical" android:padding="14dp" android:background="@drawable/bg_card" android:tag="glass:CARD">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Details" android:textColor="@color/text_primary" android:textSize="16sp" android:textStyle="bold" />
             <TextView android:id="@+id/detailExtra" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/text_secondary" android:textSize="12sp" android:lineSpacingExtra="3dp" />
         </LinearLayout>
-
-        <TextView android:id="@+id/detailAddButton" android:layout_width="match_parent" android:layout_height="58dp" android:layout_marginTop="14dp" android:gravity="center" android:background="@drawable/bg_button_primary" android:text="+  Add to Diary" android:textColor="@color/black" android:textSize="16sp" android:textStyle="bold" />
+        <TextView android:id="@+id/detailAddButton" android:layout_width="match_parent" android:layout_height="58dp" android:layout_marginTop="14dp" android:gravity="center" android:background="@drawable/bg_button_primary" android:text="+  Add to Diary" android:textColor="@color/black" android:textSize="16sp" android:textStyle="bold" android:tag="glass:ACTION" />
     </LinearLayout>
 </ScrollView>

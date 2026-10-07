@@ -7,8 +7,8 @@
     <color name="outline">#1B3A41</color>
     <color name="outline_soft">#1D353D</color>
     <color name="text_primary">#F4F8F9</color>
-    <color name="text_secondary">#B5C7CA</color>
-    <color name="text_tertiary">#91A8AE</color>
+    <color name="text_secondary">#BDCDD2</color>
+    <color name="text_tertiary">#B0C0C6</color>
     <color name="accent">#00E7B4</color>
     <color name="accent_dark">#00B894</color>
     <color name="fuelnote_icon_background">#06181C</color>
