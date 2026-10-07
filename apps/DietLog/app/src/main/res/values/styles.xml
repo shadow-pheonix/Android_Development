@@ -43,6 +43,7 @@
     </style>
 
     <style name="Input.Dark">
+        <item name="android:tag">glass:INPUT</item>
         <item name="android:background">@drawable/bg_input</item>
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textColorHint">@color/text_tertiary</item>
@@ -53,6 +54,7 @@
         <item name="android:textSize">15sp</item>
     </style>
     <style name="Action" parent="Text.Body">
+        <item name="android:tag">glass:CONTROL</item>
         <item name="android:minHeight">48dp</item>
         <item name="android:minWidth">48dp</item>
         <item name="android:gravity">center</item>
