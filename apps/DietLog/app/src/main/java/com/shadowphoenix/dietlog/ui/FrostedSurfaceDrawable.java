@@ -1,8 +1,6 @@
 package com.shadowphoenix.dietlog.ui;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.LinearGradient;
@@ -15,18 +13,14 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 
-import java.util.Random;
-
-/** Tinted frost, fine grain and a directional rim. Foreground content is never blurred. */
+/** Smooth tinted frost and a directional rim. Foreground content is never blurred. */
 public final class FrostedSurfaceDrawable extends Drawable {
     public enum Material { CARD, FEATURE, CONTROL, INPUT, NAVIGATION, TAB, ACTION, BADGE, THUMBNAIL }
 
-    private static Bitmap grain;
     private final Material material;
     private final float density;
     private final Paint frost = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint rim = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint texture = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path clip = new Path();
     private final RectF rect = new RectF();
     private boolean selected;
@@ -38,19 +32,6 @@ public final class FrostedSurfaceDrawable extends Drawable {
         density = context.getResources().getDisplayMetrics().density;
         rim.setStyle(Paint.Style.STROKE);
         rim.setStrokeWidth(density * 0.75f);
-        texture.setShader(new BitmapShader(grain(), Shader.TileMode.REPEAT, Shader.TileMode.REPEAT));
-    }
-
-    private static synchronized Bitmap grain() {
-        if (grain == null) {
-            int[] pixels = new int[64 * 64];
-            Random random = new Random(27);
-            for (int i = 0; i < pixels.length; i++) {
-                pixels[i] = random.nextBoolean() ? 0x08FFFFFF : 0x08000000;
-            }
-            grain = Bitmap.createBitmap(pixels, 64, 64, Bitmap.Config.ARGB_8888);
-        }
-        return grain;
     }
 
     private float radius() {
@@ -100,9 +81,7 @@ public final class FrostedSurfaceDrawable extends Drawable {
         int save = canvas.save();
         canvas.clipPath(clip);
         frost.setAlpha(alpha);
-        texture.setAlpha(alpha);
         canvas.drawRect(rect, frost);
-        canvas.drawRect(rect, texture);
         canvas.restoreToCount(save);
         if (material != Material.TAB || selected || pressed) {
             rim.setAlpha(alpha);
@@ -134,7 +113,7 @@ public final class FrostedSurfaceDrawable extends Drawable {
     @Override public void setAlpha(int alpha) { this.alpha = alpha; invalidateSelf(); }
     @Override public int getAlpha() { return alpha; }
     @Override public void setColorFilter(ColorFilter filter) {
-        frost.setColorFilter(filter); rim.setColorFilter(filter); texture.setColorFilter(filter);
+        frost.setColorFilter(filter); rim.setColorFilter(filter);
         invalidateSelf();
     }
     @Override public int getOpacity() { return PixelFormat.TRANSLUCENT; }

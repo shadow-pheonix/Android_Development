@@ -122,7 +122,7 @@ offline photos, nutrition calculations and diagnostics export remain available.
 
 ### Frosted glass and motion (0.7.14)
 
-The app uses a dark, softly lit backdrop with translucent frost, fine grain, rounded
+The app uses a dark, softly lit backdrop with smooth translucent frost, rounded
 surfaces and directional edge highlights. The floating navigation bar captures only
 the content behind the bar: Android 12+ uses hardware backdrop blur, while Android
 10/11 blur a small quarter-resolution crop at a bounded refresh rate. Labels, food
@@ -133,3 +133,7 @@ release, and calorie/macro rings and progress charts animate to their displayed 
 View and indicator motion stops when the app is paused or battery saver is enabled, respects Android's
 animation setting, and restores the final state when cancelled or detached. Meal
 illustrations share that policy. There are no network effects or animation libraries.
+
+In 0.7.15, the grain texture is removed from all glass surfaces, including cards,
+controls and navigation, for a smooth finish. Backdrop blur, edge highlights and
+animations are retained.
