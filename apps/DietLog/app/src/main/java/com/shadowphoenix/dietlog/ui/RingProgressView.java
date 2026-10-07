@@ -45,7 +45,7 @@ public final class RingProgressView extends View {
     }
 
     public void setProgress(float value) {
-        float target = Float.isFinite(value) ? Math.max(0f, Math.min(1f, value)) : 0;
+        float target = Float.isNaN(value) ? 0 : Math.max(0f, Math.min(1f, value));
         if (target == targetProgress) return;
         targetProgress = target;
         animateToTarget(false);

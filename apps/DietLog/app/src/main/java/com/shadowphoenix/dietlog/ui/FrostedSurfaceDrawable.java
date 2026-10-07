@@ -79,7 +79,7 @@ public final class FrostedSurfaceDrawable extends Drawable {
             case FEATURE: top = 0xD6365058; bottom = 0xCF12272E; break;
             case CONTROL: top = 0xA7354B53; bottom = 0xB91A3038; break;
             case INPUT: top = 0xD2223740; bottom = 0xD016252E; break;
-            case NAVIGATION: top = 0xAC30434C; bottom = 0xDE13242D; break;
+            case NAVIGATION: top = 0xE72B3D46; bottom = 0xEF13242D; break;
             case TAB:
                 top = selected ? 0xAB426A66 : 0x102D454E;
                 bottom = selected ? 0xAA1F4542 : 0x08203038;
