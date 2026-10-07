@@ -21,7 +21,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageStat
 
 USER_AGENT = 'DietLog/0.7.11 (https://github.com/shadow-pheonix/Android_Development)'
 ALLOWED_HOSTS = {'images.openfoodfacts.org', 'openfoodfacts-images.s3.eu-west-3.amazonaws.com',
@@ -80,6 +80,15 @@ def compress_photo(raw):
         return out.getvalue()
 
 
+def check_photo_quality(encoded):
+    with Image.open(io.BytesIO(encoded)) as image:
+        image.load()
+        if image.format != 'WEBP' or max(image.size) > 256:
+            raise ValueError('Invalid cached thumbnail')
+        if ImageStat.Stat(image.convert('L')).stddev[0] < 3:
+            raise ValueError('Photo is blank or unreadable')
+
+
 def acquire(metadata, cache, assets):
     metadata = dict(metadata)
     for field in ('source_url', 'license_url'):
@@ -108,6 +117,7 @@ def acquire(metadata, cache, assets):
                         raise
                     time.sleep(30 if error.code == 429 else 2 ** (attempt + 1))
             cached.write_bytes(encoded)
+        check_photo_quality(encoded)
         digest = hashlib.sha256(encoded).hexdigest()
         path = assets / 'food_photos' / (digest + '.webp')
         if not path.is_file():

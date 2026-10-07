@@ -43,7 +43,6 @@
       "title": "Uttapam",
       "aliases": [
         "uttapam",
-        "uttapam",
         "uttappam"
       ],
       "sources": [
@@ -1463,7 +1462,7 @@
         "INDB",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Mixed dressed vegetable salad.jpg"
     },
     {
       "id": "pancake",
@@ -1566,7 +1565,7 @@
         "INDB",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Custard.jpg"
     },
     {
       "id": "pudding",
@@ -1764,7 +1763,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Apple fruit 1.2.jpg"
     },
     {
       "id": "banana",
@@ -1777,7 +1776,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Bananavarieties.jpg"
     },
     {
       "id": "mango",
@@ -1896,7 +1895,8 @@
       "id": "watermelon",
       "title": "Watermelon",
       "aliases": [
-        "watermelon"
+        "watermelon",
+        "water melon"
       ],
       "sources": [
         "IFCT",
@@ -1916,7 +1916,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Meloen vrucht met bloem.jpg"
     },
     {
       "id": "honeydew-melon",
@@ -2059,7 +2059,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Apricots.jpg"
     },
     {
       "id": "avocado",
@@ -2327,7 +2327,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Tomato je.jpg"
     },
     {
       "id": "potato",
@@ -2527,7 +2527,8 @@
       "aliases": [
         "chili",
         "chilli",
-        "hot pepper"
+        "hot pepper",
+        "chillies"
       ],
       "sources": [
         "IFCT",
@@ -2607,7 +2608,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Asparagus-Bundle.jpg"
     },
     {
       "id": "celery",
@@ -2632,7 +2633,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Leek on white background - 0947.jpg"
     },
     {
       "id": "green-bean",
@@ -2700,7 +2701,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Courge encore verte.jpg"
     },
     {
       "id": "luffa",
@@ -2712,7 +2713,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Luffa aegyptica.jpg"
     },
     {
       "id": "snake-gourd",
@@ -2773,7 +2774,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:ChampignonMushroom.jpg"
     },
     {
       "id": "kale",
@@ -2785,7 +2786,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Boerenkool.jpg"
     },
     {
       "id": "fenugreek",
@@ -3169,7 +3170,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Chickpeas (2).jpg"
     },
     {
       "id": "mung-bean",
@@ -3309,13 +3310,14 @@
       "aliases": [
         "soybean",
         "soyabean",
-        "soy bean"
+        "soy bean",
+        "soya bean"
       ],
       "sources": [
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Soybeans.jpg"
     },
     {
       "id": "tofu",
@@ -3327,7 +3329,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Japanese SilkyTofu (Kinugoshi Tofu).JPG"
     },
     {
       "id": "tempeh",
@@ -3363,7 +3365,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Lancashire cheese.jpg"
     },
     {
       "id": "cheddar-cheese",
@@ -3375,7 +3377,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Somerset-Cheddar.jpg"
     },
     {
       "id": "mozzarella",
@@ -4220,7 +4222,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Sa-indian-gud.jpg"
     },
     {
       "id": "maple-syrup",
@@ -4420,7 +4422,7 @@
         "IFCT",
         "USDA"
       ],
-      "enabled": false
+      "file_title": "File:Glass-of-water.jpg"
     },
     {
       "id": "bagel",

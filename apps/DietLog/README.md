@@ -57,7 +57,9 @@ The SQLite schema preserves the useful structured fields (barcode, brand, catego
 
 ## Food photos
 
-Photos are committed as compressed offline WebP assets, with per-image source and license credits in `app/src/main/assets/food_photos.json`. Food details provide a Photo credits action. Foods without a usable match retain their food symbol. Loading and decoding run in the background with an 8 MiB bitmap cache, and product packages fit within their thumbnails. Nutrition values and logging behavior are unchanged.
+The 7 October 2026 snapshot covers **21,456 of 28,102 foods (76.4%)**: 14,516 exact packaged-product matches and 6,940 representative ingredient/dish matches. It bundles 14,844 distinct images totaling about 65 MB.
+
+Photos are committed as compressed offline WebP assets, with per-image source and license credits in `app/src/main/assets/food_photos.json`. Food details provide a Photo credits action. Foods without a usable match retain their food symbol. The credit manifest is streamed to keep memory use small; loading and decoding run in the background with an 8 MiB bitmap cache, and product packages fit within their thumbnails. Nutrition values and logging behavior are unchanged.
 
 See `tools/PHOTO_PIPELINE.md` for acquisition/rebuild instructions and `NOTICE_DATA.md` for licensing. CI validates every asset hash, image dimensions, catalogue link and product barcode. It does not scrape images during a build.
 

@@ -1,7 +1,7 @@
 import io
 import unittest
 from PIL import Image
-from tools.build_food_photos import match_group, safe_url, compress_photo
+from tools.build_food_photos import match_group, safe_url, compress_photo, check_photo_quality
 from tools.fetch_off_photo_metadata import extract
 from tools.fetch_commons_photo_metadata import allowed_license
 
@@ -19,6 +19,12 @@ class PhotoTests(unittest.TestCase):
         self.assertIsNone(match_group('Licorice candy', 'USDA', groups))
         self.assertIsNone(match_group('fried rice', 'OFF', groups))
         self.assertIsNone(match_group('fried rice', 'IFCT', groups))
+
+    def test_blank_photo_rejected(self):
+        raw = io.BytesIO()
+        Image.new('RGB', (100, 100), 'black').save(raw, format='WEBP')
+        with self.assertRaisesRegex(ValueError, 'blank'):
+            check_photo_quality(raw.getvalue())
 
     def test_download_hosts_and_licenses(self):
         self.assertTrue(safe_url('https://images.openfoodfacts.org/a.jpg'))

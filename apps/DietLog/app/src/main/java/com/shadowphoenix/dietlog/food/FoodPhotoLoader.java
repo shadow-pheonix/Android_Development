@@ -8,34 +8,53 @@ import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.LruCache;
+import android.util.JsonReader;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.shadowphoenix.dietlog.diagnostics.AppLogger;
-import org.json.JSONObject;
-import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 /** Offline assets only. Serial background decoding keeps list rendering responsive. */
 public final class FoodPhotoLoader implements AutoCloseable {
+    private static final Pattern ASSET_PATH = Pattern.compile("food_photos/[a-f0-9]{64}\\.webp");
     public static final class Photo {
         public final String asset, credit, license, licenseUrl, sourceUrl, kind;
-        Photo(JSONObject json) throws Exception {
-            asset = json.getString("asset");
-            if (!asset.matches("food_photos/[a-f0-9]{64}\\.webp")) throw new IllegalArgumentException("Invalid photo asset");
-            credit = json.getString("credit");
-            license = json.getString("license");
-            licenseUrl = json.getString("license_url");
-            sourceUrl = json.getString("source_url");
-            kind = json.getString("kind");
+        Photo(JsonReader reader) throws IOException {
+            String path = null, author = null, terms = null, termsUrl = null, source = null, type = null;
+            reader.beginObject();
+            while (reader.hasNext()) {
+                switch (reader.nextName()) {
+                    case "asset": path = reader.nextString(); break;
+                    case "credit": author = reader.nextString(); break;
+                    case "license": terms = reader.nextString(); break;
+                    case "license_url": termsUrl = reader.nextString(); break;
+                    case "source_url": source = reader.nextString(); break;
+                    case "kind": type = reader.nextString(); break;
+                    default: reader.skipValue();
+                }
+            }
+            reader.endObject();
+            if (path == null || !ASSET_PATH.matcher(path).matches() ||
+                    author == null || terms == null || termsUrl == null || source == null || type == null) {
+                throw new IOException("Invalid photo metadata");
+            }
+            asset = path;
+            credit = author;
+            license = terms;
+            licenseUrl = termsUrl;
+            sourceUrl = source;
+            kind = type;
         }
     }
 
@@ -53,27 +72,30 @@ public final class FoodPhotoLoader implements AutoCloseable {
         assets = context.getApplicationContext().getAssets();
         worker.execute(() -> {
             try (InputStream input = assets.open("food_photos.json");
-                 ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-                byte[] buffer = new byte[8192];
-                int count;
-                while ((count = input.read(buffer)) != -1) {
-                    if (output.size() + count > 32 * 1024 * 1024) throw new IllegalArgumentException("Photo manifest too large");
-                    output.write(buffer, 0, count);
+                 JsonReader reader = new JsonReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
+                // AssetInputStream reports the exact remaining asset length here.
+                if (input.available() > 32 * 1024 * 1024) throw new IOException("Photo manifest too large");
+                boolean supportedSchema = false;
+                reader.beginObject();
+                while (reader.hasNext() && !closed) {
+                    switch (reader.nextName()) {
+                        case "schema_version": supportedSchema = reader.nextInt() == 1; break;
+                        case "foods":
+                            reader.beginObject();
+                            while (reader.hasNext()) foods.put(reader.nextName(), reader.nextString());
+                            reader.endObject();
+                            break;
+                        case "photos":
+                            reader.beginObject();
+                            while (reader.hasNext()) photos.put(reader.nextName(), new Photo(reader));
+                            reader.endObject();
+                            break;
+                        default: reader.skipValue();
+                    }
                 }
-                JSONObject manifest = new JSONObject(output.toString(StandardCharsets.UTF_8.name()));
-                if (manifest.getInt("schema_version") != 1) throw new IllegalArgumentException("Unknown photo schema");
-                JSONObject records = manifest.getJSONObject("photos");
-                Iterator<String> keys = records.keys();
-                while (keys.hasNext()) {
-                    String key = keys.next();
-                    photos.put(key, new Photo(records.getJSONObject(key)));
-                }
-                JSONObject links = manifest.getJSONObject("foods");
-                keys = links.keys();
-                while (keys.hasNext()) {
-                    String code = keys.next();
-                    foods.put(code, links.getString(code));
-                }
+                if (closed) return;
+                reader.endObject();
+                if (!supportedSchema) throw new IOException("Unknown photo schema");
                 AppLogger.i("Offline food photos loaded count=" + foods.size());
             } catch (Exception error) {
                 foods.clear();

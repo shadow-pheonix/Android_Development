@@ -5,7 +5,7 @@ The committed `app/src/main/assets/food_photos.json` is the source/credit manife
 - Packaged products use selected front photos from Open Food Facts' official bulk export, matched to exact barcodes including leading zeros. Product images are CC BY-SA 3.0.
 - Ingredient and dish photos come from Wikimedia Commons. `photo_queries.json` contains reviewed file titles and whole-phrase food aliases scoped to catalogue sources. These photos illustrate a food family, rather than a specific preparation, and are labelled representative in the app. Disabled groups have no reviewed photo.
 - Each manifest photo retains its author, license, license link, source page, acquisition URL, transformation description and content hash. Images are resized to at most 256 px, stripped of metadata and compressed as WebP. Attribution applies to each image individually; share-alike images retain the corresponding license.
-- Unavailable or undecodable images are skipped. The app keeps a food-symbol fallback. Acquisition failures are recorded without response bodies or credentials.
+- Unavailable, undecodable or nearly blank images are skipped. The app keeps a food-symbol fallback. Acquisition failures are recorded without response bodies or credentials.
 - Downloads are bounded, cached and resumable. There are no runtime image requests. Never scrape arbitrary search-engine results or infer a branded product's photo from its name.
 
 Rebuild using the same catalogue database as the Android build, Python and Pillow:

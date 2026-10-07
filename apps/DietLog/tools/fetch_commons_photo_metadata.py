@@ -47,8 +47,9 @@ def main():
     cache = Path(args.cache)
     cache.mkdir(parents=True, exist_ok=True)
     titles_to_files = {}
-    for offset in range(0, len(groups), 20):
-        batch = groups[offset:offset + 20]
+    unresolved = [g for g in groups if not g.get('file_title')]
+    for offset in range(0, len(unresolved), 20):
+        batch = unresolved[offset:offset + 20]
         data = request_json('https://en.wikipedia.org/w/api.php', {
             'titles': '|'.join(g['title'] for g in batch), 'redirects': 1,
             'prop': 'pageimages', 'piprop': 'name', 'pilicense': 'free',
@@ -65,7 +66,7 @@ def main():
             filename = pages.get(title, {}).get('pageimage')
             if filename and filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
                 titles_to_files[group['id']] = 'File:' + filename.replace('_', ' ')
-        print('Wikipedia food groups resolved:', min(offset + 20, len(groups)), flush=True)
+        print('Wikipedia food groups resolved:', min(offset + 20, len(unresolved)), flush=True)
 
     for group in groups:
         if group.get('file_title'):
@@ -92,6 +93,8 @@ def main():
             if not allowed_license(license_name, license_url):
                 continue
             artist = plain(metadata.get('Artist', {}).get('value', ''))
+            if not artist and license_name.lower() in ('public domain', 'cc0'):
+                artist = 'Wikimedia Commons (public-domain image; author not specified)'
             if not artist:
                 continue
             url = info.get('thumburl')

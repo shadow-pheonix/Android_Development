@@ -9,6 +9,11 @@ from collections import Counter
 from pathlib import Path
 from PIL import Image
 
+try:
+    from .fetch_commons_photo_metadata import allowed_license
+except ImportError:
+    from fetch_commons_photo_metadata import allowed_license
+
 def validate(db_path, assets):
     assets = Path(assets)
     manifest = json.loads((assets / 'food_photos.json').read_text())
@@ -36,6 +41,8 @@ def validate(db_path, assets):
         for field in ['credit', 'license', 'license_url', 'source_url', 'transform']:
             if not photo.get(field):
                 raise ValueError('Missing attribution: ' + field)
+        if not allowed_license(photo['license'], photo['license_url']):
+            raise ValueError('Unsupported photo license')
         if not photo['source_url'].startswith('https://') or not photo['license_url'].startswith('https://'):
             raise ValueError('Invalid attribution link')
         if asset in checked: continue
