@@ -104,7 +104,7 @@ jobs:
           fi
       - name: Prepare offline food database dependencies
         run: |
-          python -m pip install --disable-pip-version-check openpyxl==3.1.5
+          python -m pip install --disable-pip-version-check openpyxl==3.1.5 Pillow==12.3.0
           mkdir -p .dataset-cache app/src/main/assets
           curl -fL --retry 3 -o .dataset-cache/off-india.csv https://raw.githubusercontent.com/mvark/indiafoodstats/71ff743f61edb0eee553e4ea1c9ce86ea427f0d9/data/india_products_18613.csv
           curl -fL --retry 3 -o .dataset-cache/openlabel-india.ts https://raw.githubusercontent.com/armaanux/openlabel/af43c0596c50713debb68e7be5454c6723a0f4a0/src/data/off/off-india.data.ts
@@ -113,7 +113,7 @@ jobs:
           curl -fL --retry 3 -o .dataset-cache/indb.xlsx https://raw.githubusercontent.com/lindsayjaacks/Indian-Nutrient-Databank-INDB-/fbdb62bec519c6e2468582a799fb47e194b42558/INDB.xlsx
       - name: Test and build offline catalogue
         run: |
-          python -m unittest tools.test_builder -v
+          python -m unittest tools.test_builder tools.test_photos -v
           python tools/build_food_db.py \
             --off .dataset-cache/off-india.csv \
             --openlabel .dataset-cache/openlabel-india.ts \
@@ -122,6 +122,7 @@ jobs:
             --indb .dataset-cache/indb.xlsx \
             --output app/src/main/assets/offline_foods.db
           python tools/validate_food_db.py app/src/main/assets/offline_foods.db --min-foods 26000
+          python tools/validate_food_photos.py --food-db app/src/main/assets/offline_foods.db --assets app/src/main/assets
           ls -lh app/src/main/assets/offline_foods.db
       - name: Lint, unit test, and build debug APK
         run: gradle --no-daemon lintDebug testDebugUnitTest assembleDebug

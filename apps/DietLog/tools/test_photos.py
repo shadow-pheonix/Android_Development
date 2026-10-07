@@ -39,3 +39,44 @@ class PhotoTests(unittest.TestCase):
             raw = io.BytesIO()
             Image.new('RGB', (8, 8)).save(raw, format='PNG')
             compress_photo(raw.getvalue())
+
+class ManifestTests(unittest.TestCase):
+    def test_assets_and_exact_product_assignment(self):
+        import hashlib
+        import json
+        import sqlite3
+        import tempfile
+        from pathlib import Path
+        from tools.validate_food_photos import validate
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            database = root / 'foods.db'
+            with sqlite3.connect(database) as db:
+                db.execute('CREATE TABLE foods(code TEXT,barcode TEXT,source TEXT)')
+                db.execute("INSERT INTO foods VALUES('OFF:00123','00123','OFF')")
+            raw = io.BytesIO()
+            Image.new('RGB', (80, 80), 'white').save(raw, format='WEBP')
+            digest = hashlib.sha256(raw.getvalue()).hexdigest()
+            (root / 'food_photos').mkdir()
+            asset = 'food_photos/' + digest + '.webp'
+            (root / asset).write_bytes(raw.getvalue())
+            photo = dict(asset=asset, sha256=digest, credit='Contributor', license='CC BY-SA 3.0',
+                         license_url='https://creativecommons.org/licenses/by-sa/3.0/',
+                         source_url='https://world.openfoodfacts.org/product/00123',
+                         transform='Resized', kind='product')
+            manifest = dict(schema_version=1, photos={'off:00123': photo},
+                            foods={'OFF:00123': 'off:00123'}, coverage={'OFF': 1})
+            path = root / 'food_photos.json'
+            path.write_text(json.dumps(manifest))
+            validate(database, root)
+            manifest['photos']['off:123'] = manifest['photos'].pop('off:00123')
+            manifest['foods']['OFF:00123'] = 'off:123'
+            path.write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError, 'barcode'):
+                validate(database, root)
+            manifest['photos']['off:00123'] = manifest['photos'].pop('off:123')
+            manifest['foods']['OFF:00123'] = 'off:00123'
+            path.write_text(json.dumps(manifest))
+            (root / asset).write_bytes(b'corrupt image')
+            with self.assertRaisesRegex(ValueError, 'hash'):
+                validate(database, root)
