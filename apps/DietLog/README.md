@@ -109,3 +109,13 @@ CI downloads pinned datasets, builds and validates the offline database, then ru
 ```bash
 gradle --no-daemon lintDebug testDebugUnitTest assembleDebug
 ```
+
+### UI polish (0.7.13)
+
+Home, Search, Progress and Profile share clearer spacing, brighter secondary text,
+vector navigation icons with an active-tab background, and ripple feedback.
+Food results show calories above a separate, wrapping macro line; meal headers keep
+their animated artwork. Profile actions have their own row and calorie tiles place
+the unit below the value. Progress charts use a subtle area fill for single-series
+trends and leave gaps for missing data. Existing calendar selection, profile editor,
+offline photos, nutrition calculations and diagnostics export remain available.

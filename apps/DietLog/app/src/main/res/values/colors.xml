@@ -5,10 +5,10 @@
     <color name="surface_alt">#0E2429</color>
     <color name="surface_elevated">#122A30</color>
     <color name="outline">#1B3A41</color>
-    <color name="outline_soft">#123038</color>
+    <color name="outline_soft">#1D353D</color>
     <color name="text_primary">#F4F8F9</color>
-    <color name="text_secondary">#A6B8BC</color>
-    <color name="text_tertiary">#7C9499</color>
+    <color name="text_secondary">#B5C7CA</color>
+    <color name="text_tertiary">#91A8AE</color>
     <color name="accent">#00E7B4</color>
     <color name="accent_dark">#00B894</color>
     <color name="fuelnote_icon_background">#06181C</color>

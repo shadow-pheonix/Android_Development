@@ -4,6 +4,9 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
+import android.graphics.Color;
 import android.graphics.Path;
 import android.util.AttributeSet;
 import android.view.View;
@@ -18,6 +21,7 @@ public final class ProgressTrendView extends View {
     private final Paint referencePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint pointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint fillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private String[] labels = new String[0];
     private double[][] series = new double[0][];
@@ -36,7 +40,7 @@ public final class ProgressTrendView extends View {
         gridPaint.setStrokeWidth(dp(1));
 
         textPaint.setColor(context.getColor(R.color.text_tertiary));
-        textPaint.setTextSize(dp(10));
+        textPaint.setTextSize(11 * getResources().getDisplayMetrics().scaledDensity);
 
         referencePaint.setColor(context.getColor(R.color.text_secondary));
         referencePaint.setStrokeWidth(dp(1));
@@ -44,7 +48,7 @@ public final class ProgressTrendView extends View {
         referencePaint.setPathEffect(new DashPathEffect(new float[]{dp(5), dp(5)}, 0));
 
         linePaint.setStyle(Paint.Style.STROKE);
-        linePaint.setStrokeWidth(dp(2));
+        linePaint.setStrokeWidth(dp(2.5f));
         linePaint.setStrokeCap(Paint.Cap.ROUND);
         linePaint.setStrokeJoin(Paint.Join.ROUND);
 
@@ -107,10 +111,11 @@ public final class ProgressTrendView extends View {
             max *= 1.08;
         }
 
-        float left = dp(42);
+        float axisWidth = Math.max(textPaint.measureText(formatAxis(min)), textPaint.measureText(formatAxis(max)));
+        float left = Math.max(dp(42), axisWidth + dp(8));
         float right = getWidth() - dp(10);
-        float top = dp(10);
-        float bottom = getHeight() - dp(26);
+        float top = Math.max(dp(10), textPaint.getTextSize());
+        float bottom = getHeight() - Math.max(dp(26), textPaint.getTextSize() + dp(12));
         float chartWidth = Math.max(1, right - left);
         float chartHeight = Math.max(1, bottom - top);
 
@@ -133,6 +138,37 @@ public final class ProgressTrendView extends View {
             int color = colors.length > s ? colors[s] : getContext().getColor(R.color.accent);
             linePaint.setColor(color);
             pointPaint.setColor(color);
+            if (series.length == 1) {
+                // Fill each continuous segment separately so missing days retain their gaps.
+                fillPaint.setShader(new LinearGradient(0, top, 0, bottom,
+                        new int[]{Color.argb(48, Color.red(color), Color.green(color), Color.blue(color)),
+                                Color.TRANSPARENT}, null, Shader.TileMode.CLAMP));
+                Path area = new Path();
+                float firstX = 0, lastX = 0;
+                boolean segment = false;
+                for (int i = 0; i <= Math.min(pointCount, values.length); i++) {
+                    if (i == Math.min(pointCount, values.length) || !Double.isFinite(values[i])) {
+                        if (segment) {
+                            area.lineTo(lastX, bottom);
+                            area.lineTo(firstX, bottom);
+                            area.close();
+                            canvas.drawPath(area, fillPaint);
+                            area.reset();
+                            segment = false;
+                        }
+                        continue;
+                    }
+                    float x = pointCount <= 1 ? left + chartWidth / 2f
+                            : left + chartWidth * i / (pointCount - 1f);
+                    float y = mapY(values[i], min, max, top, bottom);
+                    if (!segment) {
+                        firstX = x;
+                        area.moveTo(x, y);
+                        segment = true;
+                    } else area.lineTo(x, y);
+                    lastX = x;
+                }
+            }
             Path path = new Path();
             boolean hasPath = false;
             for (int i = 0; i < Math.min(pointCount, values.length); i++) {
@@ -155,11 +191,11 @@ public final class ProgressTrendView extends View {
             canvas.drawPath(path, linePaint);
         }
 
-        int labelSlots = Math.min(5, labels.length);
+        int labelSlots = Math.min(chartWidth < dp(280) ? 3 : 5, labels.length);
         for (int slot = 0; slot < labelSlots; slot++) {
             int index = labelSlots == 1 ? 0 :
                     Math.round((labels.length - 1) * slot / (float) (labelSlots - 1));
-            float x = labels.length <= 1 ? left : left + chartWidth * index / (labels.length - 1f);
+            float x = labels.length <= 1 ? left + chartWidth / 2f : left + chartWidth * index / (labels.length - 1f);
             String label = labels[index];
             float width = textPaint.measureText(label);
             canvas.drawText(label, Math.max(left, Math.min(right - width, x - width / 2f)),

@@ -95,8 +95,9 @@ public final class MainActivity extends Activity {
 
     private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, editProfileScreen, accountScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
-    private TextView navHomeIcon, navHomeLabel, navSearchIcon, navSearchLabel;
-    private TextView navProgressIcon, navProgressLabel, navProfileIcon, navProfileLabel;
+    private ImageView navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon;
+    private TextView navHomeLabel, navSearchLabel;
+    private TextView navProgressLabel, navProfileLabel;
     private TextView driveConnectionStatus, driveSyncStatus, driveConnectButton;
     private TextView driveSyncNowButton, driveRestoreButton, driveDisconnectButton;
     private View driveConnectedActions;
@@ -173,11 +174,8 @@ public final class MainActivity extends Activity {
 
         try {
             catalog = new FoodCatalogDb(this);
-            String status = String.format(Locale.getDefault(),
-                    "%,d foods offline • %,d packaged • %,d cooked Indian dishes",
-                    catalog.count(), catalog.countBySource("OFF"), catalog.countBySource("INDB"));
-            databaseStatusText.setText(status);
-            profileDatabaseStatus.setText("●  " + status);
+            databaseStatusText.setText(String.format(Locale.getDefault(), "%,d foods available offline", catalog.count()));
+            profileDatabaseStatus.setText(String.format(Locale.getDefault(), "%,d foods • ready offline", catalog.count()));
             loadPopularFoods();
         } catch (Exception e) {
             AppLogger.e("Offline catalog failed to open", e);
@@ -1144,7 +1142,13 @@ public final class MainActivity extends Activity {
         dateText.setVisibility(View.VISIBLE);
         dateText.setGravity(android.view.Gravity.CENTER);
         dateText.setTextColor(getColor(R.color.text_primary));
-        dateText.setTextSize(14f);
+        dateText.setTextSize(15f);
+        dateText.setBackgroundResource(R.drawable.bg_chip);
+        dateText.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_ui_calendar, 0, 0, 0);
+        dateText.setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(getColor(R.color.accent)));
+        dateText.setCompoundDrawablePadding(dp(6));
+        dateText.setPadding(dp(10), 0, dp(10), 0);
+        dateText.setAutoSizeTextTypeUniformWithConfiguration(11, 15, 1, android.util.TypedValue.COMPLEX_UNIT_SP);
         dateText.setTypeface(dateText.getTypeface(), android.graphics.Typeface.BOLD);
         dateText.setFocusable(true);
         dateText.setOnClickListener(v -> showDiaryDatePicker());
@@ -1169,13 +1173,13 @@ public final class MainActivity extends Activity {
         control.setText(text);
         control.setGravity(android.view.Gravity.CENTER);
         control.setTextColor(getColor(R.color.accent));
-        control.setTextSize(12f);
+        control.setTextSize("Today".equals(text) ? 12f : 24f);
         control.setTypeface(control.getTypeface(), android.graphics.Typeface.BOLD);
-        control.setBackgroundResource(R.drawable.bg_chip);
+        control.setBackgroundResource("Today".equals(text) ? R.drawable.bg_chip : R.drawable.bg_date_control);
         control.setFocusable(true);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(widthDp), dp(48));
-        params.setMarginStart(dp(3));
-        params.setMarginEnd(dp(3));
+        params.setMarginStart(dp(2));
+        params.setMarginEnd(dp(2));
         control.setLayoutParams(params);
         return control;
     }
@@ -1201,6 +1205,8 @@ public final class MainActivity extends Activity {
         String headerPattern = selectedDate.getYear() == today.getYear() ? "EEE, d MMM" : "EEE, d MMM yyyy";
         DateTimeFormatter headerFormat = DateTimeFormatter.ofPattern(headerPattern, Locale.getDefault());
         dateText.setText(selectedDate.format(headerFormat));
+        dateText.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                selectedDate.equals(today) ? R.drawable.ic_ui_calendar : 0, 0, 0, 0);
         dateText.setContentDescription(getString(R.string.choose_diary_date) + ", "
                 + selectedDate.format(DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.FULL)));
         if (homeTodayButton != null) {
@@ -1225,11 +1231,12 @@ public final class MainActivity extends Activity {
     }
 
     private void updateNavColors(int selected) {
-        TextView[] icons = {navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon};
+        ImageView[] icons = {navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon};
         TextView[] labels = {navHomeLabel, navSearchLabel, navProgressLabel, navProfileLabel};
         for (int i = 0; i < icons.length; i++) {
             int color = i == selected ? getColor(R.color.accent) : getColor(R.color.text_secondary);
-            icons[i].setTextColor(color);
+            icons[i].setImageTintList(android.content.res.ColorStateList.valueOf(color));
+            ((View) icons[i].getParent()).setSelected(i == selected);
             labels[i].setTextColor(color);
             labels[i].setTypeface(labels[i].getTypeface(), i == selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         }
@@ -1530,7 +1537,15 @@ public final class MainActivity extends Activity {
         section.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams sectionParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        if (entriesContainer.getChildCount() > 0) sectionParams.topMargin = dp(10);
+        if (entriesContainer.getChildCount() > 0) {
+            View divider = new View(this);
+            divider.setBackgroundColor(getColor(R.color.outline_soft));
+            LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(1));
+            dividerParams.topMargin = dp(8);
+            dividerParams.bottomMargin = dp(8);
+            entriesContainer.addView(divider, dividerParams);
+        }
         section.setLayoutParams(sectionParams);
 
         LinearLayout header = new LinearLayout(this);
@@ -1547,10 +1562,15 @@ public final class MainActivity extends Activity {
         title.setSingleLine(true);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
         title.setTextColor(getColor(R.color.text_primary));
-        title.setTextSize(15f);
+        title.setTextSize(16f);
         title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
         title.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        header.addView(title, new LinearLayout.LayoutParams(0, dp(40), 1f));
+        LinearLayout mealLabels = new LinearLayout(this);
+        mealLabels.setOrientation(LinearLayout.VERTICAL);
+        mealLabels.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        mealLabels.addView(title);
+        header.addView(mealLabels, new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
         double mealCalories = 0.0;
         for (FoodEntry entry : entries) {
@@ -1561,19 +1581,21 @@ public final class MainActivity extends Activity {
         calories.setTextColor(getColor(R.color.text_secondary));
         calories.setTextSize(12f);
         calories.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        calories.setPadding(dp(6), 0, dp(8), 0);
-        header.addView(calories, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(36)));
+        calories.setPadding(0, dp(4), 0, 0);
+        mealLabels.addView(calories);
 
         TextView add = new TextView(this);
         add.setText("+ Add");
         add.setTextColor(getColor(R.color.accent));
-        add.setTextSize(11.5f);
+        add.setTextSize(13f);
         add.setTypeface(add.getTypeface(), android.graphics.Typeface.BOLD);
         add.setGravity(android.view.Gravity.CENTER);
         add.setPadding(dp(12), 0, dp(12), 0);
         add.setBackgroundResource(R.drawable.bg_chip);
         add.setOnClickListener(v -> openMealSearch(mealType));
-        header.addView(add, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(34)));
+        add.setContentDescription("Add food to " + FoodEntry.mealDisplayName(mealType));
+        add.setFocusable(true);
+        header.addView(add, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(48)));
         section.addView(header);
 
         boolean hasEntries = false;
@@ -1593,12 +1615,8 @@ public final class MainActivity extends Activity {
         }
 
         if (!hasEntries) {
-            TextView empty = new TextView(this);
-            empty.setText("No foods logged");
-            empty.setTextColor(getColor(R.color.text_tertiary));
-            empty.setTextSize(12f);
-            empty.setPadding(dp(50), dp(2), dp(4), dp(6));
-            section.addView(empty);
+            calories.setText(String.format(Locale.getDefault(), "%.0f kcal · No foods logged", mealCalories));
+            calories.setTextColor(getColor(R.color.text_tertiary));
         }
         entriesContainer.addView(section);
     }
@@ -1841,9 +1859,9 @@ public final class MainActivity extends Activity {
                         FoodEntry.mealDisplayName(entry.mealType);
             }
             ((TextView) row.findViewById(R.id.foodSubtitle)).setText(subtitle);
-            ((TextView) row.findViewById(R.id.foodMacros)).setText(String.format(Locale.getDefault(),
-                    "%.0f kcal   P %.0fg   C %.0fg   F %.0fg",
-                    entry.calories, entry.protein, entry.carbs, entry.fat));
+            ((TextView) row.findViewById(R.id.foodMacros)).setText(foodNutritionText(
+                    String.format(Locale.getDefault(), "%.0f kcal / %s g", entry.calories, formatAmount(entry.grams)),
+                    entry.protein, entry.carbs, entry.fat, true));
             TextView action = row.findViewById(R.id.foodAdd);
             action.setText("↻");
             action.setContentDescription("Quick log " + entry.name);
@@ -1914,6 +1932,7 @@ public final class MainActivity extends Activity {
             ((TextView) row.findViewById(R.id.foodSubtitle)).setText(searchSubtitle(food));
             ((TextView) row.findViewById(R.id.foodMacros)).setText(searchMacroLine(food));
             row.setOnClickListener(v -> openDetail(food));
+            row.findViewById(R.id.foodAdd).setContentDescription("Add " + food.name);
             row.findViewById(R.id.foodAdd).setOnClickListener(v -> openDetail(food));
             searchResultsContainer.addView(row);
         }
@@ -1933,11 +1952,29 @@ public final class MainActivity extends Activity {
         return source;
     }
 
-    private String searchMacroLine(CatalogFood food) {
+    private CharSequence searchMacroLine(CatalogFood food) {
         String kcal = food.calories == null ? "—" : formatAmount(food.calories);
-        String line = kcal + " kcal / 100 g  ·  P " + macroAmount(food.protein) +
-                "  C " + macroAmount(food.carbs) + "  F " + macroAmount(food.fat);
-        return food.hasCompleteCoreMacros() ? line : line + "  ·  Incomplete";
+        return foodNutritionText(kcal + " kcal / 100 g", food.protein, food.carbs,
+                food.fat, food.hasCompleteCoreMacros());
+    }
+
+    private CharSequence foodNutritionText(String energy, Double protein, Double carbs,
+                                          Double fat, boolean complete) {
+        String[] values = {"P " + macroAmount(protein), "C " + macroAmount(carbs), "F " + macroAmount(fat)};
+        String text = energy + "\n" + String.join("   ·   ", values) + (complete ? "" : "\nIncomplete nutrition data");
+        android.text.SpannableString styled = new android.text.SpannableString(text);
+        styled.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD),
+                0, energy.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        styled.setSpan(new android.text.style.ForegroundColorSpan(getColor(R.color.text_primary)),
+                0, energy.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        int[] colors = {R.color.protein, R.color.carbs, R.color.fat};
+        int offset = energy.length() + 1;
+        for (int i = 0; i < values.length; i++) {
+            styled.setSpan(new android.text.style.ForegroundColorSpan(getColor(colors[i])),
+                    offset, offset + values[i].length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            offset += values[i].length() + "   ·   ".length();
+        }
+        return styled;
     }
 
     private String macroAmount(Double value) {

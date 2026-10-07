@@ -46,7 +46,8 @@ public final class ProfileController {
     private Spinner sexSpinner, activitySpinner, goalSpinner, macroModeSpinner;
     private CheckBox manualCalorieCheck;
     private TextView dobButton, activityDescription, goalHint, calorieTargetText, energyBreakdown;
-    private TextView macroSummary, macroWarning, headerName, headerSummary, avatarFallback;
+    private TextView macroSummary, macroWarning, headerName, headerSummary;
+    private ImageView avatarFallback;
     private TextView currentTargetSummary, currentTargetNote, recommendedTargetSummary, macroTargetSummary;
     private TextView editGoalButton, editNutritionButton;
     private View goalSection, nutritionSection;
@@ -426,10 +427,20 @@ public final class ProfileController {
                 nutritionSection != null && nutritionSection.getVisibility() == View.VISIBLE ? "Close nutrition" : "Edit nutrition");
     }
 
+    private CharSequence targetSummary(double calories) {
+        String number = String.format(Locale.getDefault(), "%,.0f", calories);
+        android.text.SpannableString text = new android.text.SpannableString(number + "\nkcal / day");
+        text.setSpan(new android.text.style.RelativeSizeSpan(0.5f), number.length() + 1,
+                text.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new android.text.style.ForegroundColorSpan(activity.getColor(R.color.text_secondary)),
+                number.length() + 1, text.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return text;
+    }
+
     private void updateSavedTargetSummary() {
         if (currentTargetSummary == null) return;
         double currentCalories = getCalorieGoal();
-        currentTargetSummary.setText(String.format(Locale.getDefault(), "%,.0f kcal/day", currentCalories));
+        currentTargetSummary.setText(targetSummary(currentCalories));
         if (!hasSavedProfile) {
             currentTargetNote.setText("Default target until you save a profile");
         } else if (settings.manualCalorieOverride) {
@@ -440,9 +451,9 @@ public final class ProfileController {
         try {
             ProfileSettings recommended = calculatorSettingsWithoutManualOverride(settings);
             double recommendedCalories = CalorieCalculator.calculate(recommended, LocalDate.now()).calorieTarget;
-            recommendedTargetSummary.setText(String.format(Locale.getDefault(), "%,.0f kcal/day", recommendedCalories));
+            recommendedTargetSummary.setText(targetSummary(recommendedCalories));
         } catch (RuntimeException ignored) {
-            recommendedTargetSummary.setText("— kcal/day");
+            recommendedTargetSummary.setText("—\nkcal / day");
         }
         macroTargetSummary.setText(String.format(Locale.getDefault(),
                 "Macros • P %.0f g • C %.0f g • F %.0f g",
@@ -468,7 +479,7 @@ public final class ProfileController {
         String displayName = draft.displayName == null ? "" : draft.displayName.trim();
         if (displayName.isEmpty()) displayName = fallbackDisplayName;
         headerName.setText(displayName.isEmpty() ? "Your profile" : displayName);
-        String summary = String.format(Locale.getDefault(), "%.0f kg  •  %.0f cm  •  %s  •  %s",
+        String summary = String.format(Locale.getDefault(), "%.0f kg  •  %.0f cm\n%s  •  %s",
                 draft.currentWeightKg, draft.heightCm, draft.goal.label, draft.activityLevel.label);
         headerSummary.setText(summary);
     }
