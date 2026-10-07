@@ -31,7 +31,6 @@ public final class UiMotion implements AutoCloseable {
     private boolean foreground;
     private boolean closed;
     private boolean pendingPage;
-    private boolean suppressPageEntrance;
     private int epoch;
 
     public UiMotion(View root) {
@@ -61,23 +60,14 @@ public final class UiMotion implements AutoCloseable {
     public void enterScreen(View target) {
         bindPressTree(root);
         refreshPolicy();
-        if (target == currentScreen && !suppressPageEntrance) return;
+        if (target == currentScreen) return;
         epoch++;
         if (pendingEntrance != null) root.removeCallbacks(pendingEntrance);
-        pendingEntrance = null;
         if (currentScreen != null) resetTree(currentScreen);
         resetTree(target);
         currentScreen = target;
-        pendingPage = !suppressPageEntrance;
-        if (foreground && pendingPage) startEntrance(target);
-    }
-
-    /** Bottom navigation changes pages immediately, including a repeated tap during entrance. */
-    public void withoutPageAnimation(Runnable navigation) {
-        boolean previous = suppressPageEntrance;
-        suppressPageEntrance = true;
-        try { navigation.run(); }
-        finally { suppressPageEntrance = previous; }
+        pendingPage = true;
+        if (foreground) startEntrance(target);
     }
 
     private void startEntrance(View target) {

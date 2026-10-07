@@ -160,9 +160,8 @@ restarts it; destroying the activity closes the
 catalogue after an in-flight query finishes. Diagnostics record query duration and
 result counts without recording the search text.
 
-### Immediate bottom navigation (0.7.18)
+### Bottom-button feedback (0.7.19)
 
-The five bottom buttons show their destination without the page fade, upward stagger
-or indicator entrance replay. Their press-scale animation is also removed. A repeated
-tap settles any pending entrance immediately. The 450 ms selection pill and native
-click feedback remain available; navigation inside pages keeps its existing motion.
+The five bottom buttons no longer shrink and spring back when pressed. Page fade
+and entrance animations, the 450 ms sliding selection pill and native click feedback
+remain available. Other buttons keep their existing press feedback.
