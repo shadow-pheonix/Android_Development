@@ -21,3 +21,11 @@ The normalized USDA SR Legacy extract is sourced from `krishnabhat/indian-food-n
 ## INDB cooked dishes — private build only
 
 The Indian Nutrient Databank (Jaacks Lab) supplies 1,014 cooked Indian dishes and serving information. Its GitHub repository does not specify a redistribution license. DietLog therefore treats this layer as **personal/private-build only**. Do not distribute a public APK containing INDB until explicit redistribution permission is confirmed. The build fetches the authors' workbook directly and does not commit it to this repository.
+
+## Offline food photos
+
+Product photos are from Open Food Facts contributors and are licensed CC BY-SA 3.0: https://creativecommons.org/licenses/by-sa/3.0/. Selected front photos are matched by exact catalogue barcode.
+
+Representative ingredient/dish photos are from Wikimedia Commons under the individual CC BY, CC BY-SA, CC0 or public-domain terms recorded in `app/src/main/assets/food_photos.json`. That manifest provides per-image authorship, source pages, license links, content hashes and modification notices. Images have been resized, metadata stripped and compressed as WebP. Share-alike images remain under their recorded licenses. Photo credits are accessible from each illustrated food's detail page, including links to the source and license. These image licenses do not change the licenses of the nutrition datasets above.
+
+Acquisition and validation instructions: `tools/PHOTO_PIPELINE.md`.

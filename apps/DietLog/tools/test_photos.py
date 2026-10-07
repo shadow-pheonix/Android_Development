@@ -1,0 +1,41 @@
+import io
+import unittest
+from PIL import Image
+from tools.build_food_photos import match_group, safe_url, compress_photo
+from tools.fetch_off_photo_metadata import extract
+from tools.fetch_commons_photo_metadata import allowed_license
+
+class PhotoTests(unittest.TestCase):
+    def test_exact_barcode_only(self):
+        rows = io.StringIO('code\timage_url\timage_small_url\n00123\thttps://x/large\thttps://x/small\n123\thttps://x/other\t\n')
+        result = extract(rows, {'00123'})
+        self.assertEqual(set(result), {'00123'})
+        self.assertEqual(result['00123']['url'], 'https://x/small')
+
+    def test_longest_whole_phrase_and_source(self):
+        groups = [dict(id='rice', aliases=['rice'], sources=['USDA']),
+                  dict(id='fried', aliases=['fried rice'], sources=['USDA'])]
+        self.assertEqual(match_group('Rice, fried rice with vegetables', 'USDA', groups), 'fried')
+        self.assertIsNone(match_group('Licorice candy', 'USDA', groups))
+        self.assertIsNone(match_group('fried rice', 'OFF', groups))
+        self.assertIsNone(match_group('fried rice', 'IFCT', groups))
+
+    def test_download_hosts_and_licenses(self):
+        self.assertTrue(safe_url('https://images.openfoodfacts.org/a.jpg'))
+        for url in ['http://images.openfoodfacts.org/a', 'https://images.openfoodfacts.org.evil/a',
+                    'https://user@images.openfoodfacts.org/a', 'file:///tmp/a']:
+            self.assertFalse(safe_url(url))
+        self.assertTrue(allowed_license('CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/'))
+        self.assertFalse(allowed_license('CC BY-NC 4.0', 'https://creativecommons.org/licenses/by-nc/4.0/'))
+
+    def test_compression_is_bounded_and_opaque(self):
+        raw = io.BytesIO()
+        Image.new('RGBA', (1200, 600), (0, 0, 0, 0)).save(raw, format='PNG')
+        with Image.open(io.BytesIO(compress_photo(raw.getvalue()))) as photo:
+            self.assertEqual(photo.format, 'WEBP')
+            self.assertEqual(photo.size, (256, 128))
+            self.assertTrue(all(channel >= 250 for channel in photo.getpixel((0, 0))[:3]))
+        with self.assertRaises(ValueError):
+            raw = io.BytesIO()
+            Image.new('RGB', (8, 8)).save(raw, format='PNG')
+            compress_photo(raw.getvalue())

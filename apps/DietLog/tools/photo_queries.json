@@ -1,0 +1,4452 @@
+{
+  "schema_version": 1,
+  "groups": [
+    {
+      "id": "idli",
+      "title": "Idli",
+      "aliases": [
+        "idli"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Button idli.JPG"
+    },
+    {
+      "id": "dosa",
+      "title": "Dosa",
+      "aliases": [
+        "dosa",
+        "dosai"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Dosa-chutney-sambhar.jpg"
+    },
+    {
+      "id": "upma",
+      "title": "Upma",
+      "aliases": [
+        "upma"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:A photo of Upma.jpg"
+    },
+    {
+      "id": "uttapam",
+      "title": "Uttapam",
+      "aliases": [
+        "uttapam",
+        "uttapam",
+        "uttappam"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Mini Uttappam.jpg"
+    },
+    {
+      "id": "vada-food",
+      "title": "Vada (food)",
+      "aliases": [
+        "vada",
+        "vade"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Medu Vadas.JPG"
+    },
+    {
+      "id": "medu-vada",
+      "title": "Medu vada",
+      "aliases": [
+        "medu vada"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Medu Vada.JPG"
+    },
+    {
+      "id": "dhokla",
+      "title": "Dhokla",
+      "aliases": [
+        "dhokla"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Dhokla on Gujrart.jpg"
+    },
+    {
+      "id": "khandvi-food",
+      "title": "Khandvi (food)",
+      "aliases": [
+        "khandvi"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Khandvi (10497367994).jpg"
+    },
+    {
+      "id": "poha-dish",
+      "title": "Poha (dish)",
+      "aliases": [
+        "poha",
+        "beaten rice"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Poha, a snack made of flattened rice.jpg"
+    },
+    {
+      "id": "chapati",
+      "title": "Chapati",
+      "aliases": [
+        "chapati",
+        "roti"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:2 Chapati warm and ready to be eaten.jpg"
+    },
+    {
+      "id": "paratha",
+      "title": "Paratha",
+      "aliases": [
+        "parantha",
+        "paratha"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Triangle paratha (cropped).JPG"
+    },
+    {
+      "id": "aloo-paratha",
+      "title": "Aloo paratha",
+      "aliases": [
+        "potato parantha",
+        "potato paratha",
+        "aloo paratha"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Triangle paratha (cropped).JPG"
+    },
+    {
+      "id": "puri-food",
+      "title": "Puri (food)",
+      "aliases": [
+        "poori",
+        "puri"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Fluffy Poori (cropped).JPG"
+    },
+    {
+      "id": "naan",
+      "title": "Naan",
+      "aliases": [
+        "naan"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Annapurna Naan.jpg"
+    },
+    {
+      "id": "bhatura",
+      "title": "Bhatura",
+      "aliases": [
+        "bhatura",
+        "bhature"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Bhatoora.jpg"
+    },
+    {
+      "id": "thepla",
+      "title": "Thepla",
+      "aliases": [
+        "thepla"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Thepla main.jpg"
+    },
+    {
+      "id": "kulcha",
+      "title": "Kulcha",
+      "aliases": [
+        "kulcha"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Chole Kulcha Meal - Order Food Online in Mumbai (31013272937).jpg"
+    },
+    {
+      "id": "appam",
+      "title": "Appam",
+      "aliases": [
+        "appam"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Appam - அப்பம்.jpg"
+    },
+    {
+      "id": "puttu",
+      "title": "Puttu",
+      "aliases": [
+        "puttu"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Puttu (Rice Flour steamed cake).jpg"
+    },
+    {
+      "id": "idiyappam",
+      "title": "Idiyappam",
+      "aliases": [
+        "idiyappam"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Idiyappam with Egg Masala Curry.jpg"
+    },
+    {
+      "id": "pongal-dish",
+      "title": "Pongal (dish)",
+      "aliases": [
+        "pongal"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Ven pongal with sambar and chutney.jpg"
+    },
+    {
+      "id": "khichdi",
+      "title": "Khichdi",
+      "aliases": [
+        "khichdi",
+        "khichri"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Dall Khichdi.jpg"
+    },
+    {
+      "id": "biryani",
+      "title": "Biryani",
+      "aliases": [
+        "biryani",
+        "biriyani"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:\"Hyderabadi Dum Biryani\".jpg"
+    },
+    {
+      "id": "pilaf",
+      "title": "Pilaf",
+      "aliases": [
+        "pulao",
+        "pilaf"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Afghan Palo.jpg"
+    },
+    {
+      "id": "fried-rice",
+      "title": "Fried rice",
+      "aliases": [
+        "fried rice"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Koh Mak, Thailand, Fried rice with seafood, Thai fried rice.jpg"
+    },
+    {
+      "id": "curd-rice",
+      "title": "Curd rice",
+      "aliases": [
+        "curd rice",
+        "dahi bhaat",
+        "dahi chawal"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Curd Rice.jpg"
+    },
+    {
+      "id": "lemon-rice",
+      "title": "Lemon rice",
+      "aliases": [
+        "lemon rice"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Chitranna and Payasa.jpg"
+    },
+    {
+      "id": "pulihora",
+      "title": "Pulihora",
+      "aliases": [
+        "tamarind rice",
+        "pulihora"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Pulihara.JPG"
+    },
+    {
+      "id": "rice-and-curry",
+      "title": "Rice and curry",
+      "aliases": [
+        "boiled rice",
+        "steamed rice",
+        "plain rice"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Meshi 001.jpg"
+    },
+    {
+      "id": "sambar-dish",
+      "title": "Sambar (dish)",
+      "aliases": [
+        "sambar",
+        "sambhar"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Pumpkin sambar.JPG"
+    },
+    {
+      "id": "rasam",
+      "title": "Rasam",
+      "aliases": [
+        "rasam"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Pineapple Rasam India.jpg"
+    },
+    {
+      "id": "dal",
+      "title": "Dal",
+      "aliases": [
+        "dal",
+        "dhal"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:3 types of lentil.png"
+    },
+    {
+      "id": "dal-makhani",
+      "title": "Dal makhani",
+      "aliases": [
+        "dal makhani",
+        "moti mahal dal"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Punjabi style Dal Makhani.jpg"
+    },
+    {
+      "id": "chana-masala",
+      "title": "Chana masala",
+      "aliases": [
+        "chickpeas curry",
+        "channa curry",
+        "chana masala",
+        "chole"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Chana masala.jpg"
+    },
+    {
+      "id": "rajma",
+      "title": "Rajma",
+      "aliases": [
+        "rajmah curry",
+        "rajma"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Rajma Masala (32081557778).jpg"
+    },
+    {
+      "id": "kadhi",
+      "title": "Kadhi",
+      "aliases": [
+        "kadhi"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Kadhi Pakora.jpg"
+    },
+    {
+      "id": "palak-paneer",
+      "title": "Palak paneer",
+      "aliases": [
+        "spinach paneer",
+        "palak paneer"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Palakpaneer Rayagada Odisha 0009.jpg"
+    },
+    {
+      "id": "matar-paneer",
+      "title": "Matar paneer",
+      "aliases": [
+        "pea paneer",
+        "matar paneer"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Matar paneer dish.jpg"
+    },
+    {
+      "id": "paneer-tikka",
+      "title": "Paneer tikka",
+      "aliases": [
+        "paneer tikka"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Paneer tikka.jpg"
+    },
+    {
+      "id": "shahi-paneer",
+      "title": "Shahi paneer",
+      "aliases": [
+        "shahi paneer",
+        "paneer curry"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Shahi panner.jpg"
+    },
+    {
+      "id": "aloo-gobi",
+      "title": "Aloo gobi",
+      "aliases": [
+        "potato cauliflower",
+        "aloo gobhi",
+        "aloo gobi"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Aloo Ghobi.jpg"
+    },
+    {
+      "id": "aloo-matar",
+      "title": "Aloo matar",
+      "aliases": [
+        "pea potato",
+        "aloo matar"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Aloo matar 1 - Massachusetts.jpg"
+    },
+    {
+      "id": "dum-aloo",
+      "title": "Dum aloo",
+      "aliases": [
+        "dum aloo"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Kashmiri Dum aloo.jpeg"
+    },
+    {
+      "id": "baingan-bharta",
+      "title": "Baingan bharta",
+      "aliases": [
+        "brinjal bhartha",
+        "baingan ka bhartha",
+        "baingan bharta"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Baigan Bharta from Nagpur.JPG"
+    },
+    {
+      "id": "sarson-ka-saag",
+      "title": "Sarson ka saag",
+      "aliases": [
+        "sarson ka saag"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Saagroti.jpg"
+    },
+    {
+      "id": "malai-kofta",
+      "title": "Malai kofta",
+      "aliases": [
+        "kofta"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Koofteh tabrizi.jpg"
+    },
+    {
+      "id": "pav-bhaji",
+      "title": "Pav bhaji",
+      "aliases": [
+        "pav bhaji"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Bambayya Pav bhaji.jpg"
+    },
+    {
+      "id": "vada-pav",
+      "title": "Vada pav",
+      "aliases": [
+        "vada pav"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Vada Pav-Indian street food.JPG"
+    },
+    {
+      "id": "misal-pav",
+      "title": "Misal pav",
+      "aliases": [
+        "misal"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Kolhapuri Misal Pav.jpg"
+    },
+    {
+      "id": "samosa",
+      "title": "Samosa",
+      "aliases": [
+        "samosa"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Samosas, snack food at Wikipedia's 16th Birthday celebration in Chittagong (01).jpg"
+    },
+    {
+      "id": "pakora",
+      "title": "Pakora",
+      "aliases": [
+        "pakora",
+        "pakoda",
+        "pakori",
+        "pakodies"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Onion pakora - a.jpg"
+    },
+    {
+      "id": "chaat",
+      "title": "Chaat",
+      "aliases": [
+        "chaat",
+        "chat"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Dahi puri, Doi phuchka.jpg"
+    },
+    {
+      "id": "bhelpuri",
+      "title": "Bhelpuri",
+      "aliases": [
+        "bhel"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Behael Puri (6105489342).jpg"
+    },
+    {
+      "id": "panipuri",
+      "title": "Panipuri",
+      "aliases": [
+        "pani puri",
+        "golgappa",
+        "panipuri"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Pani Puri1.JPG"
+    },
+    {
+      "id": "aloo-tikki",
+      "title": "Aloo tikki",
+      "aliases": [
+        "aloo tikki",
+        "potato tikki"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Aloo Tikki served with chutneys.jpg"
+    },
+    {
+      "id": "kachori",
+      "title": "Kachori",
+      "aliases": [
+        "kachori"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Rajasthani Raj Kachori.jpg"
+    },
+    {
+      "id": "dahi-vada",
+      "title": "Dahi vada",
+      "aliases": [
+        "dahi vada",
+        "dahi bhalla"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Dahi bhalla or dahi wada or dahi bada.PNG"
+    },
+    {
+      "id": "sev-food",
+      "title": "Sev (food)",
+      "aliases": [
+        "sev"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Sev 2013-12-01 16-57.jpg"
+    },
+    {
+      "id": "papadam",
+      "title": "Papadam",
+      "aliases": [
+        "papad",
+        "pappad"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Roasted Papad - Howrah 2013-11-02 4068.jpg"
+    },
+    {
+      "id": "murukku",
+      "title": "Murukku",
+      "aliases": [
+        "murukku",
+        "chakli"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:A Traditional Tamil Snack Murukku.jpg"
+    },
+    {
+      "id": "mathri",
+      "title": "Mathri",
+      "aliases": [
+        "mathri"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Mathri.JPG"
+    },
+    {
+      "id": "namak-para",
+      "title": "Namak para",
+      "aliases": [
+        "namak para"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Namak paray made at home.jpg"
+    },
+    {
+      "id": "korma",
+      "title": "Korma",
+      "aliases": [
+        "korma"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Chicken Korma.JPG"
+    },
+    {
+      "id": "butter-chicken",
+      "title": "Butter chicken",
+      "aliases": [
+        "butter chicken",
+        "murgh makhani"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Butter Chicken & Butter Naan - Home - Chandigarh - India - 0006.jpg"
+    },
+    {
+      "id": "chicken-curry",
+      "title": "Chicken curry",
+      "aliases": [
+        "chicken curry"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Chicken Curry in the Philippines.jpg"
+    },
+    {
+      "id": "tandoori-chicken",
+      "title": "Tandoori chicken",
+      "aliases": [
+        "tandoori chicken"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Chickentandoori.jpg"
+    },
+    {
+      "id": "chicken-tikka",
+      "title": "Chicken tikka",
+      "aliases": [
+        "chicken tikka"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Tandoorimumbai.jpg"
+    },
+    {
+      "id": "fish-curry",
+      "title": "Fish curry",
+      "aliases": [
+        "fish curry"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Bangladeshi Fish Curry Rice.jpg"
+    },
+    {
+      "id": "kebab",
+      "title": "Kebab",
+      "aliases": [
+        "kebab",
+        "kabab",
+        "kababs"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Lula kebab 2.jpg"
+    },
+    {
+      "id": "keema",
+      "title": "Keema",
+      "aliases": [
+        "keema",
+        "minced meat"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Sausage making-H-1.jpg"
+    },
+    {
+      "id": "rogan-josh",
+      "title": "Rogan josh",
+      "aliases": [
+        "rogan josh"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Rogan Josh Kashmiri.jpg"
+    },
+    {
+      "id": "vindaloo",
+      "title": "Vindaloo",
+      "aliases": [
+        "vindaloo"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Beef Vindaloo - Chilli Mama, Chadstone (3014236693).jpg"
+    },
+    {
+      "id": "chutney",
+      "title": "Chutney",
+      "aliases": [
+        "chutney"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Chutneykarnataka.jpg"
+    },
+    {
+      "id": "raita",
+      "title": "Raita",
+      "aliases": [
+        "raita"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Cucumber-raita.jpg"
+    },
+    {
+      "id": "indian-pickle",
+      "title": "Indian pickle",
+      "aliases": [
+        "pickle",
+        "pickled"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Chilli pickle in a plate 2.jpg"
+    },
+    {
+      "id": "gulab-jamun",
+      "title": "Gulab jamun",
+      "aliases": [
+        "gulab jamun"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Gulab-jamun-wallpaper-1.jpg"
+    },
+    {
+      "id": "rasgulla",
+      "title": "Rasgulla",
+      "aliases": [
+        "rasgulla"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Rasgulla.jpg"
+    },
+    {
+      "id": "ras-malai",
+      "title": "Ras malai",
+      "aliases": [
+        "rasmalai",
+        "ras malai"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Ras Malai 2.JPG"
+    },
+    {
+      "id": "jalebi",
+      "title": "Jalebi",
+      "aliases": [
+        "jalebi"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Basavanagudi Kadalekai Parishe (2025) Bangalore (86).jpg"
+    },
+    {
+      "id": "kheer",
+      "title": "Kheer",
+      "aliases": [
+        "kheer",
+        "payasam"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Kheer.jpg"
+    },
+    {
+      "id": "halva",
+      "title": "Halva",
+      "aliases": [
+        "halwa",
+        "halva"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Orient sweets (special halva) Samarkand, Siyab.jpg"
+    },
+    {
+      "id": "laddu",
+      "title": "Laddu",
+      "aliases": [
+        "ladoos",
+        "ladoo",
+        "laddu",
+        "laddoo"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Laddu Sweet.JPG"
+    },
+    {
+      "id": "barfi",
+      "title": "Barfi",
+      "aliases": [
+        "barfi",
+        "burfi"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Almond Khoa based burfi Mumbai India (cropped).jpg"
+    },
+    {
+      "id": "kulfi",
+      "title": "Kulfi",
+      "aliases": [
+        "kulfi"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Matka kulfi.jpg"
+    },
+    {
+      "id": "shrikhand",
+      "title": "Shrikhand",
+      "aliases": [
+        "shrikhand"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Shrikhand london kastoori.jpg"
+    },
+    {
+      "id": "sandesh-confectionery",
+      "title": "Sandesh (confectionery)",
+      "aliases": [
+        "sandesh"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Sandesh 3.jpg"
+    },
+    {
+      "id": "modak",
+      "title": "Modak",
+      "aliases": [
+        "modak"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Ukadiche Modak (Rice).jpg"
+    },
+    {
+      "id": "malpua",
+      "title": "Malpua",
+      "aliases": [
+        "malpua"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Malpoa pitha.jpg"
+    },
+    {
+      "id": "puran-poli",
+      "title": "Puran poli",
+      "aliases": [
+        "puran poli"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Puran Poli.jpg"
+    },
+    {
+      "id": "sheera-sweet",
+      "title": "Sheera (sweet)",
+      "aliases": [
+        "sheera",
+        "suji halwa"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Karnataka Sweet Kesari Bath.png"
+    },
+    {
+      "id": "gajar-ka-halwa",
+      "title": "Gajar ka halwa",
+      "aliases": [
+        "carrot halwa",
+        "gajar halwa"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Cuisine (268) 44.jpg"
+    },
+    {
+      "id": "masala-chai",
+      "title": "Masala chai",
+      "aliases": [
+        "chai",
+        "hot tea"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Chai In Sakora.jpg"
+    },
+    {
+      "id": "lassi",
+      "title": "Lassi",
+      "aliases": [
+        "lassi"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Salt lassi.jpg"
+    },
+    {
+      "id": "buttermilk",
+      "title": "Buttermilk",
+      "aliases": [
+        "buttermilk"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Buttermilk-(right)-and-Milk-(left).jpg"
+    },
+    {
+      "id": "aam-panna",
+      "title": "Aam panna",
+      "aliases": [
+        "aam panna",
+        "raw mango drink"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Keri Ka Sharbat.JPG"
+    },
+    {
+      "id": "jal-jeera",
+      "title": "Jal-jeera",
+      "aliases": [
+        "jal jeera",
+        "cumin infused water"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Jal Jeera.JPG"
+    },
+    {
+      "id": "milkshake",
+      "title": "Milkshake",
+      "aliases": [
+        "milkshake"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Strawberry milk shake (cropped).jpg"
+    },
+    {
+      "id": "smoothie",
+      "title": "Smoothie",
+      "aliases": [
+        "smoothie"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Kiwi Smoothie.jpg"
+    },
+    {
+      "id": "sandwich",
+      "title": "Sandwich",
+      "aliases": [
+        "sandwich"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Bacon, lettuce, tomato, and avocado.jpg"
+    },
+    {
+      "id": "club-sandwich",
+      "title": "Club sandwich",
+      "aliases": [
+        "club sandwich"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Club sandwich at Café Picnic.jpg"
+    },
+    {
+      "id": "hamburger",
+      "title": "Hamburger",
+      "aliases": [
+        "burger",
+        "hamburger"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:RedDot Burger.jpg"
+    },
+    {
+      "id": "pizza",
+      "title": "Pizza",
+      "aliases": [
+        "pizza"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Pizza-3007395.jpg"
+    },
+    {
+      "id": "french-fries",
+      "title": "French fries",
+      "aliases": [
+        "french fries"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:French Fries.JPG"
+    },
+    {
+      "id": "pasta",
+      "title": "Pasta",
+      "aliases": [
+        "pasta",
+        "spaghetti",
+        "penne",
+        "fettuccine"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:(Pasta) by David Adam Kess (pic.2).jpg"
+    },
+    {
+      "id": "lasagne",
+      "title": "Lasagne",
+      "aliases": [
+        "lasagne",
+        "lasagna"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Lasagne - stonesoup.jpg"
+    },
+    {
+      "id": "macaroni-and-cheese",
+      "title": "Macaroni and cheese",
+      "aliases": [
+        "macaroni cheese",
+        "macroni cheese"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Original Mac n Cheese .jpg"
+    },
+    {
+      "id": "chow-mein",
+      "title": "Chow mein",
+      "aliases": [
+        "chowmein",
+        "chow mein"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Homemade Chow mein with shrimps and meat with a choy and Choung.jpg"
+    },
+    {
+      "id": "noodle",
+      "title": "Noodle",
+      "aliases": [
+        "noodle",
+        "noodles"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Bowl full of noodles with marinated beef, bok choy, celery and green pea shoots - panoramio.jpg"
+    },
+    {
+      "id": "dumpling",
+      "title": "Dumpling",
+      "aliases": [
+        "dumpling",
+        "momos"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:HK SYP 西營盤 Sai Ying Pun Kwan Yick Building 名星海鮮酒家 Star Seafood Restaurant food 吞麵 Wonton dim sum October 2020 SS2 01.jpg"
+    },
+    {
+      "id": "spring-roll",
+      "title": "Spring roll",
+      "aliases": [
+        "spring roll"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Spring Rolls (3357696061).jpg"
+    },
+    {
+      "id": "soup",
+      "title": "Soup",
+      "aliases": [
+        "soup"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Asparagus soup (spargelsuppe).jpg"
+    },
+    {
+      "id": "omelette",
+      "title": "Omelette",
+      "aliases": [
+        "omelet",
+        "omelette",
+        "omlette"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Gorgonzola + Bacon Omelette @ Omelegg @ Amsterdam (16600947041).jpg"
+    },
+    {
+      "id": "scrambled-eggs",
+      "title": "Scrambled eggs",
+      "aliases": [
+        "scrambled egg"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Scrambed eggs.jpg"
+    },
+    {
+      "id": "fried-egg",
+      "title": "Fried egg",
+      "aliases": [
+        "fried egg"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Fried Egg 2.jpg"
+    },
+    {
+      "id": "boiled-egg",
+      "title": "Boiled egg",
+      "aliases": [
+        "boiled egg"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Soft-boiled-egg.jpg"
+    },
+    {
+      "id": "salad",
+      "title": "Salad",
+      "aliases": [
+        "salad"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "pancake",
+      "title": "Pancake",
+      "aliases": [
+        "pancake"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Foodiesfeed.com pouring-honey-on-pancakes-with-walnuts.jpg"
+    },
+    {
+      "id": "waffle",
+      "title": "Waffle",
+      "aliases": [
+        "waffle",
+        "waffles"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Waffles with Strawberries.jpg"
+    },
+    {
+      "id": "cake",
+      "title": "Cake",
+      "aliases": [
+        "cake"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Pound layer cake.jpg"
+    },
+    {
+      "id": "cookie",
+      "title": "Cookie",
+      "aliases": [
+        "cookie",
+        "cookies",
+        "biscuit",
+        "biscuits"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "muffin",
+      "title": "Muffin",
+      "aliases": [
+        "muffin",
+        "muffins"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:NCI Visuals Food Muffins.jpg"
+    },
+    {
+      "id": "bread",
+      "title": "Bread",
+      "aliases": [
+        "bread",
+        "toast"
+      ],
+      "sources": [
+        "IFCT",
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Korb mit Brötchen.JPG"
+    },
+    {
+      "id": "ice-cream",
+      "title": "Ice cream",
+      "aliases": [
+        "ice cream"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Vanilla Ice Cream Cone at Camp Manitoulin.jpg"
+    },
+    {
+      "id": "custard",
+      "title": "Custard",
+      "aliases": [
+        "custard"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "pudding",
+      "title": "Pudding",
+      "aliases": [
+        "pudding"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Blanc-manger on glass platter, full view.jpg"
+    },
+    {
+      "id": "porridge",
+      "title": "Porridge",
+      "aliases": [
+        "porridge",
+        "dalia"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Oatmeal (1).jpg"
+    },
+    {
+      "id": "popcorn",
+      "title": "Popcorn",
+      "aliases": [
+        "popcorn"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Popcorn - Studio - 2011.jpg"
+    },
+    {
+      "id": "potato-chip",
+      "title": "Potato chip",
+      "aliases": [
+        "potato chips"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Potato-Chips.jpg"
+    },
+    {
+      "id": "pretzel",
+      "title": "Pretzel",
+      "aliases": [
+        "pretzel"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:BrezelnSalz02 (cropped).JPG"
+    },
+    {
+      "id": "granola",
+      "title": "Granola",
+      "aliases": [
+        "granola"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Granola, yogurt, fruit. (16696981528).jpg"
+    },
+    {
+      "id": "cereal-bar",
+      "title": "Cereal bar",
+      "aliases": [
+        "granola bar",
+        "cereal bar"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "pie",
+      "title": "Pie",
+      "aliases": [
+        "pie"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Top down view of peach pie (722379748).jpg"
+    },
+    {
+      "id": "fruit-salad",
+      "title": "Fruit salad",
+      "aliases": [
+        "fruit salad"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Fruktsallad (Fruit salad).jpg"
+    },
+    {
+      "id": "lemonade",
+      "title": "Lemonade",
+      "aliases": [
+        "lemonade"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Lemonade - 27682817724.jpg"
+    },
+    {
+      "id": "hot-chocolate",
+      "title": "Hot chocolate",
+      "aliases": [
+        "hot cocoa",
+        "hot chocolate"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:After The St. Patrick's Parade Late Lunch @ Lemon, Dawson Street, Dublin, Rep. Of Ireland A Fine Tradition! (6992614913).jpg"
+    },
+    {
+      "id": "coffee",
+      "title": "Coffee",
+      "aliases": [
+        "coffee"
+      ],
+      "sources": [
+        "IFCT",
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Latte and dark coffee.jpg"
+    },
+    {
+      "id": "espresso",
+      "title": "Espresso",
+      "aliases": [
+        "espresso",
+        "espreso"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Tazzina di caffè a Ventimiglia.jpg"
+    },
+    {
+      "id": "iced-tea",
+      "title": "Iced tea",
+      "aliases": [
+        "iced tea"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Iced Tea from flickr.jpg"
+    },
+    {
+      "id": "fruit-punch",
+      "title": "Fruit punch",
+      "aliases": [
+        "fruit punch"
+      ],
+      "sources": [
+        "INDB",
+        "USDA"
+      ],
+      "file_title": "File:Bowle Steinhude 2009 20090822 3.JPG"
+    },
+    {
+      "id": "apple",
+      "title": "Apple",
+      "aliases": [
+        "apple",
+        "apples"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "banana",
+      "title": "Banana",
+      "aliases": [
+        "banana",
+        "bananas"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "mango",
+      "title": "Mango",
+      "aliases": [
+        "mango",
+        "mangoes"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Mangos - single and halved.jpg"
+    },
+    {
+      "id": "orange-fruit",
+      "title": "Orange (fruit)",
+      "aliases": [
+        "orange",
+        "oranges"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Oranges - whole-halved-segment.jpg"
+    },
+    {
+      "id": "lemon",
+      "title": "Lemon",
+      "aliases": [
+        "lemon",
+        "lemons"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:P1030323.JPG"
+    },
+    {
+      "id": "lime-fruit",
+      "title": "Lime (fruit)",
+      "aliases": [
+        "lime",
+        "limes"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Lime Blossom.jpg"
+    },
+    {
+      "id": "grape",
+      "title": "Grape",
+      "aliases": [
+        "grape",
+        "grapes"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Grapes, Rostov-on-Don, Russia.jpg"
+    },
+    {
+      "id": "guava",
+      "title": "Guava",
+      "aliases": [
+        "guava"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Guava pink fruit.jpg"
+    },
+    {
+      "id": "papaya",
+      "title": "Papaya",
+      "aliases": [
+        "papaya"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:03 Preparing papaya fruit - papaya peeled and cut in half.jpg"
+    },
+    {
+      "id": "pineapple",
+      "title": "Pineapple",
+      "aliases": [
+        "pineapple"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:കൈതച്ചക്ക.jpg"
+    },
+    {
+      "id": "pomegranate",
+      "title": "Pomegranate",
+      "aliases": [
+        "pomegranate"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Pomegranate Juice (2019).jpg"
+    },
+    {
+      "id": "watermelon",
+      "title": "Watermelon",
+      "aliases": [
+        "watermelon"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Taiwan 2009 Tainan City Organic Farm Watermelon FRD 7962.jpg"
+    },
+    {
+      "id": "cantaloupe",
+      "title": "Cantaloupe",
+      "aliases": [
+        "cantaloupe",
+        "musk melon",
+        "muskmelon"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "honeydew-melon",
+      "title": "Honeydew (melon)",
+      "aliases": [
+        "honeydew"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Honeydew.jpg"
+    },
+    {
+      "id": "strawberry",
+      "title": "Strawberry",
+      "aliases": [
+        "strawberry",
+        "strawberries"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Garden strawberry (Fragaria × ananassa) single2.jpg"
+    },
+    {
+      "id": "blueberry",
+      "title": "Blueberry",
+      "aliases": [
+        "blueberry",
+        "blueberries"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Blueberries.jpg"
+    },
+    {
+      "id": "raspberry",
+      "title": "Raspberry",
+      "aliases": [
+        "raspberry",
+        "raspberries"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Raspberry - halved (Rubus idaeus).jpg"
+    },
+    {
+      "id": "blackberry",
+      "title": "Blackberry",
+      "aliases": [
+        "blackberry",
+        "blackberries",
+        "black berry"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Ripe, ripening, and green blackberries.jpg"
+    },
+    {
+      "id": "cranberry",
+      "title": "Cranberry",
+      "aliases": [
+        "cranberry",
+        "cranberries"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Cranberry bog.jpg"
+    },
+    {
+      "id": "cherry",
+      "title": "Cherry",
+      "aliases": [
+        "cherry",
+        "cherries"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Cherry season (48216568227).jpg"
+    },
+    {
+      "id": "peach",
+      "title": "Peach",
+      "aliases": [
+        "peach",
+        "peaches"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Autumn Red peaches.jpg"
+    },
+    {
+      "id": "pear",
+      "title": "Pear",
+      "aliases": [
+        "pear",
+        "pears"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Pears.jpg"
+    },
+    {
+      "id": "plum",
+      "title": "Plum",
+      "aliases": [
+        "plum",
+        "plums"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Plums African Rose - whole, halved and slice.jpg"
+    },
+    {
+      "id": "apricot",
+      "title": "Apricot",
+      "aliases": [
+        "apricot",
+        "apricots"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "avocado",
+      "title": "Avocado",
+      "aliases": [
+        "avocado",
+        "avocados"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Avocado - single and halved.jpg"
+    },
+    {
+      "id": "date-palm",
+      "title": "Date palm",
+      "aliases": [
+        "date",
+        "dates"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Dates005.jpg"
+    },
+    {
+      "id": "fig",
+      "title": "Fig",
+      "aliases": [
+        "fig",
+        "figs"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Fig (Ficus carica) fruit halved.jpg"
+    },
+    {
+      "id": "raisin",
+      "title": "Raisin",
+      "aliases": [
+        "raisin",
+        "raisins"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Sunmaid-Raisin-Pile.jpg"
+    },
+    {
+      "id": "prune",
+      "title": "Prune",
+      "aliases": [
+        "prune",
+        "prunes"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Rosales - Dried Prunus domestica d.jpg"
+    },
+    {
+      "id": "kiwi-fruit",
+      "title": "Kiwi fruit",
+      "aliases": [
+        "kiwi",
+        "kiwifruit"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Actinidia fruits.jpg"
+    },
+    {
+      "id": "lychee",
+      "title": "Lychee",
+      "aliases": [
+        "lychee",
+        "litchi"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Lychee fruits and seed.jpg"
+    },
+    {
+      "id": "jackfruit",
+      "title": "Jackfruit",
+      "aliases": [
+        "jackfruit",
+        "jack fruit"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:5703Guava textures Jackfruit pulp 30.jpg"
+    },
+    {
+      "id": "sapodilla",
+      "title": "Sapodilla",
+      "aliases": [
+        "sapota",
+        "chikoo",
+        "sapodilla"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:സപ്പോട്ട.jpg"
+    },
+    {
+      "id": "custard-apple",
+      "title": "Custard apple",
+      "aliases": [
+        "custard apple"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Custard apple 2017.jpg"
+    },
+    {
+      "id": "passion-fruit",
+      "title": "Passion fruit",
+      "aliases": [
+        "passion fruit"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Passion fruit,kerala.jpg"
+    },
+    {
+      "id": "starfruit",
+      "title": "Starfruit",
+      "aliases": [
+        "star fruit",
+        "starfruit",
+        "carambola"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:FOOD Five Fingers.jpg"
+    },
+    {
+      "id": "mangosteen",
+      "title": "Mangosteen",
+      "aliases": [
+        "mangosteen"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Mangosteens - whole and opened.jpg"
+    },
+    {
+      "id": "rambutan",
+      "title": "Rambutan",
+      "aliases": [
+        "rambutan"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Rambutan (54531836095).jpg"
+    },
+    {
+      "id": "pomelo",
+      "title": "Pomelo",
+      "aliases": [
+        "pomelo",
+        "pummelo"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Pomelo fruit.jpg"
+    },
+    {
+      "id": "tamarind",
+      "title": "Tamarind",
+      "aliases": [
+        "tamarind"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Tamarind MenGyiTee.jpg"
+    },
+    {
+      "id": "phyllanthus-emblica",
+      "title": "Phyllanthus emblica",
+      "aliases": [
+        "amla",
+        "goosberry",
+        "gooseberry"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Amla 3.jpg"
+    },
+    {
+      "id": "coconut",
+      "title": "Coconut",
+      "aliases": [
+        "coconut"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Coconuts - single and cracked open.jpg"
+    },
+    {
+      "id": "coconut-milk",
+      "title": "Coconut milk",
+      "aliases": [
+        "coconut milk"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Cononut milk.JPG"
+    },
+    {
+      "id": "coconut-water",
+      "title": "Coconut water",
+      "aliases": [
+        "coconut water"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Young Coconut Drink.jpg"
+    },
+    {
+      "id": "tomato",
+      "title": "Tomato",
+      "aliases": [
+        "tomato",
+        "tomatoes"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "potato",
+      "title": "Potato",
+      "aliases": [
+        "potato",
+        "potatoes"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Patates.jpg"
+    },
+    {
+      "id": "sweet-potato",
+      "title": "Sweet potato",
+      "aliases": [
+        "sweet potato",
+        "sweetpotato"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Ipomoea batatas 006.JPG"
+    },
+    {
+      "id": "carrot",
+      "title": "Carrot",
+      "aliases": [
+        "carrot",
+        "carrots"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Vegetable-Carrot-Bundle-wStalks.jpg"
+    },
+    {
+      "id": "onion",
+      "title": "Onion",
+      "aliases": [
+        "onion",
+        "onions"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Mixed onions.jpg"
+    },
+    {
+      "id": "garlic",
+      "title": "Garlic",
+      "aliases": [
+        "garlic"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Garlic bulbs and cloves.jpg"
+    },
+    {
+      "id": "ginger",
+      "title": "Ginger",
+      "aliases": [
+        "ginger"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Ginger root.jpg"
+    },
+    {
+      "id": "spinach",
+      "title": "Spinach",
+      "aliases": [
+        "spinach"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Liat Portal for Foodie Disorder - Fresh spinach leaves.jpg"
+    },
+    {
+      "id": "cabbage",
+      "title": "Cabbage",
+      "aliases": [
+        "cabbage",
+        "cabbages"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "cauliflower",
+      "title": "Cauliflower",
+      "aliases": [
+        "cauliflower"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Chou-fleur 02.jpg"
+    },
+    {
+      "id": "broccoli",
+      "title": "Broccoli",
+      "aliases": [
+        "broccoli"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "lettuce",
+      "title": "Lettuce",
+      "aliases": [
+        "lettuce"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Iceberg lettuce in SB.jpg"
+    },
+    {
+      "id": "cucumber",
+      "title": "Cucumber",
+      "aliases": [
+        "cucumber",
+        "cucumbers"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:ARS cucumber.jpg"
+    },
+    {
+      "id": "eggplant",
+      "title": "Eggplant",
+      "aliases": [
+        "eggplant",
+        "brinjal",
+        "aubergine"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Solanum melongena 24 08 2012 (1).JPG"
+    },
+    {
+      "id": "okra",
+      "title": "Okra",
+      "aliases": [
+        "okra",
+        "bhindi",
+        "ladies finger"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Hong Kong Okra Aug 25 2012.JPG"
+    },
+    {
+      "id": "bell-pepper",
+      "title": "Bell pepper",
+      "aliases": [
+        "bell pepper",
+        "capsicum",
+        "sweet pepper"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Green-Yellow-Red-Pepper-2009.jpg"
+    },
+    {
+      "id": "chili-pepper",
+      "title": "Chili pepper",
+      "aliases": [
+        "chili",
+        "chilli",
+        "hot pepper"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Madame Jeanette and other chillies.jpg"
+    },
+    {
+      "id": "pumpkin",
+      "title": "Pumpkin",
+      "aliases": [
+        "pumpkin"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:FrenchMarketPumpkinsB.jpg"
+    },
+    {
+      "id": "zucchini",
+      "title": "Zucchini",
+      "aliases": [
+        "zucchini"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:CSA-Striped-Zucchini.jpg"
+    },
+    {
+      "id": "beetroot",
+      "title": "Beetroot",
+      "aliases": [
+        "beetroot",
+        "beets"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Detroitdarkredbeets.png"
+    },
+    {
+      "id": "radish",
+      "title": "Radish",
+      "aliases": [
+        "radish"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Radish 3371103037 4ab07db0bf o.jpg"
+    },
+    {
+      "id": "turnip",
+      "title": "Turnip",
+      "aliases": [
+        "turnip",
+        "turnips"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Turnip 2622027.jpg"
+    },
+    {
+      "id": "asparagus",
+      "title": "Asparagus",
+      "aliases": [
+        "asparagus"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "celery",
+      "title": "Celery",
+      "aliases": [
+        "celery"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Celery 1.jpg"
+    },
+    {
+      "id": "leek",
+      "title": "Leek",
+      "aliases": [
+        "leek",
+        "leeks"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "green-bean",
+      "title": "Green bean",
+      "aliases": [
+        "green bean",
+        "green beans",
+        "french bean"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Green beans with green bean slicer.jpg"
+    },
+    {
+      "id": "pea",
+      "title": "Pea",
+      "aliases": [
+        "pea",
+        "peas"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:(Pisum sativum), A pea is a most commonly green.JPG"
+    },
+    {
+      "id": "sweet-corn",
+      "title": "Sweet corn",
+      "aliases": [
+        "sweet corn",
+        "maize tender",
+        "corn sweet"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:VegCorn.jpg"
+    },
+    {
+      "id": "bitter-melon",
+      "title": "Bitter melon",
+      "aliases": [
+        "bitter gourd",
+        "karela"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Bitter Melon Momordica carantia (Fruit) (6174638849).jpg"
+    },
+    {
+      "id": "calabash",
+      "title": "Calabash",
+      "aliases": [
+        "bottle gourd",
+        "lauki",
+        "ghiya"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "luffa",
+      "title": "Luffa",
+      "aliases": [
+        "ridge gourd"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "snake-gourd",
+      "title": "Snake gourd",
+      "aliases": [
+        "snake gourd"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Snake gourd 2.jpg"
+    },
+    {
+      "id": "ash-gourd",
+      "title": "Ash gourd",
+      "aliases": [
+        "ash gourd"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:A winter melon, gourd , wax gourd , KyaukFaYonTee.jpg"
+    },
+    {
+      "id": "tinda",
+      "title": "Tinda",
+      "aliases": [
+        "tinda"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Tinda.jpg"
+    },
+    {
+      "id": "moringa-oleifera",
+      "title": "Moringa oleifera",
+      "aliases": [
+        "drumstick"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Fresh drumsticks.jpg"
+    },
+    {
+      "id": "button-mushroom",
+      "title": "Button mushroom",
+      "aliases": [
+        "mushroom",
+        "mushrooms"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "kale",
+      "title": "Kale",
+      "aliases": [
+        "kale"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "fenugreek",
+      "title": "Fenugreek",
+      "aliases": [
+        "fenugreek",
+        "methi"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Fenugreek Seeds 01.jpg"
+    },
+    {
+      "id": "coriander",
+      "title": "Coriander",
+      "aliases": [
+        "coriander",
+        "cilantro"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Coriander Seeds.jpg"
+    },
+    {
+      "id": "mint",
+      "title": "Mint",
+      "aliases": [
+        "mint",
+        "peppermint",
+        "spearmint"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "parsley",
+      "title": "Parsley",
+      "aliases": [
+        "parsley"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "basil",
+      "title": "Basil",
+      "aliases": [
+        "basil"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Ocimum basilicum 8zz.jpg"
+    },
+    {
+      "id": "dill",
+      "title": "Dill",
+      "aliases": [
+        "dill"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Fresh Dill Leaves.JPG"
+    },
+    {
+      "id": "rice",
+      "title": "Rice",
+      "aliases": [
+        "rice"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Plain white rice-min-min.jpg"
+    },
+    {
+      "id": "brown-rice",
+      "title": "Brown rice",
+      "aliases": [
+        "brown rice",
+        "rice raw brown"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "wheat",
+      "title": "Wheat",
+      "aliases": [
+        "wheat"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:A close-up image of wheat grains.jpg"
+    },
+    {
+      "id": "wheat-flour",
+      "title": "Wheat flour",
+      "aliases": [
+        "wheat flour",
+        "atta",
+        "all purpose flour"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Whole wheat grain flour being scooped.jpg"
+    },
+    {
+      "id": "semolina",
+      "title": "Semolina",
+      "aliases": [
+        "semolina",
+        "suji"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Liat Portal for Foodie Disorder - Semolina, Flour, and Wheat Grains.jpg"
+    },
+    {
+      "id": "oat",
+      "title": "Oat",
+      "aliases": [
+        "oat",
+        "oats"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Rolled oats.jpg"
+    },
+    {
+      "id": "rolled-oats",
+      "title": "Rolled oats",
+      "aliases": [
+        "rolled oats"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Rolled oats.jpg"
+    },
+    {
+      "id": "barley",
+      "title": "Barley",
+      "aliases": [
+        "barley"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:LPCC-464-Barley grains.jpg"
+    },
+    {
+      "id": "quinoa",
+      "title": "Quinoa",
+      "aliases": [
+        "quinoa"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "pearl-millet",
+      "title": "Pearl millet",
+      "aliases": [
+        "bajra",
+        "pearl millet"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "sorghum",
+      "title": "Sorghum",
+      "aliases": [
+        "jowar",
+        "sorghum"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "finger-millet",
+      "title": "Finger millet",
+      "aliases": [
+        "ragi",
+        "finger millet"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Finger millet seeds.jpg"
+    },
+    {
+      "id": "foxtail-millet",
+      "title": "Foxtail millet",
+      "aliases": [
+        "foxtail millet"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Food grain foxtail millet.jpg"
+    },
+    {
+      "id": "proso-millet",
+      "title": "Proso millet",
+      "aliases": [
+        "proso millet"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "little-millet",
+      "title": "Little millet",
+      "aliases": [
+        "samai",
+        "little millet"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Little millet.jpg"
+    },
+    {
+      "id": "kodo-millet",
+      "title": "Kodo millet",
+      "aliases": [
+        "varagu",
+        "kodo millet"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "amaranth-grain",
+      "title": "Amaranth grain",
+      "aliases": [
+        "amaranth seed",
+        "amaranth grain"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Amaranth Seed.jpg"
+    },
+    {
+      "id": "buckwheat",
+      "title": "Buckwheat",
+      "aliases": [
+        "buckwheat"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Buckwheat and products from it 01.jpg"
+    },
+    {
+      "id": "maize",
+      "title": "Maize",
+      "aliases": [
+        "maize",
+        "cornmeal"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Boiled corn cob in Araku Valley, Andhra Pradesh 03.jpg"
+    },
+    {
+      "id": "flattened-rice",
+      "title": "Flattened rice",
+      "aliases": [
+        "rice flakes",
+        "flattened rice"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Rice-flake-food.jpg"
+    },
+    {
+      "id": "puffed-rice",
+      "title": "Puffed rice",
+      "aliases": [
+        "rice puffed",
+        "puffed rice"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Spicy Puffed Rice - Badami, Bagalkot district - Karnataka - DSC 4046.jpg"
+    },
+    {
+      "id": "vermicelli",
+      "title": "Vermicelli",
+      "aliases": [
+        "vermicelli"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Fideo (coiled vermicelli).JPG"
+    },
+    {
+      "id": "lentil",
+      "title": "Lentil",
+      "aliases": [
+        "lentil",
+        "lentils",
+        "masoor"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:3 types of lentil.png"
+    },
+    {
+      "id": "chickpea",
+      "title": "Chickpea",
+      "aliases": [
+        "chickpea",
+        "chickpeas",
+        "bengal gram",
+        "channa",
+        "chana"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "mung-bean",
+      "title": "Mung bean",
+      "aliases": [
+        "mung",
+        "moong",
+        "green gram"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Mung beans (Vigna radiata).jpg"
+    },
+    {
+      "id": "vigna-mungo",
+      "title": "Vigna mungo",
+      "aliases": [
+        "black gram",
+        "urad"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Vigna mungo without skin.jpg"
+    },
+    {
+      "id": "pigeon-pea",
+      "title": "Pigeon pea",
+      "aliases": [
+        "pigeon pea",
+        "red gram",
+        "toor",
+        "arhar"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Pigeon pea (Red gram, Thuvarai in Tamil) 02.jpg"
+    },
+    {
+      "id": "kidney-bean",
+      "title": "Kidney bean",
+      "aliases": [
+        "kidney bean",
+        "rajmah",
+        "rajma"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Chitra Rajma.jpg"
+    },
+    {
+      "id": "black-turtle-bean",
+      "title": "Black turtle bean",
+      "aliases": [
+        "black bean",
+        "black beans"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Black beans (1126927794).jpg"
+    },
+    {
+      "id": "white-bean",
+      "title": "White bean",
+      "aliases": [
+        "white bean",
+        "navy bean"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "pinto-bean",
+      "title": "Pinto bean",
+      "aliases": [
+        "pinto bean"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Pinto Beans Seeds.jpg"
+    },
+    {
+      "id": "cowpea",
+      "title": "Cowpea",
+      "aliases": [
+        "cowpea",
+        "lobia",
+        "blackeyed pea"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Lobia.jpg"
+    },
+    {
+      "id": "horse-gram",
+      "title": "Horse gram",
+      "aliases": [
+        "horse gram"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "moth-bean",
+      "title": "Moth bean",
+      "aliases": [
+        "moth bean"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Matki.JPG"
+    },
+    {
+      "id": "soybean",
+      "title": "Soybean",
+      "aliases": [
+        "soybean",
+        "soyabean",
+        "soy bean"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "tofu",
+      "title": "Tofu",
+      "aliases": [
+        "tofu"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "tempeh",
+      "title": "Tempeh",
+      "aliases": [
+        "tempeh"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Tempeh (8681605421).jpg"
+    },
+    {
+      "id": "paneer",
+      "title": "Paneer",
+      "aliases": [
+        "paneer"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Panir Paneer Indian cheese fresh.jpg"
+    },
+    {
+      "id": "cheese",
+      "title": "Cheese",
+      "aliases": [
+        "cheese"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "cheddar-cheese",
+      "title": "Cheddar cheese",
+      "aliases": [
+        "cheddar"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "mozzarella",
+      "title": "Mozzarella",
+      "aliases": [
+        "mozzarella"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Mozzarella di bufala3.jpg"
+    },
+    {
+      "id": "cottage-cheese",
+      "title": "Cottage cheese",
+      "aliases": [
+        "cottage cheese"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Cottagecheese200px.jpg"
+    },
+    {
+      "id": "cream-cheese",
+      "title": "Cream cheese",
+      "aliases": [
+        "cream cheese"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Philly cream cheese.jpg"
+    },
+    {
+      "id": "milk",
+      "title": "Milk",
+      "aliases": [
+        "milk"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Glass of Milk (33657535532).jpg"
+    },
+    {
+      "id": "soy-milk",
+      "title": "Soy milk",
+      "aliases": [
+        "soy milk",
+        "soymilk"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:004-soymilk.jpg"
+    },
+    {
+      "id": "almond-milk",
+      "title": "Almond milk",
+      "aliases": [
+        "almond milk"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Home-made almond milk, November 2012.jpg"
+    },
+    {
+      "id": "yogurt",
+      "title": "Yogurt",
+      "aliases": [
+        "yogurt",
+        "yoghurt",
+        "curd"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:বগুড়ার দই.jpg"
+    },
+    {
+      "id": "greek-yogurt",
+      "title": "Greek yogurt",
+      "aliases": [
+        "greek yogurt"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Labneh01.jpg"
+    },
+    {
+      "id": "butter",
+      "title": "Butter",
+      "aliases": [
+        "butter"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Švédský koláč naruby 904 (cropped).JPG"
+    },
+    {
+      "id": "ghee",
+      "title": "Ghee",
+      "aliases": [
+        "ghee"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Ghee 2.jpg"
+    },
+    {
+      "id": "cream",
+      "title": "Cream",
+      "aliases": [
+        "cream"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:01 Mmm... Apple Crisp with Whipped Cream.jpg"
+    },
+    {
+      "id": "egg-as-food",
+      "title": "Egg as food",
+      "aliases": [
+        "egg",
+        "eggs"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Huevo frito.jpg"
+    },
+    {
+      "id": "chicken-as-food",
+      "title": "Chicken as food",
+      "aliases": [
+        "chicken"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Raw chicken slices.jpg"
+    },
+    {
+      "id": "turkey-as-food",
+      "title": "Turkey as food",
+      "aliases": [
+        "turkey"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Thanksgiving Turkey.jpg"
+    },
+    {
+      "id": "beef",
+      "title": "Beef",
+      "aliases": [
+        "beef"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Standing-rib-roast.jpg"
+    },
+    {
+      "id": "pork",
+      "title": "Pork",
+      "aliases": [
+        "pork"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Schweinebauch-2.jpg"
+    },
+    {
+      "id": "lamb-and-mutton",
+      "title": "Lamb and mutton",
+      "aliases": [
+        "lamb",
+        "mutton"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Lamb meat (1).jpg"
+    },
+    {
+      "id": "duck-as-food",
+      "title": "Duck as food",
+      "aliases": [
+        "duck"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:And (24559569447).jpg"
+    },
+    {
+      "id": "goat-meat",
+      "title": "Goat meat",
+      "aliases": [
+        "goat"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "salmon-as-food",
+      "title": "Salmon as food",
+      "aliases": [
+        "salmon"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Sashimi - Maguro Restaurant, Bangna, Bangkok (44856596864).jpg"
+    },
+    {
+      "id": "tuna",
+      "title": "Tuna",
+      "aliases": [
+        "tuna"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Tuna steak and peas - Massachusetts.jpg"
+    },
+    {
+      "id": "sardine",
+      "title": "Sardine",
+      "aliases": [
+        "sardine",
+        "sardines"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Sardines food A.jpg"
+    },
+    {
+      "id": "mackerel",
+      "title": "Mackerel",
+      "aliases": [
+        "mackerel"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:H-mart - fish department - Mackerel - 1.JPG"
+    },
+    {
+      "id": "cod-as-food",
+      "title": "Cod as food",
+      "aliases": [
+        "cod"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Frozen cod fillet.jpg"
+    },
+    {
+      "id": "trout",
+      "title": "Trout",
+      "aliases": [
+        "trout"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Fillet of Quebec Rainbow Trout Grenobloise- Horizon Restaurant (14136857964).jpg"
+    },
+    {
+      "id": "tilapia",
+      "title": "Tilapia",
+      "aliases": [
+        "tilapia"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Fish Fillet Tilapia.jpg"
+    },
+    {
+      "id": "rohu",
+      "title": "Rohu",
+      "aliases": [
+        "rohu"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Rohu at Giant Hypermarket Kota Damansara 20230203 105829.jpg"
+    },
+    {
+      "id": "catla",
+      "title": "Catla",
+      "aliases": [
+        "catla"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Catla catla.JPG"
+    },
+    {
+      "id": "pomfret",
+      "title": "Pomfret",
+      "aliases": [
+        "pomfret"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Pomfret fishes.jpg"
+    },
+    {
+      "id": "shrimp-and-prawn-as-food",
+      "title": "Shrimp and prawn as food",
+      "aliases": [
+        "shrimp",
+        "prawn",
+        "prawns"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Spicy fried King Prawns.jpg"
+    },
+    {
+      "id": "crab-meat",
+      "title": "Crab meat",
+      "aliases": [
+        "crab"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Ristet brød med krabbekløer (4898535215).jpg"
+    },
+    {
+      "id": "lobster",
+      "title": "Lobster",
+      "aliases": [
+        "lobster"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:KreeftbijDenOsse.jpg"
+    },
+    {
+      "id": "oyster",
+      "title": "Oyster",
+      "aliases": [
+        "oyster",
+        "oysters"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Pacific oyster from Brofjorden on a chopping board in Tuntorp.jpg"
+    },
+    {
+      "id": "mussel",
+      "title": "Mussel",
+      "aliases": [
+        "mussel",
+        "mussels"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:CornishMussels.JPG"
+    },
+    {
+      "id": "clam",
+      "title": "Clam",
+      "aliases": [
+        "clam",
+        "clams"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Clam meat on corn, with garlic olive oil and pepper - Massachusetts.jpg"
+    },
+    {
+      "id": "squid-as-food",
+      "title": "Squid as food",
+      "aliases": [
+        "squid"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Babbo- Squid Ink pasta with green chilis, rock shrimp and guanciale.jpg"
+    },
+    {
+      "id": "almond",
+      "title": "Almond",
+      "aliases": [
+        "almond",
+        "almonds"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Almonds - in shell, shell cracked open, shelled, blanched.jpg"
+    },
+    {
+      "id": "walnut",
+      "title": "Walnut",
+      "aliases": [
+        "walnut",
+        "walnuts"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Walnuts - whole and open with halved kernel.jpg"
+    },
+    {
+      "id": "cashew",
+      "title": "Cashew",
+      "aliases": [
+        "cashew",
+        "cashews"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:CASHEW NUTS.jpg"
+    },
+    {
+      "id": "pistachio",
+      "title": "Pistachio",
+      "aliases": [
+        "pistachio",
+        "pistachios"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Pistachio vera.jpg"
+    },
+    {
+      "id": "peanut",
+      "title": "Peanut",
+      "aliases": [
+        "peanut",
+        "peanuts",
+        "groundnut"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Peanuts (Arachis hypogaea) - in shell, shell cracked open, shelled, peeled.jpg"
+    },
+    {
+      "id": "hazelnut",
+      "title": "Hazelnut",
+      "aliases": [
+        "hazelnut",
+        "hazelnuts"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Hazelnuts (Corylus avellana) - whole with kernels.jpg"
+    },
+    {
+      "id": "pecan",
+      "title": "Pecan",
+      "aliases": [
+        "pecan",
+        "pecans"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Roasted Pecans - Juglandaceae Carya illinoinensis (Pecan Tree).jpg"
+    },
+    {
+      "id": "macadamia-nut",
+      "title": "Macadamia nut",
+      "aliases": [
+        "macadamia"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Macadamia nut kernels.jpg"
+    },
+    {
+      "id": "brazil-nut",
+      "title": "Brazil nut",
+      "aliases": [
+        "brazil nut"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Bertholletia excelsa compose.jpg"
+    },
+    {
+      "id": "pine-nut",
+      "title": "Pine nut",
+      "aliases": [
+        "pine nut",
+        "pine nuts"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Pinoli.jpg"
+    },
+    {
+      "id": "chia-seed",
+      "title": "Chia seed",
+      "aliases": [
+        "chia"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Seed of chia (Salvia hispanica)Salvia hispanica group.jpg"
+    },
+    {
+      "id": "flaxseed",
+      "title": "Flaxseed",
+      "aliases": [
+        "flax",
+        "linseed"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Flax seeds (1).jpg"
+    },
+    {
+      "id": "sesame",
+      "title": "Sesame",
+      "aliases": [
+        "sesame",
+        "til"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Sesame Seeds.jpg"
+    },
+    {
+      "id": "sunflower-seed",
+      "title": "Sunflower seed",
+      "aliases": [
+        "sunflower seed"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Sunflower Seeds Kaldari.jpg"
+    },
+    {
+      "id": "pumpkin-seed",
+      "title": "Pumpkin seed",
+      "aliases": [
+        "pumpkin seed"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Pepita de calabaza.jpg"
+    },
+    {
+      "id": "poppy-seed",
+      "title": "Poppy seed",
+      "aliases": [
+        "poppy seed"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Poppy seeds.jpg"
+    },
+    {
+      "id": "cumin",
+      "title": "Cumin",
+      "aliases": [
+        "cumin",
+        "jeera",
+        "zeera"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Cumin 1.jpg"
+    },
+    {
+      "id": "black-pepper",
+      "title": "Black pepper",
+      "aliases": [
+        "black pepper",
+        "pepper black"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Black Pepper (Piper nigrum) fruits.jpg"
+    },
+    {
+      "id": "turmeric",
+      "title": "Turmeric",
+      "aliases": [
+        "turmeric"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Turmeric powder textures.jpg"
+    },
+    {
+      "id": "cinnamon",
+      "title": "Cinnamon",
+      "aliases": [
+        "cinnamon"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Cinnamomum verum spices.jpg"
+    },
+    {
+      "id": "cardamom",
+      "title": "Cardamom",
+      "aliases": [
+        "cardamom"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:02017 0119 Kardamom, Winter in den Beskiden.jpg"
+    },
+    {
+      "id": "clove",
+      "title": "Clove",
+      "aliases": [
+        "clove",
+        "cloves"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Cloves.JPG"
+    },
+    {
+      "id": "mustard-seed",
+      "title": "Mustard seed",
+      "aliases": [
+        "mustard"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Mustard Seeds in a plate at Reganigudem.jpg"
+    },
+    {
+      "id": "fennel",
+      "title": "Fennel",
+      "aliases": [
+        "fennel"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Fennel seeds 01.jpg"
+    },
+    {
+      "id": "nutmeg",
+      "title": "Nutmeg",
+      "aliases": [
+        "nutmeg"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Biji Pala Bubuk.jpg"
+    },
+    {
+      "id": "cacao-bean",
+      "title": "Cacao bean",
+      "aliases": [
+        "cocoa",
+        "cacao"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Cocoa beans slightly fermented.png"
+    },
+    {
+      "id": "chocolate",
+      "title": "Chocolate",
+      "aliases": [
+        "chocolate"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Three Bars (1).jpg"
+    },
+    {
+      "id": "dark-chocolate",
+      "title": "Dark chocolate",
+      "aliases": [
+        "dark chocolate"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Green and Black's dark chocolate bar 2.jpg"
+    },
+    {
+      "id": "honey",
+      "title": "Honey",
+      "aliases": [
+        "honey"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Runny hunny.jpg"
+    },
+    {
+      "id": "sugar",
+      "title": "Sugar",
+      "aliases": [
+        "sugar",
+        "sugars"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Sucre blanc cassonade complet rapadura.jpg"
+    },
+    {
+      "id": "brown-sugar",
+      "title": "Brown sugar",
+      "aliases": [
+        "brown sugar"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Sucre blanc cassonade complet rapadura.jpg"
+    },
+    {
+      "id": "jaggery",
+      "title": "Jaggery",
+      "aliases": [
+        "jaggery",
+        "gur"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "maple-syrup",
+      "title": "Maple syrup",
+      "aliases": [
+        "maple syrup"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Maple syrup.jpg"
+    },
+    {
+      "id": "olive-oil",
+      "title": "Olive oil",
+      "aliases": [
+        "olive oil",
+        "oil olive"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Oliven V1.jpg"
+    },
+    {
+      "id": "sunflower-oil",
+      "title": "Sunflower oil",
+      "aliases": [
+        "sunflower oil",
+        "oil sunflower"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Sunflower oil bottles in Dnipro.jpg"
+    },
+    {
+      "id": "coconut-oil",
+      "title": "Coconut oil",
+      "aliases": [
+        "coconut oil",
+        "oil coconut"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Coconut and oil.jpg"
+    },
+    {
+      "id": "peanut-oil",
+      "title": "Peanut oil",
+      "aliases": [
+        "peanut oil",
+        "groundnut oil",
+        "oil peanut"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:4 gallons of peanut oil.jpg"
+    },
+    {
+      "id": "canola-oil",
+      "title": "Canola oil",
+      "aliases": [
+        "canola oil",
+        "oil canola"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Canola Oil (4107885913) Cropped.jpg"
+    },
+    {
+      "id": "sesame-oil",
+      "title": "Sesame oil",
+      "aliases": [
+        "sesame oil",
+        "oil sesame"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:SesameSeedOil.png"
+    },
+    {
+      "id": "salt",
+      "title": "Salt",
+      "aliases": [
+        "salt"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Rock salt (halitite) (Billianwala Salt Member, Salt Range Formation, Ediacaran to Lower Cambrian; Khewra Salt Mine, Salt Range, Pakistan) 14.jpg"
+    },
+    {
+      "id": "vinegar",
+      "title": "Vinegar",
+      "aliases": [
+        "vinegar"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Eguilles 20110828 14.jpg"
+    },
+    {
+      "id": "peanut-butter",
+      "title": "Peanut butter",
+      "aliases": [
+        "peanut butter"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:2020-03-24 20 57 22 An open jar of Skippy Creamy Peanut Butter in the Dulles section of Sterling, Loudoun County, Virginia.jpg"
+    },
+    {
+      "id": "jam",
+      "title": "Jam",
+      "aliases": [
+        "jam",
+        "jelly"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Fruits jam variants.jpg"
+    },
+    {
+      "id": "hummus",
+      "title": "Hummus",
+      "aliases": [
+        "hummus"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Lebanese style hummus.jpg"
+    },
+    {
+      "id": "orange-juice",
+      "title": "Orange juice",
+      "aliases": [
+        "orange juice"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Orangejuice.jpg"
+    },
+    {
+      "id": "apple-juice",
+      "title": "Apple juice",
+      "aliases": [
+        "apple juice"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Apfelsaft im Glas.jpg"
+    },
+    {
+      "id": "tea",
+      "title": "Tea",
+      "aliases": [
+        "tea"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Longjing tea steeping in gaiwan.jpg"
+    },
+    {
+      "id": "water",
+      "title": "Water",
+      "aliases": [
+        "water"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "bagel",
+      "title": "Bagel",
+      "aliases": [
+        "bagel",
+        "bagels"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Bagel with sesame 3.jpg"
+    },
+    {
+      "id": "tortilla",
+      "title": "Tortilla",
+      "aliases": [
+        "tortilla",
+        "tortillas"
+      ],
+      "sources": [
+        "IFCT",
+        "USDA"
+      ],
+      "file_title": "File:Stacks of corn tortillas and flour tortillas, with the top one rolled, side view (2).jpg"
+    }
+  ]
+}
