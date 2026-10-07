@@ -114,7 +114,7 @@ public final class ProgressTrendView extends View {
         float axisWidth = Math.max(textPaint.measureText(formatAxis(min)), textPaint.measureText(formatAxis(max)));
         float left = Math.max(dp(42), axisWidth + dp(8));
         float right = getWidth() - dp(10);
-        float top = dp(10);
+        float top = Math.max(dp(10), textPaint.getTextSize());
         float bottom = getHeight() - Math.max(dp(26), textPaint.getTextSize() + dp(12));
         float chartWidth = Math.max(1, right - left);
         float chartHeight = Math.max(1, bottom - top);
