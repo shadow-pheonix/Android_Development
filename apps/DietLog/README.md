@@ -189,3 +189,11 @@ menu with an opaque gradient, a subtle rim and inset options. The current choice
 has a teal checkmark and highlight. Closed fields show a matching chevron, and
 menu width, typography and touch spacing are consistent. Native Spinner selection,
 scrolling and keyboard/accessibility behavior are retained.
+
+### Navigation without tap effects (0.7.23)
+
+Bottom navigation no longer draws native tap ripples over the sliding selection
+pill. The center Add button also has no ripple or pressed rim highlight. Combined
+with the existing removal of press scaling, the selection pill is now the sole
+animated feedback on the bar. Its 450 ms slide, active icon/label colors, page fade,
+click handlers and accessibility selection behavior are retained.

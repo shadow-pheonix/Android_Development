@@ -18,6 +18,7 @@ public final class FrostedSurfaceDrawable extends Drawable {
     public enum Material { CARD, FEATURE, CONTROL, INPUT, NAVIGATION, TAB, SELECTION, ACTION, BADGE, THUMBNAIL }
 
     private final Material material;
+    private final boolean pressFeedbackEnabled;
     private final float density;
     private final Paint frost = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint rim = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -28,7 +29,12 @@ public final class FrostedSurfaceDrawable extends Drawable {
     private int alpha = 255;
 
     public FrostedSurfaceDrawable(Context context, Material material) {
+        this(context, material, true);
+    }
+
+    public FrostedSurfaceDrawable(Context context, Material material, boolean pressFeedbackEnabled) {
         this.material = material;
+        this.pressFeedbackEnabled = pressFeedbackEnabled;
         density = context.getResources().getDisplayMetrics().density;
         rim.setStyle(Paint.Style.STROKE);
         rim.setStrokeWidth(density * 0.75f);
@@ -97,7 +103,7 @@ public final class FrostedSurfaceDrawable extends Drawable {
         boolean nextSelected = false, nextPressed = false;
         for (int value : state) {
             if (value == android.R.attr.state_selected || value == android.R.attr.state_checked) nextSelected = true;
-            if (value == android.R.attr.state_pressed) nextPressed = true;
+            if (pressFeedbackEnabled && value == android.R.attr.state_pressed) nextPressed = true;
         }
         if (selected == nextSelected && pressed == nextPressed) return false;
         selected = nextSelected;

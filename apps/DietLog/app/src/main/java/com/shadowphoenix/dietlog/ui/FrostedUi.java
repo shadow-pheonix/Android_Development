@@ -30,11 +30,13 @@ public final class FrostedUi {
     public static void surface(View view, FrostedSurfaceDrawable.Material material) {
         view.setTag("glass:" + material.name());
         view.setTag(R.id.frostedAppliedMaterial, material.name());
-        FrostedSurfaceDrawable frost = new FrostedSurfaceDrawable(view.getContext(), material);
+        // Navigation already has one moving selection pill; touch feedback would overlap it.
+        boolean navigationButton = view.getParent() instanceof FrostedNavigationView;
+        FrostedSurfaceDrawable frost = new FrostedSurfaceDrawable(view.getContext(), material, !navigationButton);
         Drawable drawable = frost;
-        if (view.isClickable() || material == FrostedSurfaceDrawable.Material.CONTROL
+        if (!navigationButton && (view.isClickable() || material == FrostedSurfaceDrawable.Material.CONTROL
                 || material == FrostedSurfaceDrawable.Material.ACTION
-                || material == FrostedSurfaceDrawable.Material.TAB) {
+                || material == FrostedSurfaceDrawable.Material.TAB)) {
             drawable = new RippleDrawable(ColorStateList.valueOf(0x2872FFE0), frost, null);
         }
         view.setBackground(drawable);
