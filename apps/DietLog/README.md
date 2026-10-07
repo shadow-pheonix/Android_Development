@@ -159,3 +159,10 @@ and leaving Search suppress older results. Returning after leaving a pending sea
 restarts it; destroying the activity closes the
 catalogue after an in-flight query finishes. Diagnostics record query duration and
 result counts without recording the search text.
+
+### Immediate bottom navigation (0.7.18)
+
+The five bottom buttons show their destination without the page fade, upward stagger
+or indicator entrance replay. Their press-scale animation is also removed. A repeated
+tap settles any pending entrance immediately. The 450 ms selection pill and native
+click feedback remain available; navigation inside pages keeps its existing motion.

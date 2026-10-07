@@ -31,6 +31,7 @@ public final class UiMotion implements AutoCloseable {
     private boolean foreground;
     private boolean closed;
     private boolean pendingPage;
+    private boolean suppressPageEntrance;
     private int epoch;
 
     public UiMotion(View root) {
@@ -60,14 +61,23 @@ public final class UiMotion implements AutoCloseable {
     public void enterScreen(View target) {
         bindPressTree(root);
         refreshPolicy();
-        if (target == currentScreen) return;
+        if (target == currentScreen && !suppressPageEntrance) return;
         epoch++;
         if (pendingEntrance != null) root.removeCallbacks(pendingEntrance);
+        pendingEntrance = null;
         if (currentScreen != null) resetTree(currentScreen);
         resetTree(target);
         currentScreen = target;
-        pendingPage = true;
-        if (foreground) startEntrance(target);
+        pendingPage = !suppressPageEntrance;
+        if (foreground && pendingPage) startEntrance(target);
+    }
+
+    /** Bottom navigation changes pages immediately, including a repeated tap during entrance. */
+    public void withoutPageAnimation(Runnable navigation) {
+        boolean previous = suppressPageEntrance;
+        suppressPageEntrance = true;
+        try { navigation.run(); }
+        finally { suppressPageEntrance = previous; }
     }
 
     private void startEntrance(View target) {
@@ -101,6 +111,8 @@ public final class UiMotion implements AutoCloseable {
 
     @SuppressLint("ClickableViewAccessibility") // Listener returns false; native performClick handles accessibility.
     public void bindPressTree(View view) {
+        // Bottom navigation has its own selection pill and native click feedback.
+        if (view instanceof FrostedNavigationView) return;
         if (view.hasOnClickListeners() && !(view instanceof EditText) && !(view instanceof Spinner)
                 && !Boolean.TRUE.equals(view.getTag(R.id.frostedPressBound))) {
             view.setTag(R.id.frostedPressBound, true);

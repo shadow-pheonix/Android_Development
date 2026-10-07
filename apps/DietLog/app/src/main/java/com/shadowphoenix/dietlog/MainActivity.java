@@ -362,17 +362,17 @@ public final class MainActivity extends Activity {
     }
 
     private void configureNavigation() {
-        navHome.setOnClickListener(v -> showScreen(homeScreen, 0));
-        navSearch.setOnClickListener(v -> openSearchScreen(defaultMealType(), false));
-        navAdd.setOnClickListener(v -> {
+        navHome.setOnClickListener(v -> uiMotion.withoutPageAnimation(() -> showScreen(homeScreen, 0)));
+        navSearch.setOnClickListener(v -> uiMotion.withoutPageAnimation(() -> openSearchScreen(defaultMealType(), false)));
+        navAdd.setOnClickListener(v -> uiMotion.withoutPageAnimation(() -> {
             setActiveMeal(defaultMealType());
             showManualEntry(null, null);
-        });
-        navProgress.setOnClickListener(v -> {
+        }));
+        navProgress.setOnClickListener(v -> uiMotion.withoutPageAnimation(() -> {
             if (progressController != null) progressController.refresh();
             showScreen(progressScreen, 2);
-        });
-        navProfile.setOnClickListener(v -> showProfileScreen());
+        }));
+        navProfile.setOnClickListener(v -> uiMotion.withoutPageAnimation(this::showProfileScreen));
         findViewById(R.id.profileEditProfileButton).setOnClickListener(v -> openEditProfileScreen());
         findViewById(R.id.editProfileBack).setOnClickListener(v -> closeEditProfileScreen());
         findViewById(R.id.profileSavePersonalButton).setOnClickListener(v -> {
