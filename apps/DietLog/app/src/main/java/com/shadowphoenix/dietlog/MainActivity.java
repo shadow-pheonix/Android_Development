@@ -56,6 +56,7 @@ import com.shadowphoenix.dietlog.sync.supabase.SupabaseConnectionStore;
 import com.shadowphoenix.dietlog.sync.drive.DriveConnectionStore;
 import com.shadowphoenix.dietlog.sync.drive.GoogleDriveAuthorization;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
+import com.shadowphoenix.dietlog.ui.MealIllustrationView;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -1518,13 +1519,13 @@ public final class MainActivity extends Activity {
 
     private void renderDiaryEntries(List<FoodEntry> entries) {
         entriesContainer.removeAllViews();
-        renderMealSection(FoodEntry.MEAL_BREAKFAST, "B", entries);
-        renderMealSection(FoodEntry.MEAL_LUNCH, "L", entries);
-        renderMealSection(FoodEntry.MEAL_SNACKS, "S", entries);
-        renderMealSection(FoodEntry.MEAL_DINNER, "D", entries);
+        renderMealSection(FoodEntry.MEAL_BREAKFAST, entries);
+        renderMealSection(FoodEntry.MEAL_LUNCH, entries);
+        renderMealSection(FoodEntry.MEAL_SNACKS, entries);
+        renderMealSection(FoodEntry.MEAL_DINNER, entries);
     }
 
-    private void renderMealSection(String mealType, String icon, List<FoodEntry> entries) {
+    private void renderMealSection(String mealType, List<FoodEntry> entries) {
         LinearLayout section = new LinearLayout(this);
         section.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams sectionParams = new LinearLayout.LayoutParams(
@@ -1536,13 +1537,20 @@ public final class MainActivity extends Activity {
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(android.view.Gravity.CENTER_VERTICAL);
 
+        MealIllustrationView mealIllustration = new MealIllustrationView(this, mealType);
+        LinearLayout.LayoutParams illustrationParams = new LinearLayout.LayoutParams(dp(40), dp(40));
+        illustrationParams.setMarginEnd(dp(10));
+        header.addView(mealIllustration, illustrationParams);
+
         TextView title = new TextView(this);
-        title.setText(icon + "  " + FoodEntry.mealDisplayName(mealType));
+        title.setText(FoodEntry.mealDisplayName(mealType));
+        title.setSingleLine(true);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
         title.setTextColor(getColor(R.color.text_primary));
         title.setTextSize(15f);
         title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
         title.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        header.addView(title, new LinearLayout.LayoutParams(0, dp(36), 1f));
+        header.addView(title, new LinearLayout.LayoutParams(0, dp(40), 1f));
 
         double mealCalories = 0.0;
         for (FoodEntry entry : entries) {
@@ -1589,7 +1597,7 @@ public final class MainActivity extends Activity {
             empty.setText("No foods logged");
             empty.setTextColor(getColor(R.color.text_tertiary));
             empty.setTextSize(12f);
-            empty.setPadding(dp(4), dp(2), dp(4), dp(6));
+            empty.setPadding(dp(50), dp(2), dp(4), dp(6));
             section.addView(empty);
         }
         entriesContainer.addView(section);

@@ -23,6 +23,7 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 ## Current functionality
 
 - Today's calories, protein, carbs and fat.
+- Illustrated Breakfast, Lunch, Snacks and Dinner headers with gentle offline vector animation; motion pauses when Home is hidden and respects disabled animations and battery saver.
 - Tap the Home nutrition progress card for the selected day's vitamins and minerals, with profile-adjusted Indian targets and explicit source-data coverage.
 - Manual logging by grams and per-100 g nutrition.
 - Fully offline food search after installation; no runtime food API and no API keys.
