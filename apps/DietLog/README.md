@@ -147,3 +147,15 @@ size/RTL changes and disabled motion place it directly on the selected tab. Paus
 hiding or detaching navigation settles the pill and cancels its animator. The center
 Add button remains a separate action, and tab ripple and accessibility selection
 feedback are preserved.
+
+### Search responsiveness and gentler navigation (0.7.17)
+
+The selection pill now uses a 450 ms slide with a gentler start. Opening Search
+shows the page before requesting foods. Popular foods are loaded once per activity
+on a serial database worker and cached, so returning to Search reuses both the
+cached foods and the existing popular rows. Typed searches also run on that worker.
+Loading feedback appears while results are pending. New requests, history shortcuts
+and leaving Search suppress older results. Returning after leaving a pending search
+restarts it; destroying the activity closes the
+catalogue after an in-flight query finishes. Diagnostics record query duration and
+result counts without recording the search text.
