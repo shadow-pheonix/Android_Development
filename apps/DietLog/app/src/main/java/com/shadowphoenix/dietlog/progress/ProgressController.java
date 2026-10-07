@@ -11,6 +11,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.shadowphoenix.dietlog.R;
+import com.shadowphoenix.dietlog.ui.FrostedUi;
+import com.shadowphoenix.dietlog.ui.FrostedSurfaceDrawable.Material;
 import com.shadowphoenix.dietlog.data.DiaryDbHelper;
 import com.shadowphoenix.dietlog.profile.ProfileController;
 import com.shadowphoenix.dietlog.profile.ProfileSettings;
@@ -127,9 +129,9 @@ public final class ProgressController {
     private void setRange(int days) {
         rangeDays = days;
         boolean seven = days == 7;
-        range7.setBackgroundResource(seven ? R.drawable.bg_chip_selected : R.drawable.bg_chip);
+        FrostedUi.surface(range7, seven ? Material.ACTION : Material.CONTROL);
         range7.setTextColor(activity.getColor(seven ? R.color.black : R.color.text_secondary));
-        range30.setBackgroundResource(seven ? R.drawable.bg_chip : R.drawable.bg_chip_selected);
+        FrostedUi.surface(range30, seven ? Material.CONTROL : Material.ACTION);
         range30.setTextColor(activity.getColor(seven ? R.color.text_secondary : R.color.black));
         refresh();
     }

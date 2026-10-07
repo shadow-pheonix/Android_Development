@@ -1,23 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
-    android:background="@drawable/bg_card"
-    android:orientation="vertical"
-    android:padding="14dp">
+<?xml version='1.0' encoding='utf-8'?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_card" android:orientation="vertical" android:padding="14dp" android:tag="glass:CARD">
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
         <ImageView android:layout_width="22dp" android:layout_height="22dp" android:layout_marginRight="8dp" android:contentDescription="Google Drive" android:src="@drawable/ic_google_drive" />
         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Google Drive" android:textColor="@color/text_primary" android:textSize="16sp" android:textStyle="bold" />
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_chip" android:paddingLeft="8dp" android:paddingTop="4dp" android:paddingRight="8dp" android:paddingBottom="4dp" android:text="Recommended" android:textColor="@color/accent" android:textSize="10sp" android:textStyle="bold" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_chip" android:paddingLeft="8dp" android:paddingTop="4dp" android:paddingRight="8dp" android:paddingBottom="4dp" android:text="Recommended" android:textColor="@color/accent" android:textSize="10sp" android:textStyle="bold" android:tag="glass:CONTROL" />
     </LinearLayout>
     <TextView android:id="@+id/driveConnectionStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="Not connected" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" />
     <TextView android:id="@+id/driveSyncStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Connect Drive for automatic private backup and restore." android:textColor="@color/text_secondary" android:textSize="11sp" />
-    <TextView android:id="@+id/driveConnectButton" android:layout_width="match_parent" android:layout_height="44dp" android:layout_marginTop="10dp" android:background="@drawable/bg_button_primary" android:gravity="center" android:text="Connect Google Drive" android:textColor="@color/background" android:textSize="13sp" android:textStyle="bold" />
+    <TextView android:id="@+id/driveConnectButton" android:layout_width="match_parent" android:layout_height="44dp" android:layout_marginTop="10dp" android:background="@drawable/bg_button_primary" android:gravity="center" android:text="Connect Google Drive" android:textColor="@color/background" android:textSize="13sp" android:textStyle="bold" android:tag="glass:ACTION" />
     <LinearLayout android:id="@+id/driveConnectedActions" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="vertical" android:visibility="gone">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <TextView android:id="@+id/driveSyncNowButton" android:layout_width="0dp" android:layout_height="42dp" android:layout_weight="1" android:background="@drawable/bg_chip" android:gravity="center" android:text="Sync now" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" />
-            <TextView android:id="@+id/driveRestoreButton" android:layout_width="0dp" android:layout_height="42dp" android:layout_weight="1" android:layout_marginLeft="8dp" android:background="@drawable/bg_chip" android:gravity="center" android:text="Restore / merge" android:textColor="@color/text_primary" android:textSize="12sp" android:textStyle="bold" />
+            <TextView android:id="@+id/driveSyncNowButton" android:layout_width="0dp" android:layout_height="42dp" android:layout_weight="1" android:background="@drawable/bg_chip" android:gravity="center" android:text="Sync now" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" android:tag="glass:CONTROL" />
+            <TextView android:id="@+id/driveRestoreButton" android:layout_width="0dp" android:layout_height="42dp" android:layout_weight="1" android:layout_marginLeft="8dp" android:background="@drawable/bg_chip" android:gravity="center" android:text="Restore / merge" android:textColor="@color/text_primary" android:textSize="12sp" android:textStyle="bold" android:tag="glass:CONTROL" />
         </LinearLayout>
         <TextView android:id="@+id/driveDisconnectButton" android:layout_width="match_parent" android:layout_height="36dp" android:layout_marginTop="4dp" android:gravity="center" android:text="Disconnect Drive" android:textColor="@color/text_secondary" android:textSize="11sp" />
     </LinearLayout>

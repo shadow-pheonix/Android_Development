@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:orientation="vertical">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_vertical" android:padding="16dp" android:background="@drawable/bg_card_alt">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_vertical" android:padding="16dp" android:background="@drawable/bg_card_alt" android:tag="glass:FEATURE">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-            <FrameLayout android:id="@+id/profileAvatarPicker" android:layout_width="58dp" android:layout_height="58dp" android:background="@drawable/bg_food_thumb" android:clipToOutline="true" android:contentDescription="Change profile photo" android:focusable="true">
+            <FrameLayout android:id="@+id/profileAvatarPicker" android:layout_width="58dp" android:layout_height="58dp" android:background="@drawable/bg_food_thumb" android:clipToOutline="true" android:contentDescription="Change profile photo" android:focusable="true" android:tag="glass:BADGE">
                 <ImageView android:id="@+id/profileAvatarFallback" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/ic_ui_profile" android:tint="@color/accent" android:padding="16dp" android:importantForAccessibility="no" />
                 <ImageView android:id="@+id/profileAvatarImage" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="Profile photo" android:scaleType="centerCrop" android:visibility="gone" />
             </FrameLayout>
@@ -12,6 +12,6 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Tap photo to change" android:textColor="@color/text_tertiary" android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
-        <TextView android:id="@+id/profileEditProfileButton" android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="Edit profile" android:textColor="@color/accent" android:textSize="13sp" android:textStyle="bold" style="@style/Action" android:layout_marginTop="16dp" />
+        <TextView android:id="@+id/profileEditProfileButton" android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="Edit profile" android:textColor="@color/accent" android:textSize="13sp" android:textStyle="bold" style="@style/Action" android:layout_marginTop="16dp" android:tag="glass:CONTROL" />
     </LinearLayout>
 </LinearLayout>

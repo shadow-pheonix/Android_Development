@@ -1,21 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/profileNutritionSection"
-    android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp"
-    android:orientation="vertical" android:padding="14dp" android:background="@drawable/bg_card_alt"
-    android:visibility="gone">
+<?xml version='1.0' encoding='utf-8'?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/profileNutritionSection" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:orientation="vertical" android:padding="14dp" android:background="@drawable/bg_card_alt" android:visibility="gone" android:tag="glass:FEATURE">
     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nutrition goals" android:textColor="@color/text_primary" android:textSize="17sp" android:textStyle="bold" />
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Saved macro targets drive the Home rings and Progress adherence." android:textColor="@color/text_secondary" android:textSize="12sp" />
-    <Spinner android:id="@+id/profileMacroModeSpinner" android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginTop="11dp" android:background="@drawable/bg_input" android:paddingLeft="10dp" android:paddingRight="10dp" />
-    <TextView android:id="@+id/profileUseRecommendedMacros" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="8dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="Generate recommended macros" android:textColor="@color/accent" android:textSize="13sp" android:textStyle="bold" />
-
+    <Spinner android:id="@+id/profileMacroModeSpinner" android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginTop="11dp" android:background="@drawable/bg_input" android:paddingLeft="10dp" android:paddingRight="10dp" android:tag="glass:INPUT" />
+    <TextView android:id="@+id/profileUseRecommendedMacros" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="8dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="Generate recommended macros" android:textColor="@color/accent" android:textSize="13sp" android:textStyle="bold" android:tag="glass:CONTROL" />
     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="11dp" android:text="Macro grams" android:textColor="@color/text_secondary" android:textSize="12sp" />
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:orientation="horizontal" android:weightSum="3">
         <EditText android:id="@+id/profileProteinInput" style="@style/Input.Dark" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:hint="Protein g" android:inputType="numberDecimal" android:singleLine="true" />
         <EditText android:id="@+id/profileCarbsInput" style="@style/Input.Dark" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:layout_marginLeft="6dp" android:hint="Carbs g" android:inputType="numberDecimal" android:singleLine="true" />
         <EditText android:id="@+id/profileFatInput" style="@style/Input.Dark" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:layout_marginLeft="6dp" android:hint="Fat g" android:inputType="numberDecimal" android:singleLine="true" />
     </LinearLayout>
-
     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Macro calorie percentages" android:textColor="@color/text_secondary" android:textSize="12sp" />
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:orientation="horizontal" android:weightSum="3">
         <EditText android:id="@+id/profileProteinPercentInput" style="@style/Input.Dark" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:hint="Protein %" android:inputType="numberDecimal" android:singleLine="true" />
@@ -24,13 +18,12 @@
     </LinearLayout>
     <TextView android:id="@+id/profileMacroSummary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:textColor="@color/text_secondary" android:textSize="12sp" />
     <TextView android:id="@+id/profileMacroWarning" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:textColor="@color/calories" android:textSize="11sp" />
-
     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="11dp" android:text="Other daily targets / limits" android:textColor="@color/text_secondary" android:textSize="12sp" />
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:orientation="horizontal" android:weightSum="3">
         <EditText android:id="@+id/profileFibreInput" style="@style/Input.Dark" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:hint="Fibre g" android:inputType="numberDecimal" android:singleLine="true" />
         <EditText android:id="@+id/profileSugarInput" style="@style/Input.Dark" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:layout_marginLeft="6dp" android:hint="Sugar g" android:inputType="numberDecimal" android:singleLine="true" />
         <EditText android:id="@+id/profileSodiumInput" style="@style/Input.Dark" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:layout_marginLeft="6dp" android:hint="Sodium mg" android:inputType="numberDecimal" android:singleLine="true" />
     </LinearLayout>
-    <TextView android:id="@+id/profileSaveButton" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="12dp" android:gravity="center" android:background="@drawable/bg_button_primary" android:text="Save nutrition targets" android:textColor="@color/background" android:textSize="15sp" android:textStyle="bold" />
+    <TextView android:id="@+id/profileSaveButton" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="12dp" android:gravity="center" android:background="@drawable/bg_button_primary" android:text="Save nutrition targets" android:textColor="@color/background" android:textSize="15sp" android:textStyle="bold" android:tag="glass:ACTION" />
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Calorie needs are estimates. Body-weight trend over several weeks is the best way to calibrate real maintenance." android:textColor="@color/text_tertiary" android:textSize="11sp" />
 </LinearLayout>

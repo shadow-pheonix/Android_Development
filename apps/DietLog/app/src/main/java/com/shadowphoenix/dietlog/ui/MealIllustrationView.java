@@ -21,7 +21,7 @@ public final class MealIllustrationView extends FrameLayout {
 
     public MealIllustrationView(Context context, String mealType) {
         super(context);
-        setBackgroundResource(R.drawable.bg_meal_badge);
+        FrostedUi.surface(this, FrostedSurfaceDrawable.Material.BADGE);
         setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
         setClipChildren(false);
         illustration = new ImageView(context);
