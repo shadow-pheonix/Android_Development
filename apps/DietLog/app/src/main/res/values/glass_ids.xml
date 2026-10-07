@@ -1,4 +1,5 @@
 <resources>
     <item name="frostedAppliedMaterial" type="id" />
     <item name="frostedPressBound" type="id" />
+    <item name="frostedMotionState" type="id" />
 </resources>

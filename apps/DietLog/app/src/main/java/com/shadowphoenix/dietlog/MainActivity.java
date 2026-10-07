@@ -1241,7 +1241,7 @@ public final class MainActivity extends Activity {
         FrostedUi.applyTree(target);
         ((FrostedNavigationView) bottomNav).refreshBackdrop();
         bottomNav.removeCallbacks(refreshFrostedNavigation);
-        if (!immersive) bottomNav.postDelayed(refreshFrostedNavigation, 450);
+        if (!immersive) bottomNav.postDelayed(refreshFrostedNavigation, 750);
         if (!immersive) updateNavColors(navIndex);
         uiMotion.enterScreen(target);
     }

@@ -130,6 +130,6 @@ photos and controls remain sharp. Scroll padding keeps the final items above the
 
 Page content enters with a short stagger, controls respond with a gentle press and
 release, and calorie/macro rings and progress charts animate to their displayed values.
-Motion stops when the app is paused or battery saver is enabled, respects Android's
+View and indicator motion stops when the app is paused or battery saver is enabled, respects Android's
 animation setting, and restores the final state when cancelled or detached. Meal
 illustrations share that policy. There are no network effects or animation libraries.

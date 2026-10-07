@@ -84,9 +84,14 @@ public final class UiMotion implements AutoCloseable {
             for (int i = 0; i < group.getChildCount() && stagger < 8; i++) {
                 View item = group.getChildAt(i);
                 if (item.getVisibility() != View.VISIBLE) continue;
+                MotionState state = stateFor(item);
+                if (!state.fade) {
+                    state.alpha = item.getAlpha(); state.translationY = item.getTranslationY();
+                    state.fade = true;
+                }
                 item.setAlpha(0);
-                item.setTranslationY(distance);
-                item.animate().alpha(1).translationY(0).setStartDelay(stagger++ * 18L)
+                item.setTranslationY(state.translationY + distance);
+                item.animate().alpha(state.alpha).translationY(state.translationY).setStartDelay(stagger++ * 18L)
                         .setDuration(240).setInterpolator(new PathInterpolator(0.2f, 0.8f, 0.2f, 1f)).start();
             }
             replayIndicators(target);
@@ -102,14 +107,16 @@ public final class UiMotion implements AutoCloseable {
             view.setOnTouchListener((target, event) -> {
                 int action = event.getActionMasked();
                 if (!allowed() || !target.isEnabled()) {
-                    target.animate().cancel(); target.setScaleX(1); target.setScaleY(1);
+                    resetView(target);
                     return false;
                 }
                 if (action == MotionEvent.ACTION_DOWN) {
-                    target.animate().scaleX(0.97f).scaleY(0.97f).setStartDelay(0).setDuration(90)
+                    MotionState state = scaleStateFor(target);
+                    target.animate().scaleX(state.scaleX * 0.97f).scaleY(state.scaleY * 0.97f).setStartDelay(0).setDuration(90)
                             .setInterpolator(new PathInterpolator(0.2f, 0.8f, 0.2f, 1)).start();
                 } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
-                    target.animate().scaleX(1).scaleY(1).setStartDelay(0).setDuration(190)
+                    MotionState state = scaleStateFor(target);
+                    target.animate().scaleX(state.scaleX).scaleY(state.scaleY).setStartDelay(0).setDuration(190)
                             .setInterpolator(new OvershootInterpolator(1.2f)).start();
                 }
                 return false;
@@ -127,9 +134,10 @@ public final class UiMotion implements AutoCloseable {
 
     public void emphasize(View view) {
         if (!allowed()) return;
+        MotionState state = scaleStateFor(view);
         view.animate().cancel();
-        view.setScaleX(0.88f); view.setScaleY(0.88f);
-        view.animate().scaleX(1).scaleY(1).setStartDelay(0).setDuration(260)
+        view.setScaleX(state.scaleX * 0.88f); view.setScaleY(state.scaleY * 0.88f);
+        view.animate().scaleX(state.scaleX).scaleY(state.scaleY).setStartDelay(0).setDuration(260)
                 .setInterpolator(new OvershootInterpolator(1.1f)).start();
     }
 
@@ -162,9 +170,36 @@ public final class UiMotion implements AutoCloseable {
         }
     }
 
+    private static final class MotionState {
+        boolean fade, scale;
+        float alpha, translationY, scaleX, scaleY;
+    }
+
+    private static MotionState stateFor(View view) {
+        MotionState state = (MotionState) view.getTag(R.id.frostedMotionState);
+        if (state == null) {
+            state = new MotionState();
+            view.setTag(R.id.frostedMotionState, state);
+        }
+        return state;
+    }
+
+    private static MotionState scaleStateFor(View view) {
+        MotionState state = stateFor(view);
+        if (!state.scale) {
+            state.scaleX = view.getScaleX(); state.scaleY = view.getScaleY(); state.scale = true;
+        }
+        return state;
+    }
+
     private static void resetView(View view) {
-        view.animate().cancel();
-        view.setAlpha(1); view.setTranslationY(0); view.setScaleX(1); view.setScaleY(1);
+        MotionState state = (MotionState) view.getTag(R.id.frostedMotionState);
+        if (state != null) {
+            view.animate().cancel();
+            if (state.fade) { view.setAlpha(state.alpha); view.setTranslationY(state.translationY); }
+            if (state.scale) { view.setScaleX(state.scaleX); view.setScaleY(state.scaleY); }
+            view.setTag(R.id.frostedMotionState, null);
+        }
         if (view instanceof RingProgressView) ((RingProgressView) view).finishAnimation();
         if (view instanceof ProgressTrendView) ((ProgressTrendView) view).finishAnimation();
     }
