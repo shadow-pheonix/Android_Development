@@ -68,6 +68,30 @@
         <item name="android:textSize">14sp</item>
     </style>
 
+    <style name="FrostedSpinner" parent="android:style/Widget.Material.Spinner">
+        <item name="android:spinnerMode">dropdown</item>
+        <item name="android:popupTheme">@style/FrostedDropdownTheme</item>
+        <item name="android:popupBackground">@drawable/bg_dropdown_popup</item>
+        <item name="android:popupElevation">8dp</item>
+        <item name="android:dropDownWidth">match_parent</item>
+        <item name="android:background">@drawable/bg_input</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:tag">glass:INPUT</item>
+    </style>
+
+    <style name="FrostedDropdownTheme" parent="AppTheme">
+        <item name="android:dropDownListViewStyle">@style/FrostedDropdownList</item>
+    </style>
+
+    <style name="FrostedDropdownList" parent="android:style/Widget.Material.ListView.DropDown">
+        <item name="android:listSelector">@drawable/bg_dropdown_selected</item>
+        <item name="android:divider">@android:color/transparent</item>
+        <item name="android:dividerHeight">4dp</item>
+    </style>
+
     <style name="Input.Dark">
         <item name="android:tag">glass:INPUT</item>
         <item name="android:background">@drawable/bg_input</item>

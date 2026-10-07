@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.CheckedTextView;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
@@ -197,33 +198,23 @@ public final class ProfileController {
     }
 
     private void setupSpinners() {
-        sexSpinner.setAdapter(enumAdapter(ProfileSettings.Sex.values()));
-        activitySpinner.setAdapter(enumAdapter(ProfileSettings.ActivityLevel.values()));
-        goalSpinner.setAdapter(enumAdapter(ProfileSettings.Goal.values()));
-        macroModeSpinner.setAdapter(enumAdapter(ProfileSettings.MacroMode.values()));
+        sexSpinner.setAdapter(enumAdapter(sexSpinner, ProfileSettings.Sex.values()));
+        activitySpinner.setAdapter(enumAdapter(activitySpinner, ProfileSettings.ActivityLevel.values()));
+        goalSpinner.setAdapter(enumAdapter(goalSpinner, ProfileSettings.Goal.values()));
+        macroModeSpinner.setAdapter(enumAdapter(macroModeSpinner, ProfileSettings.MacroMode.values()));
     }
 
-    private <T> ArrayAdapter<T> enumAdapter(T[] values) {
-        return new ArrayAdapter<T>(activity, android.R.layout.simple_spinner_item, values) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                TextView view = (TextView) super.getView(position, convertView, parent);
-                view.setTextColor(activity.getColor(R.color.text_primary));
-                view.setTextSize(14f);
-                view.setPadding(dp(4), 0, dp(4), 0);
-                return view;
-            }
-
+    private <T> ArrayAdapter<T> enumAdapter(Spinner spinner, T[] values) {
+        return new ArrayAdapter<T>(activity, R.layout.item_dropdown_value, values) {
             @Override
             public View getDropDownView(int position, View convertView, ViewGroup parent) {
-                TextView view = (TextView) super.getDropDownView(position, convertView, parent);
-                view.setTextColor(activity.getColor(R.color.text_primary));
-                view.setBackgroundColor(activity.getColor(R.color.surface_elevated));
-                view.setPadding(dp(14), dp(12), dp(14), dp(12));
+                CheckedTextView view = (CheckedTextView) super.getDropDownView(position, convertView, parent);
+                view.setChecked(position == spinner.getSelectedItemPosition());
+                view.setTypeface(null, view.isChecked() ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
                 return view;
             }
 
-            { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item); }
+            { setDropDownViewResource(R.layout.item_dropdown_option); }
         };
     }
 

@@ -181,3 +181,11 @@ The summary is titled “Daily nutrition” to cover calories and all three macr
 Both date arrows use the same 48 × 48 dp frosted control with centered, mirrored
 vector chevrons. The date row centers controls vertically instead of aligning
 their different text baselines.
+
+### Consistent dropdowns (0.7.22)
+
+Sex, activity level, calorie goal and macro input mode share one rounded frosted
+menu with an opaque gradient, a subtle rim and inset options. The current choice
+has a teal checkmark and highlight. Closed fields show a matching chevron, and
+menu width, typography and touch spacing are consistent. Native Spinner selection,
+scrolling and keyboard/accessibility behavior are retained.
