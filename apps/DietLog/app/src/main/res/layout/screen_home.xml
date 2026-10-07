@@ -10,42 +10,11 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingLeft="18dp"
-        android:paddingTop="18dp"
+        android:paddingTop="8dp"
         android:paddingRight="18dp"
         android:paddingBottom="22dp">
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
-            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Good morning 👋" android:textColor="@color/text_secondary" android:textSize="14sp" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Stay consistent" android:textColor="@color/text_primary" android:textSize="27sp" android:textStyle="bold" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Small steps make big changes." android:textColor="@color/text_secondary" android:textSize="13sp" />
-            </LinearLayout>
-            <TextView android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:text="♢" android:textColor="@color/text_primary" android:textSize="25sp" android:background="@drawable/bg_chip" />
-        </LinearLayout>
-
-        <TextView android:id="@+id/dateText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:textColor="@color/text_secondary" android:textSize="12sp" android:visibility="gone" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal"
-            android:weightSum="7">
-            <TextView android:id="@+id/day0" style="@style/Text.Body" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_calendar" android:gravity="center" android:text="Mon
-12" android:textAlignment="center" android:textSize="12sp" />
-            <TextView android:id="@+id/day1" style="@style/Text.Body" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_calendar" android:gravity="center" android:text="Tue
-13" android:textAlignment="center" android:textSize="12sp" />
-            <TextView android:id="@+id/day2" style="@style/Text.Body" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_calendar" android:gravity="center" android:text="Wed
-14" android:textAlignment="center" android:textSize="12sp" />
-            <TextView android:id="@+id/day3" style="@style/Text.Body" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_calendar" android:gravity="center" android:text="Thu
-15" android:textAlignment="center" android:textSize="12sp" />
-            <TextView android:id="@+id/day4" style="@style/Text.Body" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_calendar" android:gravity="center" android:text="Fri
-16" android:textAlignment="center" android:textSize="12sp" />
-            <TextView android:id="@+id/day5" style="@style/Text.Body" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_calendar" android:gravity="center" android:text="Sat
-17" android:textAlignment="center" android:textSize="12sp" />
-            <TextView android:id="@+id/day6" style="@style/Text.Body" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_calendar" android:gravity="center" android:text="Sun
-18" android:textAlignment="center" android:textSize="12sp" />
-        </LinearLayout>
+        <TextView android:id="@+id/dateText" android:layout_width="match_parent" android:layout_height="48dp" android:textColor="@color/text_primary" android:textSize="14sp" />
 
         <LinearLayout
             android:id="@+id/homeNutritionCard"

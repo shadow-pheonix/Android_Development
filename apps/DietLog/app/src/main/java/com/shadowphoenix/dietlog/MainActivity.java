@@ -58,7 +58,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -161,7 +160,7 @@ public final class MainActivity extends Activity {
         configureDriveBackup();
         configureSupabaseBackup();
         configureDiagnostics();
-        configureWeekStrip();
+        configureDateNavigation();
 
         try {
             catalog = new FoodCatalogDb(this);
@@ -1090,7 +1089,7 @@ public final class MainActivity extends Activity {
         findViewById(R.id.exportButton).setOnClickListener(v -> exportDiagnostics());
     }
 
-    private void configureWeekStrip() {
+    private void configureDateNavigation() {
         ViewGroup root = (ViewGroup) dateText.getParent();
         int dateIndex = root.indexOfChild(dateText);
         root.removeView(dateText);
@@ -1099,13 +1098,12 @@ public final class MainActivity extends Activity {
         controls.setOrientation(LinearLayout.HORIZONTAL);
         controls.setGravity(android.view.Gravity.CENTER_VERTICAL);
         LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
-        controlsParams.topMargin = dp(12);
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(48));
         controls.setLayoutParams(controlsParams);
 
-        TextView previous = dateControl("‹", 38);
-        previous.setContentDescription("Previous week");
-        previous.setOnClickListener(v -> selectDate(selectedDate.minusWeeks(1)));
+        TextView previous = dateControl("‹", 48);
+        previous.setContentDescription(getString(R.string.previous_day));
+        previous.setOnClickListener(v -> selectDate(selectedDate.minusDays(1)));
         controls.addView(previous);
 
         dateText.setVisibility(View.VISIBLE);
@@ -1113,21 +1111,22 @@ public final class MainActivity extends Activity {
         dateText.setTextColor(getColor(R.color.text_primary));
         dateText.setTextSize(14f);
         dateText.setTypeface(dateText.getTypeface(), android.graphics.Typeface.BOLD);
-        dateText.setClickable(false);
-        controls.addView(dateText, new LinearLayout.LayoutParams(0, dp(40), 1f));
+        dateText.setFocusable(true);
+        dateText.setOnClickListener(v -> showDiaryDatePicker());
+        controls.addView(dateText, new LinearLayout.LayoutParams(0, dp(48), 1f));
 
         homeTodayButton = dateControl("Today", 60);
         homeTodayButton.setContentDescription("Jump to today");
         homeTodayButton.setOnClickListener(v -> selectDate(LocalDate.now()));
         controls.addView(homeTodayButton);
 
-        TextView next = dateControl("›", 38);
-        next.setContentDescription("Next week");
-        next.setOnClickListener(v -> selectDate(selectedDate.plusWeeks(1)));
+        TextView next = dateControl("›", 48);
+        next.setContentDescription(getString(R.string.next_day));
+        next.setOnClickListener(v -> selectDate(selectedDate.plusDays(1)));
         controls.addView(next);
 
         root.addView(controls, dateIndex);
-        renderWeekStrip();
+        renderDateNavigation();
     }
 
     private TextView dateControl(String text, int widthDp) {
@@ -1138,7 +1137,8 @@ public final class MainActivity extends Activity {
         control.setTextSize(12f);
         control.setTypeface(control.getTypeface(), android.graphics.Typeface.BOLD);
         control.setBackgroundResource(R.drawable.bg_chip);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(widthDp), dp(34));
+        control.setFocusable(true);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(widthDp), dp(48));
         params.setMarginStart(dp(3));
         params.setMarginEnd(dp(3));
         control.setLayoutParams(params);
@@ -1147,36 +1147,29 @@ public final class MainActivity extends Activity {
 
     private void selectDate(LocalDate date) {
         selectedDate = date;
-        renderWeekStrip();
+        renderDateNavigation();
         refreshHome();
         AppLogger.i("Diary date selected=" + selectedDate);
     }
 
-    private void renderWeekStrip() {
+    private void showDiaryDatePicker() {
+        DatePickerDialog picker = new DatePickerDialog(
+                this, R.style.DiaryDatePickerDialog,
+                (view, year, month, dayOfMonth) -> selectDate(LocalDate.of(year, month + 1, dayOfMonth)),
+                selectedDate.getYear(), selectedDate.getMonthValue() - 1, selectedDate.getDayOfMonth());
+        picker.setTitle(R.string.choose_diary_date);
+        picker.show();
+    }
+
+    private void renderDateNavigation() {
         LocalDate today = LocalDate.now();
-        LocalDate monday = selectedDate.minusDays(selectedDate.getDayOfWeek().getValue() - 1L);
         String headerPattern = selectedDate.getYear() == today.getYear() ? "EEE, d MMM" : "EEE, d MMM yyyy";
         DateTimeFormatter headerFormat = DateTimeFormatter.ofPattern(headerPattern, Locale.getDefault());
         dateText.setText(selectedDate.format(headerFormat));
+        dateText.setContentDescription(getString(R.string.choose_diary_date) + ", "
+                + selectedDate.format(DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.FULL)));
         if (homeTodayButton != null) {
             homeTodayButton.setVisibility(selectedDate.equals(today) ? View.GONE : View.VISIBLE);
-        }
-        for (int i = 0; i < 7; i++) {
-            int id = getResources().getIdentifier("day" + i, "id", getPackageName());
-            TextView day = findViewById(id);
-            LocalDate date = monday.plusDays(i);
-            String dow = date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.getDefault());
-            day.setText(dow + System.lineSeparator() + date.getDayOfMonth());
-            day.setOnClickListener(v -> selectDate(date));
-            if (date.equals(selectedDate)) {
-                day.setBackgroundResource(R.drawable.bg_calendar_selected);
-                day.setTextColor(getColor(R.color.accent));
-                day.setTypeface(day.getTypeface(), android.graphics.Typeface.BOLD);
-            } else {
-                day.setBackgroundResource(R.drawable.bg_calendar);
-                day.setTextColor(date.equals(today) ? getColor(R.color.accent) : getColor(R.color.text_secondary));
-                day.setTypeface(day.getTypeface(), date.equals(today) ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
-            }
         }
     }
 
@@ -1473,7 +1466,7 @@ public final class MainActivity extends Activity {
                 return;
             }
             selectedDate = LocalDate.now();
-            renderWeekStrip();
+            renderDateNavigation();
             refreshHome();
             AppLogger.i("Relog copied entries=" + copied + " sourceDate=" + sourceDate);
             toast("Relogged " + copied + (copied == 1 ? " food" : " foods") +
