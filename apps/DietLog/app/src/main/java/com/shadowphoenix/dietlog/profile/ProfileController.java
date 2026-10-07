@@ -48,8 +48,8 @@ public final class ProfileController {
     private TextView dobButton, activityDescription, goalHint, calorieTargetText, energyBreakdown;
     private TextView macroSummary, macroWarning, headerName, headerSummary, avatarFallback;
     private TextView currentTargetSummary, currentTargetNote, recommendedTargetSummary, macroTargetSummary;
-    private TextView editProfileButton, editGoalButton, editNutritionButton;
-    private View personalEditor, goalSection, nutritionSection;
+    private TextView editGoalButton, editNutritionButton;
+    private View goalSection, nutritionSection;
     private ImageView avatarImage;
 
     public ProfileController(Activity activity, Runnable onTargetsChanged) {
@@ -91,6 +91,15 @@ public final class ProfileController {
         populateUi();
         refreshPreview();
         onTargetsChanged.run();
+    }
+
+    public void beginPersonalProfileEdit() {
+        collapseEditors();
+        reloadFromPreferences();
+    }
+
+    public boolean savePersonalProfile() {
+        return save();
     }
 
     public void updateCurrentWeightFromProgress(double weightKg) {
@@ -180,10 +189,8 @@ public final class ProfileController {
         currentTargetNote = activity.findViewById(R.id.profileCurrentTargetNote);
         recommendedTargetSummary = activity.findViewById(R.id.profileRecommendedTargetSummary);
         macroTargetSummary = activity.findViewById(R.id.profileMacroTargetSummary);
-        editProfileButton = activity.findViewById(R.id.profileEditProfileButton);
         editGoalButton = activity.findViewById(R.id.profileEditGoalButton);
         editNutritionButton = activity.findViewById(R.id.profileEditNutritionButton);
-        personalEditor = activity.findViewById(R.id.profilePersonalEditor);
         goalSection = activity.findViewById(R.id.profileGoalSection);
         nutritionSection = activity.findViewById(R.id.profileNutritionSection);
     }
@@ -284,9 +291,7 @@ public final class ProfileController {
         });
         activity.findViewById(R.id.profileUseRecommendedMacros).setOnClickListener(v -> applyRecommendedMacros());
         activity.findViewById(R.id.profileSaveButton).setOnClickListener(v -> save());
-        activity.findViewById(R.id.profileSavePersonalButton).setOnClickListener(v -> save());
         activity.findViewById(R.id.profileSaveGoalButton).setOnClickListener(v -> save());
-        editProfileButton.setOnClickListener(v -> toggleEditor(personalEditor));
         editGoalButton.setOnClickListener(v -> toggleEditor(goalSection));
         editNutritionButton.setOnClickListener(v -> toggleEditor(nutritionSection));
         activity.findViewById(R.id.profileAvatarPicker).setOnClickListener(v -> pickAvatar());
@@ -304,7 +309,7 @@ public final class ProfileController {
         for (EditText input : watched) input.addTextChangedListener(watcher);
     }
 
-    private void save() {
+    private boolean save() {
         try {
             ProfileSettings draft = readDraft(true);
             CalorieCalculator.Estimate estimate = CalorieCalculator.calculate(draft, LocalDate.now());
@@ -335,8 +340,10 @@ public final class ProfileController {
             collapseEditors();
             onTargetsChanged.run();
             Toast.makeText(activity, "Profile and nutrition targets saved", Toast.LENGTH_SHORT).show();
+            return true;
         } catch (IllegalArgumentException e) {
             Toast.makeText(activity, e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
         }
     }
 
@@ -407,15 +414,12 @@ public final class ProfileController {
     }
 
     private void collapseEditors() {
-        if (personalEditor != null) personalEditor.setVisibility(View.GONE);
         if (goalSection != null) goalSection.setVisibility(View.GONE);
         if (nutritionSection != null) nutritionSection.setVisibility(View.GONE);
         updateEditorButtonLabels();
     }
 
     private void updateEditorButtonLabels() {
-        if (editProfileButton != null) editProfileButton.setText(
-                personalEditor != null && personalEditor.getVisibility() == View.VISIBLE ? "Close" : "Edit profile");
         if (editGoalButton != null) editGoalButton.setText(
                 goalSection != null && goalSection.getVisibility() == View.VISIBLE ? "Close calorie goal" : "Edit calorie goal");
         if (editNutritionButton != null) editNutritionButton.setText(

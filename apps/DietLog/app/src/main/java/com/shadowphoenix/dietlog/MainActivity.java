@@ -85,7 +85,7 @@ public final class MainActivity extends Activity {
     private SharedPreferences.OnSharedPreferenceChangeListener driveSyncStatusListener;
     private long renderedDriveDataChangeGeneration;
 
-    private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, accountScreen, bottomNav;
+    private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, editProfileScreen, accountScreen, bottomNav;
     private View navHome, navSearch, navAdd, navProgress, navProfile;
     private TextView navHomeIcon, navHomeLabel, navSearchIcon, navSearchLabel;
     private TextView navProgressIcon, navProgressLabel, navProfileIcon, navProfileLabel;
@@ -222,6 +222,7 @@ public final class MainActivity extends Activity {
         nutritionScreen = findViewById(R.id.nutritionScreen);
         progressScreen = findViewById(R.id.progressScreen);
         profileScreen = findViewById(R.id.profileScreen);
+        editProfileScreen = findViewById(R.id.editProfileScreen);
         accountScreen = findViewById(R.id.accountScreen);
         bottomNav = findViewById(R.id.bottomNav);
 
@@ -349,6 +350,11 @@ public final class MainActivity extends Activity {
             showScreen(progressScreen, 2);
         });
         navProfile.setOnClickListener(v -> showProfileScreen());
+        findViewById(R.id.profileEditProfileButton).setOnClickListener(v -> openEditProfileScreen());
+        findViewById(R.id.editProfileBack).setOnClickListener(v -> closeEditProfileScreen());
+        findViewById(R.id.profileSavePersonalButton).setOnClickListener(v -> {
+            if (profileController.savePersonalProfile()) closeEditProfileScreen();
+        });
         profileAccountAction.setOnClickListener(v -> openAccountScreen());
         findViewById(R.id.accountBack).setOnClickListener(v -> showProfileScreen());
         findViewById(R.id.homeSeeAll).setOnClickListener(v -> {
@@ -373,6 +379,24 @@ public final class MainActivity extends Activity {
         refreshSupabaseBackupUi();
         refreshAccountUi();
         showScreen(accountScreen, -1);
+    }
+
+    private void openEditProfileScreen() {
+        profileController.beginPersonalProfileEdit();
+        showScreen(editProfileScreen, -1);
+        ((android.widget.ScrollView) editProfileScreen).scrollTo(0, 0);
+    }
+
+    private void closeEditProfileScreen() {
+        profileController.reloadFromPreferences();
+        View focused = getCurrentFocus();
+        if (focused != null) {
+            android.view.inputmethod.InputMethodManager keyboard =
+                    (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (keyboard != null) keyboard.hideSoftInputFromWindow(focused.getWindowToken(), 0);
+            focused.clearFocus();
+        }
+        showProfileScreen();
     }
 
     private void refreshAccountUi() {
@@ -1181,9 +1205,10 @@ public final class MainActivity extends Activity {
         nutritionScreen.setVisibility(target == nutritionScreen ? View.VISIBLE : View.GONE);
         progressScreen.setVisibility(target == progressScreen ? View.VISIBLE : View.GONE);
         profileScreen.setVisibility(target == profileScreen ? View.VISIBLE : View.GONE);
+        editProfileScreen.setVisibility(target == editProfileScreen ? View.VISIBLE : View.GONE);
         accountScreen.setVisibility(target == accountScreen ? View.VISIBLE : View.GONE);
         boolean immersive = target == detailScreen || target == manualScreen || target == nutritionScreen
-                || target == accountScreen;
+                || target == accountScreen || target == editProfileScreen;
         bottomNav.setVisibility(immersive ? View.GONE : View.VISIBLE);
         if (!immersive) updateNavColors(navIndex);
     }
@@ -2393,7 +2418,9 @@ public final class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (accountScreen.getVisibility() == View.VISIBLE) {
+        if (editProfileScreen.getVisibility() == View.VISIBLE) {
+            closeEditProfileScreen();
+        } else if (accountScreen.getVisibility() == View.VISIBLE) {
             showProfileScreen();
         } else if (nutritionScreen.getVisibility() == View.VISIBLE) {
             showScreen(homeScreen, 0);

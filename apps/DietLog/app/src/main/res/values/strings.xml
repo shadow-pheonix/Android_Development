@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">FuelNote</string>
+    <string name="edit_profile">Edit profile</string>
+    <string name="back_to_profile">Back to Profile</string>
     <string name="choose_diary_date">Choose diary date</string>
     <string name="previous_day">Previous day</string>
     <string name="next_day">Next day</string>
