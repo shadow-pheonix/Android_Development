@@ -1,86 +1,59 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:clipToPadding="false">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingLeft="18dp"
-        android:paddingTop="8dp"
-        android:paddingRight="18dp"
-        android:paddingBottom="22dp">
-
-        <TextView android:id="@+id/dateText" android:layout_width="match_parent" android:layout_height="48dp" android:textColor="@color/text_primary" android:textSize="14sp" />
-
-        <LinearLayout
-            android:id="@+id/homeNutritionCard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="vertical"
-            android:padding="13dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="@drawable/bg_card_alt">
-
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:clipToPadding="false" android:scrollbars="none">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingLeft="20dp" android:paddingTop="8dp" android:paddingRight="20dp" android:paddingBottom="24dp">
+        <TextView android:id="@+id/dateText" android:layout_width="match_parent" android:layout_height="48dp" android:textColor="@color/text_primary" android:textSize="14sp" android:includeFontPadding="false" android:maxLines="2" />
+        <LinearLayout android:id="@+id/homeNutritionCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="vertical" android:padding="16dp" android:clickable="true" android:focusable="true" android:background="@drawable/bg_card_alt" android:foreground="?android:attr/selectableItemBackground">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Calories" android:textColor="@color/text_primary" android:textSize="15sp" android:textStyle="bold" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nutrition details  ›" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Calories" android:textColor="@color/text_primary" android:textSize="15sp" android:textStyle="bold" android:includeFontPadding="false" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nutrition details  ›" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" android:includeFontPadding="false" />
             </LinearLayout>
-
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:gravity="center_vertical">
-                <FrameLayout android:layout_width="0dp" android:layout_height="164dp" android:layout_weight="1">
-                    <com.shadowphoenix.dietlog.ui.RingProgressView android:id="@+id/caloriesRing" android:layout_width="154dp" android:layout_height="154dp" android:layout_gravity="center" />
+                <FrameLayout android:layout_width="0dp" android:layout_height="152dp" android:layout_weight="1">
+                    <com.shadowphoenix.dietlog.ui.RingProgressView android:id="@+id/caloriesRing" android:layout_width="144dp" android:layout_height="144dp" android:layout_gravity="center" />
                     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CAL" android:textColor="@color/accent" android:textSize="11sp" android:textStyle="bold" />
-                        <TextView android:id="@+id/calorieValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="0" android:textColor="@color/text_primary" android:textSize="32sp" android:textStyle="bold" />
-                        <TextView android:id="@+id/calorieGoalText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="of 2,000 kcal" android:textColor="@color/text_secondary" android:textSize="13sp" />
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="EATEN" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" android:includeFontPadding="false" android:letterSpacing="0.12" />
+                        <TextView android:id="@+id/calorieValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="0" android:textColor="@color/text_primary" android:textSize="36sp" android:textStyle="bold" android:includeFontPadding="false" />
+                        <TextView android:id="@+id/calorieGoalText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="of 2,000 kcal" android:textColor="@color/text_secondary" android:textSize="13sp" android:includeFontPadding="false" />
                     </LinearLayout>
                 </FrameLayout>
-                <LinearLayout android:layout_width="88dp" android:layout_height="88dp" android:orientation="vertical" android:gravity="center" android:background="@drawable/bg_card" android:padding="8dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Remaining" android:textColor="@color/text_secondary" android:textSize="11sp" />
-                    <TextView android:id="@+id/calorieLeft" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="2000" android:textColor="@color/text_primary" android:textSize="19sp" android:textStyle="bold" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="kcal" android:textColor="@color/text_secondary" android:textSize="11sp" />
+                <LinearLayout android:layout_width="88dp" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:background="@drawable/bg_card" android:padding="8dp" android:minHeight="88dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Remaining" android:textColor="@color/text_secondary" android:textSize="12sp" android:includeFontPadding="false" />
+                    <TextView android:id="@+id/calorieLeft" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="2000" android:textColor="@color/text_primary" android:textSize="22sp" android:textStyle="bold" android:includeFontPadding="false" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="kcal" android:textColor="@color/text_secondary" android:textSize="12sp" android:includeFontPadding="false" />
                 </LinearLayout>
             </LinearLayout>
-
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="0dp" android:orientation="horizontal" android:weightSum="3">
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
-                    <FrameLayout android:layout_width="66dp" android:layout_height="66dp">
-                        <com.shadowphoenix.dietlog.ui.RingProgressView android:id="@+id/proteinRing" android:layout_width="66dp" android:layout_height="66dp" />
-                        <TextView android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="P" android:textColor="@color/protein" android:textSize="16sp" android:textStyle="bold" />
+                    <FrameLayout android:layout_width="56dp" android:layout_height="56dp">
+                        <com.shadowphoenix.dietlog.ui.RingProgressView android:id="@+id/proteinRing" android:layout_width="56dp" android:layout_height="56dp" />
+                        <TextView android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="P" android:textColor="@color/protein" android:textSize="16sp" android:textStyle="bold" android:includeFontPadding="false" />
                     </FrameLayout>
-                    <TextView android:id="@+id/proteinValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="0 / 150g" android:textColor="@color/text_primary" android:textSize="13sp" android:textStyle="bold" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Protein" android:textColor="@color/text_secondary" android:textSize="12sp" />
+                    <TextView android:id="@+id/proteinValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="0 / 150g" android:textColor="@color/text_primary" android:textSize="13sp" android:textStyle="bold" android:includeFontPadding="false" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Protein" android:textColor="@color/text_secondary" android:textSize="12sp" android:includeFontPadding="false" />
                 </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
-                    <FrameLayout android:layout_width="66dp" android:layout_height="66dp">
-                        <com.shadowphoenix.dietlog.ui.RingProgressView android:id="@+id/carbsRing" android:layout_width="66dp" android:layout_height="66dp" />
-                        <TextView android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="C" android:textColor="@color/carbs" android:textSize="16sp" android:textStyle="bold" />
+                    <FrameLayout android:layout_width="56dp" android:layout_height="56dp">
+                        <com.shadowphoenix.dietlog.ui.RingProgressView android:id="@+id/carbsRing" android:layout_width="56dp" android:layout_height="56dp" />
+                        <TextView android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="C" android:textColor="@color/carbs" android:textSize="16sp" android:textStyle="bold" android:includeFontPadding="false" />
                     </FrameLayout>
-                    <TextView android:id="@+id/carbsValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="0 / 250g" android:textColor="@color/text_primary" android:textSize="13sp" android:textStyle="bold" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Carbs" android:textColor="@color/text_secondary" android:textSize="12sp" />
+                    <TextView android:id="@+id/carbsValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="0 / 250g" android:textColor="@color/text_primary" android:textSize="13sp" android:textStyle="bold" android:includeFontPadding="false" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Carbs" android:textColor="@color/text_secondary" android:textSize="12sp" android:includeFontPadding="false" />
                 </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
-                    <FrameLayout android:layout_width="66dp" android:layout_height="66dp">
-                        <com.shadowphoenix.dietlog.ui.RingProgressView android:id="@+id/fatRing" android:layout_width="66dp" android:layout_height="66dp" />
-                        <TextView android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="F" android:textColor="@color/fat" android:textSize="16sp" android:textStyle="bold" />
+                    <FrameLayout android:layout_width="56dp" android:layout_height="56dp">
+                        <com.shadowphoenix.dietlog.ui.RingProgressView android:id="@+id/fatRing" android:layout_width="56dp" android:layout_height="56dp" />
+                        <TextView android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="F" android:textColor="@color/fat" android:textSize="16sp" android:textStyle="bold" android:includeFontPadding="false" />
                     </FrameLayout>
-                    <TextView android:id="@+id/fatValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="0 / 70g" android:textColor="@color/text_primary" android:textSize="13sp" android:textStyle="bold" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Fat" android:textColor="@color/text_secondary" android:textSize="12sp" />
+                    <TextView android:id="@+id/fatValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="0 / 70g" android:textColor="@color/text_primary" android:textSize="13sp" android:textStyle="bold" android:includeFontPadding="false" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Fat" android:textColor="@color/text_secondary" android:textSize="12sp" android:includeFontPadding="false" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
-
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:orientation="vertical" android:padding="12dp" android:background="@drawable/bg_card">
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
-                <TextView android:id="@+id/foodLogTitle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/recent_entries" android:textColor="@color/text_primary" android:textSize="17sp" android:textStyle="bold" />
-                <TextView android:id="@+id/relogButton" android:layout_width="wrap_content" android:layout_height="32dp" android:layout_marginEnd="8dp" android:gravity="center" android:paddingLeft="12dp" android:paddingRight="12dp" android:background="@drawable/bg_chip" android:text="Relog" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" />
-                <TextView android:id="@+id/homeSeeAll" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="See all  ›" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:orientation="vertical" android:padding="16dp" android:background="@drawable/bg_card">
+            <TextView android:id="@+id/foodLogTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_weight="0" android:text="@string/recent_entries" android:textColor="@color/text_primary" android:textSize="19sp" android:textStyle="bold" android:includeFontPadding="false" android:layout_marginBottom="12dp" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="end">
+                <TextView android:id="@+id/relogButton" android:layout_width="0dp" android:layout_height="48dp" android:layout_marginEnd="8dp" android:gravity="center" android:paddingLeft="12dp" android:paddingRight="12dp" android:background="@drawable/bg_chip" android:text="Relog a meal" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" android:includeFontPadding="false" style="@style/Action" android:layout_weight="1" />
+                <TextView android:id="@+id/homeSeeAll" android:layout_width="0dp" android:layout_height="48dp" android:text="See all  ›" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" android:includeFontPadding="false" style="@style/Action" android:layout_weight="1" android:background="@drawable/bg_chip" />
             </LinearLayout>
             <LinearLayout android:id="@+id/entriesContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:orientation="vertical" />
         </LinearLayout>
