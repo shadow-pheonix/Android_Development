@@ -30,6 +30,21 @@ public final class FoodSearchTest {
         assertEquals("biryani", new FoodSearch.Query("biriyani").text);
     }
 
+    @Test public void connectorsDoNotBlockIngredientsAndNegationIsRetained() {
+        assertEquals("egg curry", new FoodSearch.Query("the egg curry").text);
+        assertEquals("rice egg", new FoodSearch.Query("rice with egg").text);
+        assertEquals("without sugar", new FoodSearch.Query("without sugar").text);
+        assertEquals("a", new FoodSearch.Query("a").text);
+    }
+
+    @Test public void commonFoodPluralsMatchWithoutASpellingWarning() {
+        FoodSearch.Query q = new FoodSearch.Query("boiled eggs");
+        assertEquals("boiled egg", q.text);
+        assertFalse(q.spellingAdjusted);
+        assertEquals("idli", new FoodSearch.Query("idlis").text);
+        assertEquals("dosa", new FoodSearch.Query("dosas").text);
+    }
+
     @Test public void syntaxAndWildcardsFromInputCannotBecomeOperators() {
         assertEquals("\"milk*\" AND \"or*\" AND \"name*\" AND \"rice*\"",
                 new FoodSearch.Query("milk\" OR name:rice* % _").match());

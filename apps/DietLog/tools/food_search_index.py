@@ -6,7 +6,8 @@ import unicodedata
 from pathlib import Path
 
 SPELLINGS = {'chiken': 'chicken', 'chciken': 'chicken', 'panner': 'paneer',
-             'briyani': 'biryani', 'biriyani': 'biryani', 'basmathi': 'basmati'}
+             'briyani': 'biryani', 'biriyani': 'biryani', 'basmathi': 'basmati',
+             'eggs': 'egg', 'bananas': 'banana', 'idlis': 'idli', 'dosas': 'dosa'}
 
 
 def normalize(value):

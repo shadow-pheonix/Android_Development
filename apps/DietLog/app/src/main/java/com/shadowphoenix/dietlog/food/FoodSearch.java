@@ -44,8 +44,16 @@ public final class FoodSearch {
             List<String> parts = normalized.isEmpty() ? Collections.emptyList()
                     : Arrays.asList(normalized.split(" "));
             List<String> canonical = new ArrayList<>();
-            for (String part : parts.subList(0, Math.min(8, parts.size()))) canonical.add(canonicalSpelling(part));
-            spellingAdjusted = !canonical.equals(parts.subList(0, Math.min(8, parts.size())));
+            boolean adjusted = false;
+            for (String part : parts) {
+                if (parts.size() > 1 && Arrays.asList("a", "an", "the", "and", "of", "with").contains(part)) continue;
+                String word = canonicalSpelling(part);
+                // Plurals are equivalent wording, not a spelling-error warning.
+                adjusted |= !word.equals(part) && !Arrays.asList("eggs", "bananas", "idlis", "dosas").contains(part);
+                canonical.add(word);
+                if (canonical.size() == 8) break;
+            }
+            spellingAdjusted = adjusted;
             tokens = Collections.unmodifiableList(canonical);
             text = String.join(" ", tokens);
         }
@@ -62,6 +70,10 @@ public final class FoodSearch {
             case "panner": return "paneer";
             case "briyani": case "biriyani": return "biryani";
             case "basmathi": return "basmati";
+            case "eggs": return "egg";
+            case "bananas": return "banana";
+            case "idlis": return "idli";
+            case "dosas": return "dosa";
             default: return token;
         }
     }

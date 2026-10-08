@@ -118,7 +118,8 @@ Offline search now uses portable SQLite FTS4 with word-prefix matching in any or
 across names, brands, aliases and categories. Exact dishes/local aliases rank first,
 then name/brand matches, with category-only matches last. Complete nutrition and
 Indian cooked-food sources break relevance ties. Brand words and preparation words
-are retained; searching `dosa batter` does not turn into a cooked-dosa recommendation.
+are retained; harmless connectors such as "and"/"with" are ignored and common food
+plurals are recognized. Searching `dosa batter` does not turn into a cooked-dosa recommendation.
 Barcodes still use indexed exact lookup and scanner-format normalization.
 
 Common catalogue misspellings normalize to canonical names. When normal matching
@@ -135,7 +136,7 @@ Catalogue queries run on the existing serial worker. Inputs, candidate counts an
 corrections are bounded (128 characters, eight words, 600 candidates, 30 UI results).
 Diagnostics record only query length, counts, approximate status and duration.
 
-Validation includes nine builder/index tests, eleven Java planner/ranking tests and
+Validation includes nine builder/index tests, thirteen Java planner/ranking tests and
 actual runtime SQL checks against the full catalogue. Representative local candidate
 queries took under 2 ms in the workspace; this excludes phone rendering and is not
 a device latency guarantee. Android CI supplies lint, unit tests and APK compilation.
