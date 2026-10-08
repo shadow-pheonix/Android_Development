@@ -17,6 +17,9 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Tasks;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.shadowphoenix.dietlog.diagnostics.AppLogger;
 
 import java.util.Collections;
@@ -158,8 +161,9 @@ public final class GoogleDriveAuthorization {
     private static void requestAuthorization(
             Context context, AuthorizationRequest request, Callback callback, boolean allowResolution) {
         AuthorizationClient client = Identity.getAuthorizationClient(context);
-        client.authorize(request)
-                .addOnSuccessListener(result -> {
+        Task<AuthorizationResult> authorization = client.authorize(request);
+        OnSuccessListener<AuthorizationResult> success = result -> {
+                    if (!callback.isActive()) return;
                     if (result.hasResolution()) {
                         if (!allowResolution || !(context instanceof Activity)) {
                             callback.onFailure(Failure.REAUTH_REQUIRED,
@@ -170,8 +174,9 @@ public final class GoogleDriveAuthorization {
                         return;
                     }
                     deliverAuthorizedResult(context, result, callback);
-                })
-                .addOnFailureListener(error -> {
+                };
+        OnFailureListener failure = error -> {
+                    if (!callback.isActive()) return;
                     if (error instanceof ApiException) {
                         ApiException api = (ApiException) error;
                         int statusCode = api.getStatusCode();
@@ -186,7 +191,16 @@ public final class GoogleDriveAuthorization {
                         callback.onFailure(Failure.AUTHORIZATION_FAILED,
                                 "Could not authorize Google Drive.", error);
                     }
-                });
+                };
+        if (allowResolution && context instanceof Activity) {
+            // Cancel UI listeners on stop; a delayed preparation result must
+            // not open consent on an obsolete/background Activity. Consent
+            // results themselves still use handleActivityResult after recreation.
+            authorization.addOnSuccessListener((Activity) context, success)
+                    .addOnFailureListener((Activity) context, failure);
+        } else {
+            authorization.addOnSuccessListener(success).addOnFailureListener(failure);
+        }
     }
 
     private static void launchResolution(
@@ -297,6 +311,8 @@ public final class GoogleDriveAuthorization {
     }
 
     public interface Callback {
+        /** A caller can withdraw a pending UI request without storing a token or launching consent. */
+        default boolean isActive() { return true; }
         void onAuthorized(String accessToken, String accountName);
         void onFailure(Failure failure, String message, Throwable error);
     }
