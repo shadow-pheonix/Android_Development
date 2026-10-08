@@ -22,6 +22,8 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 
 ## Current functionality
 
+- Optional Google Drive sign-in or Continue without login after the launch animation, before first-run profile setup. The choice is remembered on this device and Drive can be connected later from Profile.
+- Body recomposition goal with maintenance-calorie estimates, no planned weekly scale-weight change and higher recommended protein; actual activity level remains a separate calorie multiplier.
 - A brief animated FuelNote launch screen, followed by guided profile setup for users without completed personal details. Setup covers age/DOB, sex, measurements, goal and activity, then previews calculated calorie and macro targets before saving.
 - Today's calories, protein, carbs and fat.
 - Illustrated Breakfast, Lunch, Snacks and Dinner headers with gentle offline vector animation; motion pauses when Home is hidden and respects disabled animations and battery saver.
@@ -60,6 +62,40 @@ from nutrition-only saves. Existing valid profiles saved before this version are
 accepted without repeating setup; incomplete or invalid stored profiles require it.
 No profile values are written during partial setup or logged by the new flow. All
 details remain editable through Profile after setup.
+
+## Optional login and recomposition (0.7.30)
+
+After the animation, users who have not made an entry choice see Continue with Google
+Drive and Continue without login. Successful Drive authorization or an explicit guest
+choice advances to profile setup (or Home for an existing completed profile). Connected
+Drive users skip this choice. Cancellation/failure does not count as a choice; users
+can retry or continue offline. Guest remains available while authorization is preparing,
+and withdrawing that request prevents a late consent screen or token storage. UI task
+listeners are Activity-scoped, and returning from background/rotation releases stale
+busy controls. Consent results still use the existing recreation-safe Activity result
+handler. The choice is device-local and does not create another cloud account or change
+Google's existing private `drive.appdata` scope. Diagnostics remains accessible.
+
+Body recomposition is a goal rather than an activity level. Mifflin–St Jeor BMR and the
+user's actual activity multiplier produce estimated maintenance calories (rounded to
+10 kcal, with the existing automatic 1,200 kcal floor). It requests zero weekly weight
+change and keeps the initial weight target at current weight. Protein starts at 2 g/kg
+of current body weight; fat starts at 0.8 g/kg or 20% of calories, whichever is greater;
+carbohydrates fill the remaining energy. Energy-budget constraints cap recommended
+protein at 40% of calories and reserve at least 50 g/20% of calories for carbs before
+allocating fat, preventing recommendations from overshooting low manual targets or
+high-weight profiles. Whole-gram rounding accounts for at most 2 kcal difference.
+
+Setup generates these recommendations automatically. Switching to recomposition in
+Profile applies them once; later custom macro edits and explicit calorie overrides
+remain available. Weekly weight-rate controls and Progress use zero for this goal.
+Targets are starting estimates; resistance training and measured trends guide later
+adjustments. The 2 g/kg starting protein target is within the ISSN exercise protein
+position stand's 1.4–2.0 g/kg/day range (DOI: 10.1186/s12970-017-0177-8).
+
+Nine calculator regression tests cover reference BMR/TDEE examples, actual activity,
+sex/DOB, stale weight-loss rates, recomposition protein, macro-budget edge cases,
+manual overrides, existing goals and invalid non-finite values.
 
 ## Bundled food catalogue
 

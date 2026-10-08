@@ -163,35 +163,35 @@ public final class GoogleDriveAuthorization {
         AuthorizationClient client = Identity.getAuthorizationClient(context);
         Task<AuthorizationResult> authorization = client.authorize(request);
         OnSuccessListener<AuthorizationResult> success = result -> {
-                    if (!callback.isActive()) return;
-                    if (result.hasResolution()) {
-                        if (!allowResolution || !(context instanceof Activity)) {
-                            callback.onFailure(Failure.REAUTH_REQUIRED,
-                                    "Google Drive needs user authorization.", null);
-                            return;
-                        }
-                        launchResolution((Activity) context, result.getPendingIntent(), callback);
-                        return;
-                    }
-                    deliverAuthorizedResult(context, result, callback);
-                };
+            if (!callback.isActive()) return;
+            if (result.hasResolution()) {
+                if (!allowResolution || !(context instanceof Activity)) {
+                    callback.onFailure(Failure.REAUTH_REQUIRED,
+                            "Google Drive needs user authorization.", null);
+                    return;
+                }
+                launchResolution((Activity) context, result.getPendingIntent(), callback);
+                return;
+            }
+            deliverAuthorizedResult(context, result, callback);
+        };
         OnFailureListener failure = error -> {
-                    if (!callback.isActive()) return;
-                    if (error instanceof ApiException) {
-                        ApiException api = (ApiException) error;
-                        int statusCode = api.getStatusCode();
-                        AppLogger.e("Drive authorization request failed status=" + statusCode
-                                + " name=" + CommonStatusCodes.getStatusCodeString(statusCode), error);
-                        callback.onFailure(statusCode == CommonStatusCodes.CANCELED
-                                        ? Failure.CANCELLED : Failure.AUTHORIZATION_FAILED,
-                                authorizationFailureMessage(statusCode), error);
-                    } else {
-                        AppLogger.e("Drive authorization request failed: "
-                                + error.getClass().getSimpleName(), error);
-                        callback.onFailure(Failure.AUTHORIZATION_FAILED,
-                                "Could not authorize Google Drive.", error);
-                    }
-                };
+            if (!callback.isActive()) return;
+            if (error instanceof ApiException) {
+                ApiException api = (ApiException) error;
+                int statusCode = api.getStatusCode();
+                AppLogger.e("Drive authorization request failed status=" + statusCode
+                        + " name=" + CommonStatusCodes.getStatusCodeString(statusCode), error);
+                callback.onFailure(statusCode == CommonStatusCodes.CANCELED
+                                ? Failure.CANCELLED : Failure.AUTHORIZATION_FAILED,
+                        authorizationFailureMessage(statusCode), error);
+            } else {
+                AppLogger.e("Drive authorization request failed: "
+                        + error.getClass().getSimpleName(), error);
+                callback.onFailure(Failure.AUTHORIZATION_FAILED,
+                        "Could not authorize Google Drive.", error);
+            }
+        };
         if (allowResolution && context instanceof Activity) {
             // Cancel UI listeners on stop; a delayed preparation result must
             // not open consent on an obsolete/background Activity. Consent
