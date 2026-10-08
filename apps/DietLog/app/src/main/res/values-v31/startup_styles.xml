@@ -1,0 +1,8 @@
+<resources>
+    <style name="LauncherTheme" parent="AppTheme">
+        <item name="android:windowBackground">@drawable/bg_frosted_scene</item>
+        <item name="android:windowSplashScreenBackground">@color/fuelnote_icon_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_fuelnote_foreground</item>
+        <item name="android:windowSplashScreenAnimationDuration">400</item>
+    </style>
+</resources>

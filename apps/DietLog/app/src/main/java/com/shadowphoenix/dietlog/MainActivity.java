@@ -45,6 +45,8 @@ import com.shadowphoenix.dietlog.nutrition.MicronutrientValues;
 import com.shadowphoenix.dietlog.profile.AccountIdentity;
 import com.shadowphoenix.dietlog.profile.ProfileController;
 import com.shadowphoenix.dietlog.profile.ProfileSettings;
+import com.shadowphoenix.dietlog.profile.ProfilePreferences;
+import com.shadowphoenix.dietlog.profile.OnboardingController;
 import com.shadowphoenix.dietlog.progress.ProgressController;
 import com.shadowphoenix.dietlog.sync.DriveBackupScheduler;
 import com.shadowphoenix.dietlog.sync.DriveRestoreManager;
@@ -63,6 +65,7 @@ import com.shadowphoenix.dietlog.ui.RingProgressView;
 import com.shadowphoenix.dietlog.ui.MealIllustrationView;
 import com.shadowphoenix.dietlog.ui.FrostedUi;
 import com.shadowphoenix.dietlog.ui.UiMotion;
+import com.shadowphoenix.dietlog.ui.StartupAnimation;
 import com.shadowphoenix.dietlog.ui.FrostedSurfaceDrawable.Material;
 import com.shadowphoenix.dietlog.ui.FrostedNavigationView;
 
@@ -101,6 +104,9 @@ public final class MainActivity extends Activity {
     private TextView detailPhotoCredit;
     private ProfileController profileController;
     private ProgressController progressController;
+    private OnboardingController onboardingController;
+    private StartupAnimation startupAnimation;
+    private boolean startupFinished;
     private final ExecutorService driveExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService supabaseExecutor = Executors.newSingleThreadExecutor();
     private DriveSyncStatusStore driveSyncStatusStore;
@@ -109,6 +115,7 @@ public final class MainActivity extends Activity {
 
     private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, editProfileScreen, accountScreen, bottomNav;
     private View navHome, navSearch, navScan, navProgress, navProfile;
+    private View onboardingScreen;
     private UiMotion uiMotion;
     private ImageView navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon;
     private TextView navHomeLabel, navSearchLabel;
@@ -209,7 +216,29 @@ public final class MainActivity extends Activity {
         refreshAccountUi();
         refreshHome();
         FrostedUi.applyTree(findViewById(R.id.appRoot));
-        showScreen(homeScreen, 0);
+        bottomNav.setVisibility(View.GONE);
+        Bundle setupState = savedInstanceState == null ? null : savedInstanceState.getBundle("profile_setup");
+        if (savedInstanceState != null) finishStartup(setupState);
+        else startupAnimation = new StartupAnimation(findViewById(R.id.startupOverlay), () -> finishStartup(null));
+    }
+
+    private void finishStartup(Bundle restoredSetup) {
+        if (startupFinished) return;
+        startupFinished = true;
+        findViewById(R.id.startupOverlay).setVisibility(View.GONE);
+        findViewById(R.id.screenContainer).setVisibility(View.VISIBLE);
+        if (new ProfilePreferences(this).hasCompletedPersonalProfile()) {
+            showScreen(homeScreen, 0);
+        } else {
+            onboardingController = new OnboardingController(this, restoredSetup, () -> {
+                onboardingController = null;
+                profileController.reloadFromPreferences();
+                showScreen(homeScreen, 0);
+            }, () -> moveTaskToBack(true));
+            findViewById(R.id.setupDiagnostics).setOnClickListener(v -> exportDiagnostics());
+            AppLogger.i("First-run profile setup opened");
+            showScreen(onboardingScreen, -1);
+        }
     }
 
     private void configureSystemBarInsets() {
@@ -229,6 +258,11 @@ public final class MainActivity extends Activity {
                 top = bars.top;
                 right = bars.right;
                 bottom = bars.bottom;
+                // Android 15 enforces edge-to-edge; older versions resize the
+                // content window for the keyboard through adjustResize.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                    bottom = Math.max(bottom, insets.getInsets(WindowInsets.Type.ime()).bottom);
+                }
             } else {
                 left = insets.getSystemWindowInsetLeft();
                 top = insets.getSystemWindowInsetTop();
@@ -251,6 +285,7 @@ public final class MainActivity extends Activity {
         profileScreen = findViewById(R.id.profileScreen);
         editProfileScreen = findViewById(R.id.editProfileScreen);
         accountScreen = findViewById(R.id.accountScreen);
+        onboardingScreen = findViewById(R.id.onboardingScreen);
         bottomNav = findViewById(R.id.bottomNav);
 
         navHome = findViewById(R.id.navHome);
@@ -1254,8 +1289,9 @@ public final class MainActivity extends Activity {
         profileScreen.setVisibility(target == profileScreen ? View.VISIBLE : View.GONE);
         editProfileScreen.setVisibility(target == editProfileScreen ? View.VISIBLE : View.GONE);
         accountScreen.setVisibility(target == accountScreen ? View.VISIBLE : View.GONE);
+        onboardingScreen.setVisibility(target == onboardingScreen ? View.VISIBLE : View.GONE);
         boolean immersive = target == detailScreen || target == manualScreen || target == nutritionScreen
-                || target == accountScreen || target == editProfileScreen;
+                || target == accountScreen || target == editProfileScreen || target == onboardingScreen;
         bottomNav.setVisibility(immersive ? View.GONE : View.VISIBLE);
         target.setPadding(target.getPaddingLeft(), target.getPaddingTop(), target.getPaddingRight(),
                 immersive ? 0 : dp(100));
@@ -2607,6 +2643,7 @@ public final class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (uiMotion != null) uiMotion.setForeground(true);
+        if (startupAnimation != null) startupAnimation.resume();
         if (bottomNav != null) ((FrostedNavigationView) bottomNav).refreshBackdrop();
         refreshAfterDriveDataChangeIfNeeded();
         refreshDriveBackupUi();
@@ -2626,6 +2663,7 @@ public final class MainActivity extends Activity {
     protected void onSaveInstanceState(Bundle outState) {
         outState.putString("selected_date", selectedDate.toString());
         outState.putString("active_meal", activeMealType);
+        if (onboardingController != null) outState.putBundle("profile_setup", onboardingController.saveState());
         super.onSaveInstanceState(outState);
     }
 
@@ -2647,7 +2685,11 @@ public final class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (editProfileScreen.getVisibility() == View.VISIBLE) {
+        if (!startupFinished) {
+            moveTaskToBack(true);
+        } else if (onboardingScreen.getVisibility() == View.VISIBLE) {
+            if (onboardingController == null || !onboardingController.goBack()) moveTaskToBack(true);
+        } else if (editProfileScreen.getVisibility() == View.VISIBLE) {
             closeEditProfileScreen();
         } else if (accountScreen.getVisibility() == View.VISIBLE) {
             showProfileScreen();
@@ -2664,6 +2706,7 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
+        if (startupAnimation != null) startupAnimation.pause();
         if (uiMotion != null) uiMotion.setForeground(false);
         super.onPause();
     }
@@ -2676,6 +2719,7 @@ public final class MainActivity extends Activity {
         });
         else if (closingCatalog != null) closingCatalog.close();
         if (uiMotion != null) uiMotion.close();
+        if (startupAnimation != null) startupAnimation.close();
         if (bottomNav != null) bottomNav.removeCallbacks(refreshFrostedNavigation);
         if (photoLoader != null) photoLoader.close();
         driveExecutor.shutdownNow();

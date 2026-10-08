@@ -63,13 +63,14 @@
             <TextView android:id="@+id/setupError" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginTop="12dp" android:textColor="#FF8A80" android:textSize="14sp"
                 android:accessibilityLiveRegion="polite" android:visibility="gone" />
+            <Space android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
+            <TextView android:id="@+id/setupNext" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:minHeight="52dp" android:layout_marginTop="24dp" android:padding="12dp" android:gravity="center" android:background="@drawable/bg_button_primary"
+                android:text="Continue" android:textColor="@color/background" android:textSize="15sp" android:textStyle="bold"
+                android:clickable="true" android:focusable="true" android:tag="glass:ACTION" />
+            <TextView android:id="@+id/setupDiagnostics" android:layout_width="match_parent" android:layout_height="48dp"
+                android:gravity="center" android:text="@string/export_diagnostics" android:textColor="@color/text_secondary"
+                android:textSize="12sp" android:clickable="true" android:focusable="true" />
         </LinearLayout>
     </ScrollView>
-    <TextView android:id="@+id/setupNext" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:minHeight="52dp" android:padding="12dp" android:gravity="center" android:background="@drawable/bg_button_primary"
-        android:text="Continue" android:textColor="@color/background" android:textSize="15sp" android:textStyle="bold"
-        android:clickable="true" android:focusable="true" android:tag="glass:ACTION" />
-    <TextView android:id="@+id/setupDiagnostics" android:layout_width="match_parent" android:layout_height="48dp"
-        android:gravity="center" android:text="@string/export_diagnostics" android:textColor="@color/text_secondary"
-        android:textSize="12sp" android:clickable="true" android:focusable="true" />
 </LinearLayout>

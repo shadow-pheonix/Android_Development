@@ -22,6 +22,7 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 
 ## Current functionality
 
+- A brief animated FuelNote launch screen, followed by guided profile setup for users without completed personal details. Setup covers age/DOB, sex, measurements, goal and activity, then previews calculated calorie and macro targets before saving.
 - Today's calories, protein, carbs and fat.
 - Illustrated Breakfast, Lunch, Snacks and Dinner headers with gentle offline vector animation; motion pauses when Home is hidden and respects disabled animations and battery saver.
 - Tap the Home nutrition progress card for the selected day's vitamins and minerals, with profile-adjusted Indian targets and explicit source-data coverage.
@@ -38,6 +39,27 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 - Mandatory bounded logs, crash capture and `Export diagnostics`.
 
 Barcode decoding uses ZXing Core under the Apache License 2.0; camera capture uses Android Camera2 directly so scanning has no runtime network/service dependency.
+
+## Startup and first-run setup (0.7.29)
+
+Fresh activity launches reveal the FuelNote mark and wordmark over the frosted scene
+in about one second. The animation pauses in the background, is skipped for disabled
+animations or battery saver, and does not replay on activity recreation or ordinary
+foreground returns. Android 12+ uses the same mark for the system launch screen.
+
+Users without a completed personal profile enter a four-step setup before Home:
+personal details, height/current weight, goal/activity/target weight, and a target
+preview. Required inputs begin empty on a new installation; name and DOB are optional
+when age is entered. Each step validates its inputs, and the final confirmation saves
+the profile plus recommended calorie and macro targets together. Back revisits steps
+or leaves the app without marking setup complete. In-progress inputs and the current
+step survive activity recreation. Export diagnostics remains available during setup.
+
+The `personalProfileComplete` preference distinguishes confirmed personal details
+from nutrition-only saves. Existing valid profiles saved before this version are
+accepted without repeating setup; incomplete or invalid stored profiles require it.
+No profile values are written during partial setup or logged by the new flow. All
+details remain editable through Profile after setup.
 
 ## Bundled food catalogue
 

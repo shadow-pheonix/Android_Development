@@ -3,9 +3,9 @@ package com.shadowphoenix.dietlog.profile;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import java.time.LocalDate;
-
 import com.shadowphoenix.dietlog.sync.SyncCoordinator;
+
+import java.time.LocalDate;
 
 public final class ProfilePreferences {
     private static final String FILE = "dietlog_profile";

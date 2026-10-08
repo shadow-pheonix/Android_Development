@@ -142,8 +142,11 @@ public final class OnboardingController {
         ProfileSettings s = preferences.load();
         s.displayName = name.getText().toString().trim();
         s.dateOfBirthIso = birthIso;
-        s.ageYears = birthIso.isEmpty() ? (int) number(age, "Age")
-                : Period.between(LocalDate.parse(birthIso), LocalDate.now()).getYears();
+        if (birthIso.isEmpty()) {
+            double years = number(age, "Age");
+            if (years != Math.rint(years)) throw new IllegalArgumentException("Enter age in whole years");
+            s.ageYears = (int) years;
+        } else s.ageYears = Period.between(LocalDate.parse(birthIso), LocalDate.now()).getYears();
         s.sex = selected(sex, ProfileSettings.Sex.values(), "sex");
         if (throughStep >= 1) {
             s.heightCm = number(height, "Height");
