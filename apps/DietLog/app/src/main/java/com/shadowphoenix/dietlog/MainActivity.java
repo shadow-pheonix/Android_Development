@@ -36,6 +36,7 @@ import com.shadowphoenix.dietlog.food.CatalogFood;
 import com.shadowphoenix.dietlog.food.FoodPhotoLoader;
 import com.shadowphoenix.dietlog.food.FoodCatalogDb;
 import com.shadowphoenix.dietlog.food.LatestFoodRequest;
+import com.shadowphoenix.dietlog.food.MealSuggestionCache;
 import com.shadowphoenix.dietlog.food.ServingOption;
 import com.shadowphoenix.dietlog.nutrition.DailyMicronutrientSummary;
 import com.shadowphoenix.dietlog.nutrition.Micronutrient;
@@ -97,8 +98,7 @@ public final class MainActivity extends Activity {
     private DiaryDbHelper diary;
     private FoodCatalogDb catalog;
     private LatestFoodRequest foodRequests;
-    private volatile List<CatalogFood> popularFoods;
-    private boolean popularRowsDisplayed;
+    private final MealSuggestionCache<CatalogFood> mealSuggestions = new MealSuggestionCache<>();
     private String pendingSearchQuery;
     private boolean searchNeedsReload;
     private boolean suppressSearchChanges;
@@ -213,7 +213,7 @@ public final class MainActivity extends Activity {
             catalog = new FoodCatalogDb(this);
             databaseStatusText.setText(String.format(Locale.getDefault(), "%,d foods available offline", catalog.count()));
             profileDatabaseStatus.setText(String.format(Locale.getDefault(), "%,d foods • ready offline", catalog.count()));
-            loadPopularFoods();
+            loadMealSuggestions();
         } catch (Exception e) {
             AppLogger.e("Offline catalog failed to open", e);
             databaseStatusText.setText("Offline database unavailable in this build");
@@ -598,7 +598,7 @@ public final class MainActivity extends Activity {
         findViewById(R.id.searchButton).setOnClickListener(v -> search());
         findViewById(R.id.searchClear).setOnClickListener(v -> {
             clearSearchQuery();
-            loadPopularFoods();
+            loadMealSuggestions();
             searchInput.requestFocus();
         });
         searchInput.addTextChangedListener(new TextWatcher() {
@@ -612,7 +612,7 @@ public final class MainActivity extends Activity {
                 pendingSearchQuery = value.toString().trim();
                 searchNeedsReload = searchScreen.getVisibility() != View.VISIBLE;
                 if (searchNeedsReload) return;
-                if (pendingSearchQuery.isEmpty()) loadPopularFoods();
+                if (pendingSearchQuery.isEmpty()) loadMealSuggestions();
                 else {
                     searchSectionTitle.setText("Searching…");
                     searchInput.postDelayed(liveSearch, 250);
@@ -629,7 +629,7 @@ public final class MainActivity extends Activity {
         });
         shortcutAll.setOnClickListener(v -> {
             clearSearchQuery();
-            loadPopularFoods();
+            loadMealSuggestions();
         });
         shortcutRecent.setOnClickListener(v -> {
             clearSearchQuery();
@@ -1982,7 +1982,7 @@ public final class MainActivity extends Activity {
         if (searchScreen != null && searchScreen.getVisibility() == View.VISIBLE
                 && searchNeedsReload && pendingSearchQuery != null) {
             searchNeedsReload = false;
-            if (pendingSearchQuery.isEmpty()) loadPopularFoods();
+            if (pendingSearchQuery.isEmpty()) loadMealSuggestions();
             else requestSearch(pendingSearchQuery);
         }
     }
@@ -2002,7 +2002,7 @@ public final class MainActivity extends Activity {
         if (catalog == null) return;
         String q = searchInput.getText().toString().trim();
         if (q.isEmpty()) {
-            loadPopularFoods();
+            loadMealSuggestions();
             return;
         }
         requestSearch(q);
@@ -2066,45 +2066,45 @@ public final class MainActivity extends Activity {
         manualContextText.setVisibility(View.VISIBLE);
     }
 
-    private void loadPopularFoods() {
+    private void loadMealSuggestions() {
         cancelLiveSearch();
         if (catalog == null) return;
         foodRequests.cancel();
         searchNeedsReload = false;
         selectShortcutTab(shortcutAll);
-        searchSectionTitle.setText("Andhra favourites");
-        List<CatalogFood> cached = popularFoods;
+        final String requestedMeal = activeMealType;
+        searchSectionTitle.setText(FoodEntry.MEAL_SNACKS.equals(requestedMeal)
+                ? "Snack suggestions" : FoodEntry.mealDisplayName(requestedMeal) + " suggestions");
+        List<CatalogFood> cached = mealSuggestions.get(requestedMeal);
         if (cached != null) {
             pendingSearchQuery = null;
-            if (!popularRowsDisplayed) {
+            if (mealSuggestions.needsRender(requestedMeal)) {
                 renderFoodResults(cached);
-                popularRowsDisplayed = true;
+                mealSuggestions.markDisplayed(requestedMeal);
             }
             return;
         }
         pendingSearchQuery = "";
         showSearchStatus("Loading foods…");
         foodRequests.submit(() -> {
-            if (popularFoods == null) {
+            List<CatalogFood> foods = mealSuggestions.get(requestedMeal);
+            if (foods == null) {
                 long started = SystemClock.elapsedRealtime();
-                popularFoods = Collections.unmodifiableList(queryPopularFoods());
-                AppLogger.i("Popular foods cached count=" + popularFoods.size()
+                foods = mealSuggestions.store(requestedMeal, catalog.mealSuggestions(requestedMeal));
+                AppLogger.i("Meal suggestions cached meal=" + requestedMeal + " count=" + foods.size()
                         + " elapsedMs=" + (SystemClock.elapsedRealtime() - started));
             }
-            return popularFoods;
+            return foods;
         }, foods -> {
+            if (!requestedMeal.equals(activeMealType)) return;
             pendingSearchQuery = null;
             renderFoodResults(foods);
-            popularRowsDisplayed = true;
+            mealSuggestions.markDisplayed(requestedMeal);
         }, this::searchFailed);
     }
 
-    private List<CatalogFood> queryPopularFoods() {
-        return catalog.andhraFavourites();
-    }
-
     private void showSearchStatus(String message) {
-        popularRowsDisplayed = false;
+        mealSuggestions.invalidateDisplayed();
         searchResultsContainer.removeAllViews();
         TextView status = new TextView(this);
         status.setText(message);
@@ -2161,7 +2161,7 @@ public final class MainActivity extends Activity {
     }
 
     private void renderHistoryResults(List<FoodHistory.Item> items, String mode) {
-        popularRowsDisplayed = false;
+        mealSuggestions.invalidateDisplayed();
         searchResultsContainer.removeAllViews();
         if (items.isEmpty()) {
             TextView empty = new TextView(this);
@@ -2251,7 +2251,7 @@ public final class MainActivity extends Activity {
     }
 
     private void renderFoodResults(List<CatalogFood> results) {
-        popularRowsDisplayed = false;
+        mealSuggestions.invalidateDisplayed();
         searchResultsContainer.removeAllViews();
         if (results.isEmpty()) {
             TextView empty = new TextView(this);

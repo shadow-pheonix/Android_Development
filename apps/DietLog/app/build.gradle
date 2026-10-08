@@ -25,8 +25,8 @@ android {
         applicationId 'com.shadowphoenix.dietlog'
         minSdk 29
         targetSdk 35
-        versionCode 53
-        versionName '0.7.34'
+        versionCode 54
+        versionName '0.7.35'
         buildConfigField 'String', 'SOURCE_COMMIT', '"' + (System.getenv('GITHUB_SHA') ?: 'local') + '"'
         buildConfigField 'String', 'CI_RUN_ID', '"' + (System.getenv('GITHUB_RUN_ID') ?: 'local') + '"'
         buildConfigField 'String', 'SUPABASE_URL', '"' + (System.getenv('DIETLOG_SUPABASE_URL') ?: '') + '"'
