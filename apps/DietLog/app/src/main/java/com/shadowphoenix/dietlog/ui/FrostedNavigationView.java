@@ -20,6 +20,8 @@ import android.view.ViewTreeObserver;
 import android.view.animation.PathInterpolator;
 import android.widget.LinearLayout;
 
+import com.shadowphoenix.dietlog.R;
+
 /** Blurs only the backdrop crop behind the floating bar, never the bar's icons/labels. */
 public final class FrostedNavigationView extends LinearLayout {
     private final Paint bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
@@ -213,7 +215,7 @@ public final class FrostedNavigationView extends LinearLayout {
     }
 
     private void captureBackdrop(Canvas canvas) {
-        canvas.drawColor(0xFF081219);
+        canvas.drawColor(getContext().getColor(R.color.glass_scene_base));
         int save = canvas.save();
         // Both views are direct children of appRoot. Capturing source excludes this bar.
         canvas.translate(-getLeft(), -getTop());

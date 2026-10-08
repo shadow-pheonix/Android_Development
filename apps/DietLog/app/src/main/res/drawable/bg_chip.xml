@@ -1,7 +1,7 @@
 <ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="#2872FFE0"><item>
 <shape android:shape="rectangle">
-    <gradient android:startColor="#A7354B53" android:endColor="#B91A3038" android:angle="315" />
-    <stroke android:width="0.75dp" android:color="#66D4EEE9" />
+    <gradient android:startColor="@color/glass_control_top" android:endColor="@color/glass_control_bottom" android:angle="315" />
+    <stroke android:width="0.75dp" android:color="@color/glass_rim_static" />
     <corners android:radius="24dp" />
 </shape>
 </item></ripple>

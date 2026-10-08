@@ -1,6 +1,7 @@
 package com.shadowphoenix.dietlog.ui;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.LinearGradient;
@@ -13,11 +14,14 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 
+import com.shadowphoenix.dietlog.R;
+
 /** Smooth tinted frost and a directional rim. Foreground content is never blurred. */
 public final class FrostedSurfaceDrawable extends Drawable {
     public enum Material { CARD, FEATURE, CONTROL, INPUT, NAVIGATION, TAB, SELECTION, ACTION, BADGE, THUMBNAIL }
 
     private final Material material;
+    private final Resources resources;
     private final boolean pressFeedbackEnabled;
     private final float density;
     private final Paint frost = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -35,7 +39,8 @@ public final class FrostedSurfaceDrawable extends Drawable {
     public FrostedSurfaceDrawable(Context context, Material material, boolean pressFeedbackEnabled) {
         this.material = material;
         this.pressFeedbackEnabled = pressFeedbackEnabled;
-        density = context.getResources().getDisplayMetrics().density;
+        resources = context.getResources();
+        density = resources.getDisplayMetrics().density;
         rim.setStyle(Paint.Style.STROKE);
         rim.setStrokeWidth(density * 0.75f);
     }
@@ -62,27 +67,30 @@ public final class FrostedSurfaceDrawable extends Drawable {
     }
 
     private void updatePaints() {
-        int top = 0xD32B414B, bottom = 0xD0112029;
+        int top = color(R.color.glass_card_top), bottom = color(R.color.glass_card_bottom);
         switch (material) {
-            case FEATURE: top = 0xD6365058; bottom = 0xCF12272E; break;
-            case CONTROL: top = 0xA7354B53; bottom = 0xB91A3038; break;
-            case INPUT: top = 0xD2223740; bottom = 0xD016252E; break;
-            case NAVIGATION: top = 0xE72B3D46; bottom = 0xEF13242D; break;
-            case SELECTION: top = 0xAB426A66; bottom = 0xAA1F4542; break;
+            case FEATURE: top = color(R.color.glass_feature_top); bottom = color(R.color.glass_feature_bottom); break;
+            case CONTROL: top = color(R.color.glass_control_top); bottom = color(R.color.glass_control_bottom); break;
+            case INPUT: top = color(R.color.glass_input_top); bottom = color(R.color.glass_input_bottom); break;
+            case NAVIGATION: top = color(R.color.glass_navigation_top); bottom = color(R.color.glass_navigation_bottom); break;
+            case SELECTION: top = color(R.color.glass_selection_top); bottom = color(R.color.glass_selection_bottom); break;
             case TAB:
-                top = selected ? 0xAB426A66 : 0x102D454E;
-                bottom = selected ? 0xAA1F4542 : 0x08203038;
+                top = color(selected ? R.color.glass_selection_top : R.color.glass_tab_top);
+                bottom = color(selected ? R.color.glass_selection_bottom : R.color.glass_tab_bottom);
                 break;
-            case ACTION: top = 0xEE63F5D1; bottom = 0xE51AC2A7; break;
-            case BADGE: top = 0xB82E5358; bottom = 0xC118353B; break;
+            case ACTION: top = color(R.color.glass_action_top); bottom = color(R.color.glass_action_bottom); break;
+            case BADGE: top = color(R.color.glass_badge_top); bottom = color(R.color.glass_badge_bottom); break;
             default: break;
         }
         frost.setShader(new LinearGradient(rect.left, rect.top, rect.right, rect.bottom,
                 new int[]{top, bottom}, null, Shader.TileMode.CLAMP));
         rim.setShader(new LinearGradient(rect.left, rect.top, rect.right, rect.bottom,
-                new int[]{pressed ? 0xAFFFFFFF : 0x72E4FFFA, 0x184CE8CE, 0x35D3EEEA},
+                new int[]{color(pressed ? R.color.glass_rim_pressed : R.color.glass_rim_top),
+                        color(R.color.glass_rim_middle), color(R.color.glass_rim_bottom)},
                 new float[]{0, 0.56f, 1}, Shader.TileMode.CLAMP));
     }
+
+    private int color(int resourceId) { return resources.getColor(resourceId, null); }
 
     @Override public void draw(Canvas canvas) {
         if (rect.isEmpty()) return;

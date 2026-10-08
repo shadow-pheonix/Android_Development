@@ -10,6 +10,8 @@ import android.graphics.SweepGradient;
 import android.util.AttributeSet;
 import android.view.View;
 
+import com.shadowphoenix.dietlog.R;
+
 public final class RingProgressView extends View {
     private final Paint trackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint progressPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -37,7 +39,7 @@ public final class RingProgressView extends View {
         trackPaint.setStyle(Paint.Style.STROKE);
         trackPaint.setStrokeCap(Paint.Cap.ROUND);
         trackPaint.setStrokeWidth(strokeWidthPx);
-        trackPaint.setColor(0x603D6770);
+        trackPaint.setColor(context.getColor(R.color.glass_ring_track));
         progressPaint.setStyle(Paint.Style.STROKE);
         progressPaint.setStrokeCap(Paint.Cap.ROUND);
         progressPaint.setStrokeWidth(strokeWidthPx);
