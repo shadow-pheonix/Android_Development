@@ -5,11 +5,12 @@ import android.content.Context;
 import android.widget.TextView;
 
 import com.shadowphoenix.dietlog.R;
+import com.shadowphoenix.dietlog.profile.StartupPreferences;
 
 /** An optional, device-local entry choice; cancellation never counts as a choice. */
 public final class StartupChoiceController {
     private final TextView google, guest, status;
-    private boolean busy;
+    private boolean busy, restoring;
 
     public StartupChoiceController(Activity activity, Runnable connect, Runnable continueWithoutLogin,
                                    Runnable diagnostics) {
@@ -22,21 +23,38 @@ public final class StartupChoiceController {
             status.setText("Opening Google Drive…");
             connect.run();
         });
-        guest.setOnClickListener(v -> { setBusy(false); continueWithoutLogin.run(); });
+        guest.setOnClickListener(v -> {
+            if (restoring) return;
+            setBusy(false);
+            continueWithoutLogin.run();
+        });
         activity.findViewById(R.id.startupChoiceDiagnostics).setOnClickListener(v -> diagnostics.run());
     }
 
     public static boolean hasChosen(Context context) {
-        return context.getSharedPreferences("dietlog_startup", Context.MODE_PRIVATE)
-                .getBoolean("entryChoiceComplete", false);
+        return new StartupPreferences(context).hasChosen();
     }
 
     public static void markChosen(Context context) {
-        context.getSharedPreferences("dietlog_startup", Context.MODE_PRIVATE)
-                .edit().putBoolean("entryChoiceComplete", true).apply();
+        new StartupPreferences(context).markChosen();
+    }
+
+    public void showRestoring() {
+        restoring = true;
+        setBusy(true);
+        google.setText("Restoring…");
+        status.setText("Checking your Drive backup and restoring your profile…");
+    }
+
+    public void showRestoreFailure() {
+        restoring = false;
+        setBusy(false);
+        google.setText("Retry Drive restore");
+        status.setText("Couldn’t check your backup. Retry, or continue without login.");
     }
 
     public void showFailure(boolean cancelled) {
+        restoring = false;
         setBusy(false);
         status.setText(cancelled ? "Login cancelled. Try again, or continue without login."
                 : "Couldn’t connect to Google Drive. Try again, or continue without login.");
@@ -46,7 +64,7 @@ public final class StartupChoiceController {
         // Google results arrive before onResume. If no result arrived, release
         // an interrupted preparation request so rotation/backgrounding cannot
         // leave the user stuck on disabled controls.
-        if (busy) {
+        if (busy && !restoring) {
             setBusy(false);
             status.setText("Choose Google Drive, or continue without login.");
         }
@@ -57,5 +75,7 @@ public final class StartupChoiceController {
         google.setEnabled(!value);
         google.setAlpha(value ? 0.5f : 1);
         google.setText(value ? "Connecting…" : "Continue with Google Drive");
+        guest.setEnabled(!restoring);
+        guest.setAlpha(restoring ? 0.5f : 1);
     }
 }

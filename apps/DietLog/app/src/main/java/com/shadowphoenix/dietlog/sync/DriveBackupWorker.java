@@ -7,6 +7,8 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.shadowphoenix.dietlog.diagnostics.AppLogger;
+import com.shadowphoenix.dietlog.profile.ProfilePreferences;
+import com.shadowphoenix.dietlog.profile.StartupPreferences;
 import com.shadowphoenix.dietlog.sync.drive.DriveFileMetadata;
 import com.shadowphoenix.dietlog.sync.drive.DriveRestClient;
 import com.shadowphoenix.dietlog.sync.drive.GoogleDriveAuthorization;
@@ -25,6 +27,11 @@ public final class DriveBackupWorker extends Worker {
     @Override
     public Result doWork() {
         Context context = getApplicationContext();
+        if (new StartupPreferences(context).needsDriveRestore(true,
+                new ProfilePreferences(context).hasCompletedPersonalProfile())) {
+            AppLogger.i("Drive upload deferred until startup recovery finishes");
+            return Result.retry();
+        }
         DriveSyncStatusStore status = new DriveSyncStatusStore(context);
         status.markAttempt();
         try {
