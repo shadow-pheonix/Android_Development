@@ -5,9 +5,13 @@ Fallbacks are always labelled representative and never replace an official match
 """
 import argparse
 import concurrent.futures
+import functools
 import hashlib
 import json
+import re
+import shutil
 import sqlite3
+import tempfile
 import urllib.parse
 import urllib.request
 from collections import Counter
@@ -17,6 +21,18 @@ try:
 except ImportError:
     from build_food_photos import normalized, compress_photo, check_photo_quality
 
+normalized = functools.lru_cache(maxsize=65536)(normalized)
+
+# Manufacturer pages reviewed for this snapshot. The registry cannot authorize
+# arbitrary image hosts (especially community uploads) just by declaring them.
+BRAND_PAGES = frozenset(('britannia-international.com', 'epigamiastore.com',
+    'happilo.com', 'nakpro.com', 'shop.orklaindia.com', 'true-elements.com',
+    'www.cadbury.co.uk', 'www.englishoven.com', 'www.farmley.com',
+    'www.idfreshfood.com', 'www.maggi.in', 'www.milkymist.com', 'www.yogabars.in'))
+BRAND_IMAGES = frozenset(('britannia-international.com', 'cdn.shopify.com',
+    'englishoven.com', 'shop.orklaindia.com', 'static.wixstatic.com',
+    'tastehub.mdlzapps.cloud', 'www.englishoven.com', 'www.idfreshfood.com', 'www.maggi.in'))
+
 
 def phrase(value, alias):
     alias = normalized(alias)
@@ -25,6 +41,9 @@ def phrase(value, alias):
 
 def match_photo(row, definitions):
     code, name, brand, source = row
+    # Reference catalogues put the food first and preparation/ingredients after
+    # commas. "Carrot, orange" is a carrot; "Peas, cooked, with salt" isn't salt.
+    family_name = name.split(',')[0] if source in ('IFCT', 'USDA') else name
     exact, representative = [], []
     for key, entry in definitions.items():
         if source not in entry['sources']:
@@ -33,12 +52,19 @@ def match_photo(row, definitions):
             if source == 'OFF' and code in entry['food_codes'] and any(phrase(brand, a) for a in entry['brands']):
                 exact.append(key)
             continue
+        if source == 'OFF' and code in entry.get('fallback_codes', []):
+            representative.append(((entry.get('priority', 0), 0, 0, True), key))
+            continue
+        aliases = [alias for alias in entry['aliases'] if phrase(family_name, alias)]
+        if not aliases:
+            continue
         if any(phrase(name, a) for a in entry.get('exclude_aliases', [])):
             continue
-        for alias in entry['aliases']:
-            if phrase(name, alias):
-                representative.append(((len(normalized(alias).split()), len(normalized(alias)),
-                                        entry['presentation'] == 'packshot'), key))
+        if entry.get('require_any') and not any(phrase(name, a) for a in entry['require_any']):
+            continue
+        for alias in aliases:
+            representative.append(((entry.get('priority', 0), len(normalized(alias).split()), len(normalized(alias)),
+                                    entry['presentation'] == 'packshot'), key))
     if len(exact) > 1:
         raise ValueError('Ambiguous official product: ' + code)
     if exact:
@@ -64,13 +90,18 @@ def validate_definition(key, entry):
                 urllib.parse.urlsplit(entry['source_url']).hostname != 'www.pexels.com' or \
                 entry['license_url'] != 'https://www.pexels.com/license/':
             raise ValueError('Unapproved stock source')
+    else:
+        if urllib.parse.urlsplit(entry['source_url']).hostname not in BRAND_PAGES or \
+                urllib.parse.urlsplit(entry['license_url']).hostname not in BRAND_PAGES or \
+                urllib.parse.urlsplit(entry['url']).hostname not in BRAND_IMAGES:
+            raise ValueError('Unapproved manufacturer source')
     if entry['kind'] == 'product':
         if entry['provider'] != 'official_brand' or entry['sources'] != ['OFF'] or not entry['brands'] or not entry['food_codes']:
             raise ValueError('Official product requires approved brand and codes')
     elif not entry['aliases']:
         raise ValueError('Representative photo requires product-type aliases')
-    if entry['provider'] == 'official_brand' and entry['presentation'] != 'packshot':
-        raise ValueError('Official image must be a packshot')
+    if entry['kind'] == 'product' and entry['presentation'] != 'packshot':
+        raise ValueError('Official product image must be a packshot')
     if not entry.get('reviewed') or not entry.get('review_note'):
         raise ValueError('Photo needs visual review')
     for field in ('title', 'credit', 'license'):
@@ -78,6 +109,8 @@ def validate_definition(key, entry):
             raise ValueError('Missing source metadata')
     if not set(entry['sources']) <= {'OFF', 'IFCT', 'INDB', 'USDA'}:
         raise ValueError('Unknown catalogue source')
+    if not re.fullmatch(r'[a-f0-9]{64}', entry.get('reviewed_sha256', '')):
+        raise ValueError('Missing reviewed thumbnail hash')
 
 
 def assignments(rows, definitions):
@@ -113,6 +146,8 @@ def acquire(entry, cache, assets):
         cached.write_bytes(encoded)
     check_photo_quality(encoded)
     digest = hashlib.sha256(encoded).hexdigest()
+    if digest != entry['reviewed_sha256']:
+        raise ValueError('Image changed since visual review: ' + entry['title'])
     asset = 'food_photos/' + digest + '.webp'
     (assets / asset).write_bytes(encoded)
     fields = ('url', 'source_url', 'title', 'credit', 'license', 'license_url', 'kind', 'provider', 'presentation')
@@ -127,14 +162,20 @@ def build(db_path, sources, cache, assets, workers=4):
     foods = assignments(rows, definitions)
     cache, assets = Path(cache), Path(assets)
     cache.mkdir(parents=True, exist_ok=True)
-    (assets / 'food_photos').mkdir(parents=True, exist_ok=True)
-    # Fail before replacing the manifest if any reviewed source cannot be obtained.
     photos = {}
     wanted = sorted(set(foods.values()))
-    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = {executor.submit(acquire, definitions[key], cache, assets): key for key in wanted}
-        for future in concurrent.futures.as_completed(futures):
-            photos[futures[future]] = future.result()
+    # Download and verify everything before touching the committed bundle. A
+    # failed source must leave the previous assets and manifest intact.
+    with tempfile.TemporaryDirectory(dir=cache, prefix='staging-') as directory:
+        stage = Path(directory)
+        (stage / 'food_photos').mkdir()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {executor.submit(acquire, definitions[key], cache, stage): key for key in wanted}
+            for future in concurrent.futures.as_completed(futures):
+                photos[futures[future]] = future.result()
+        (assets / 'food_photos').mkdir(parents=True, exist_ok=True)
+        for file in (stage / 'food_photos').glob('*.webp'):
+            shutil.copyfile(file, assets / 'food_photos' / file.name)
     coverage = dict(Counter(source for code, _, _, source in rows if code in foods))
     manifest = dict(schema_version=2, photos=photos, foods=foods, coverage=coverage)
     temporary = assets / 'food_photos.tmp'

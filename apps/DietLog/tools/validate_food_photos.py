@@ -34,6 +34,8 @@ def validate(db_path, assets, sources=None):
         if set(manifest['photos']) != set(manifest['foods'].values()):
             raise ValueError('Unused or missing photo metadata')
         for key, photo in manifest['photos'].items():
+            if photo.get('sha256') != definitions[key]['reviewed_sha256']:
+                raise ValueError('Photo changed since visual review')
             for field in ('url', 'source_url', 'title', 'credit', 'license', 'license_url',
                           'kind', 'provider', 'presentation'):
                 if photo.get(field) != definitions[key][field]:
