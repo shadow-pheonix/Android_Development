@@ -102,7 +102,7 @@ public final class ProfileController {
     }
 
     public boolean savePersonalProfile() {
-        return save();
+        return save(true);
     }
 
     public void updateCurrentWeightFromProgress(double weightKg) {
@@ -303,8 +303,13 @@ public final class ProfileController {
     }
 
     private boolean save() {
+        return save(false);
+    }
+
+    private boolean save(boolean personal) {
         try {
             ProfileSettings draft = readDraft(true);
+            if (personal) ProfileSetup.validatePersonal(draft, LocalDate.now());
             CalorieCalculator.Estimate estimate = CalorieCalculator.calculate(draft, LocalDate.now());
             if (draft.targetWeightKg < 25 || draft.targetWeightKg > 350) {
                 throw new IllegalArgumentException("Target weight must be between 25 and 350 kg");
@@ -326,7 +331,8 @@ public final class ProfileController {
                 draft.fatPercent = draft.fatGoalG * 9.0 / estimate.calorieTarget * 100.0;
             }
             settings = draft;
-            preferences.save(settings);
+            if (personal) preferences.savePersonalProfile(settings);
+            else preferences.save(settings);
             hasSavedProfile = true;
             populateUi();
             refreshPreview();

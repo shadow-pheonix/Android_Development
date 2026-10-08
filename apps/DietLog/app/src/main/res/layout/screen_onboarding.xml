@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:padding="18dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center_vertical">
+        <FrameLayout android:id="@+id/setupBack" android:layout_width="48dp" android:layout_height="48dp"
+            android:background="@drawable/bg_chip" android:contentDescription="Previous setup step"
+            android:clickable="true" android:focusable="true" android:tag="glass:CONTROL">
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center"
+                android:src="@drawable/ic_arrow_back_24" android:importantForAccessibility="no" />
+        </FrameLayout>
+        <TextView android:id="@+id/setupStep" android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:gravity="center" android:textColor="@color/accent" android:textSize="13sp" />
+        <View android:layout_width="48dp" android:layout_height="48dp" />
+    </LinearLayout>
+    <ProgressBar android:id="@+id/setupProgress" style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent" android:layout_height="4dp" android:layout_marginTop="12dp"
+        android:max="4" android:progress="1" android:progressTint="@color/accent" android:saveEnabled="false" />
+    <ScrollView android:id="@+id/setupScroll" android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:fillViewport="true" android:clipToPadding="false" android:paddingTop="24dp" android:paddingBottom="16dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+            <TextView android:id="@+id/setupTitle" style="@style/Text.Title" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:accessibilityHeading="true" />
+            <TextView android:id="@+id/setupSubtitle" style="@style/Text.Body" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp" />
+            <LinearLayout android:id="@+id/setupBasics" style="@style/SetupPanel">
+                <TextView style="@style/SetupLabel" android:text="Name / nickname · optional" android:labelFor="@id/setupName" />
+                <EditText android:id="@+id/setupName" style="@style/SetupInput" android:hint="What should we call you?" android:inputType="textPersonName" android:maxLength="80" />
+                <TextView style="@style/SetupLabel" android:text="Date of birth or age" android:labelFor="@id/setupAge" />
+                <TextView android:id="@+id/setupDob" style="@style/SetupInput" android:gravity="center_vertical"
+                    android:text="Choose date of birth" android:clickable="true" android:focusable="true" android:tag="glass:INPUT" />
+                <EditText android:id="@+id/setupAge" style="@style/SetupInput" android:hint="Age in years" android:inputType="number" android:maxLength="3" />
+                <TextView style="@style/SetupLabel" android:text="Sex" android:labelFor="@id/setupSex" />
+                <Spinner android:id="@+id/setupSex" style="@style/SetupSpinner" />
+                <TextView style="@style/SetupNote" android:text="Used by the calorie estimate. Your profile stays on this device unless you choose to sync it." />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/setupBody" style="@style/SetupPanel" android:visibility="gone">
+                <TextView style="@style/SetupLabel" android:text="Height (cm)" android:labelFor="@id/setupHeight" />
+                <EditText android:id="@+id/setupHeight" style="@style/SetupInput" android:hint="e.g. 170" android:inputType="numberDecimal" />
+                <TextView style="@style/SetupLabel" android:text="Current weight (kg)" android:labelFor="@id/setupWeight" />
+                <EditText android:id="@+id/setupWeight" style="@style/SetupInput" android:hint="e.g. 70" android:inputType="numberDecimal" />
+                <TextView style="@style/SetupNote" android:text="These details help estimate your daily energy needs. You can update them anytime in Profile." />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/setupPlan" style="@style/SetupPanel" android:visibility="gone">
+                <TextView style="@style/SetupLabel" android:text="Your goal" android:labelFor="@id/setupGoal" />
+                <Spinner android:id="@+id/setupGoal" style="@style/SetupSpinner" />
+                <LinearLayout android:id="@+id/setupTargetGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                    <TextView style="@style/SetupLabel" android:text="Target weight (kg)" android:labelFor="@id/setupTarget" />
+                    <EditText android:id="@+id/setupTarget" style="@style/SetupInput" android:hint="Your target weight" android:inputType="numberDecimal" />
+                </LinearLayout>
+                <TextView style="@style/SetupLabel" android:text="Activity level" android:labelFor="@id/setupActivity" />
+                <Spinner android:id="@+id/setupActivity" style="@style/SetupSpinner" />
+                <TextView android:id="@+id/setupActivityNote" style="@style/SetupNote" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/setupReview" style="@style/SetupPanel" android:visibility="gone">
+                <TextView style="@style/SetupLabel" android:text="Your daily target" />
+                <TextView android:id="@+id/setupCalories" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp" android:textColor="@color/accent" android:textSize="32sp" android:textStyle="bold" />
+                <TextView android:id="@+id/setupMacros" style="@style/SetupNote" android:textColor="@color/text_primary" />
+                <TextView android:id="@+id/setupSummary" style="@style/SetupNote" />
+                <TextView style="@style/SetupNote" android:text="This is a starting estimate. Your weight trend over several weeks will help you adjust it. You can change calories and nutrition targets in Profile." />
+            </LinearLayout>
+            <TextView android:id="@+id/setupError" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:textColor="#FF8A80" android:textSize="14sp"
+                android:accessibilityLiveRegion="polite" android:visibility="gone" />
+        </LinearLayout>
+    </ScrollView>
+    <TextView android:id="@+id/setupNext" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="52dp" android:padding="12dp" android:gravity="center" android:background="@drawable/bg_button_primary"
+        android:text="Continue" android:textColor="@color/background" android:textSize="15sp" android:textStyle="bold"
+        android:clickable="true" android:focusable="true" android:tag="glass:ACTION" />
+    <TextView android:id="@+id/setupDiagnostics" android:layout_width="match_parent" android:layout_height="48dp"
+        android:gravity="center" android:text="@string/export_diagnostics" android:textColor="@color/text_secondary"
+        android:textSize="12sp" android:clickable="true" android:focusable="true" />
+</LinearLayout>
