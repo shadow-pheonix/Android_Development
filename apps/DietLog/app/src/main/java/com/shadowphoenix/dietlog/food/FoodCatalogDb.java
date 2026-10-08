@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.shadowphoenix.dietlog.BuildConfig;
 import com.shadowphoenix.dietlog.diagnostics.AppLogger;
+import com.shadowphoenix.dietlog.data.FoodEntry;
 import com.shadowphoenix.dietlog.nutrition.Micronutrient;
 import com.shadowphoenix.dietlog.nutrition.MicronutrientValues;
 
@@ -141,6 +142,17 @@ public final class FoodCatalogDb implements AutoCloseable {
     public List<CatalogFood> andhraFavourites() {
         List<CatalogFood> foods = new ArrayList<>();
         try (Cursor c = db.rawQuery(FOOD_SELECT + "WHERE r.popular=1 ORDER BY r.position", null)) {
+            while (c.moveToNext()) foods.add(read(c));
+        }
+        return foods;
+    }
+
+    public List<CatalogFood> mealSuggestions(String mealType) {
+        List<CatalogFood> foods = new ArrayList<>();
+        String sql = "SELECT f.*,COALESCE(m.display_name,r.display_name) AS display_name " +
+                "FROM meal_foods m JOIN foods f ON f.code=m.code " +
+                "LEFT JOIN regional_foods r ON r.code=f.code WHERE m.meal_type=? ORDER BY m.position";
+        try (Cursor c = db.rawQuery(sql, new String[]{FoodEntry.normalizeMealType(mealType)})) {
             while (c.moveToNext()) foods.add(read(c));
         }
         return foods;

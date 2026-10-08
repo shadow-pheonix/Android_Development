@@ -66,6 +66,33 @@ public class LatestFoodRequestTest {
         } finally { requests.close(); assertTrue(worker.awaitTermination(3, TimeUnit.SECONDS)); }
     }
 
+    @Test public void switchingMealCanWarmOldCacheButOnlyDisplaysTheSelectedMeal() throws Exception {
+        ExecutorService worker = Executors.newSingleThreadExecutor();
+        BlockingQueue<Runnable> callbacks = new LinkedBlockingQueue<>();
+        LatestFoodRequest requests = new LatestFoodRequest(worker, callbacks::add);
+        MealSuggestionCache<String> cache = new MealSuggestionCache<>();
+        CountDownLatch started = new CountDownLatch(1), release = new CountDownLatch(1);
+        List<String> visible = new ArrayList<>();
+        try {
+            requests.submit(() -> {
+                started.countDown(); await(release);
+                return cache.store("breakfast", java.util.Collections.singletonList("idli"));
+            }, foods -> { visible.addAll(foods); cache.markDisplayed("breakfast"); }, error -> fail(error.toString()));
+            await(started);
+            requests.submit(() -> cache.store("lunch", java.util.Collections.singletonList("rice")),
+                    foods -> { visible.addAll(foods); cache.markDisplayed("lunch"); }, error -> fail(error.toString()));
+            release.countDown();
+            callback(callbacks).run();
+            assertEquals(java.util.Collections.singletonList("rice"), visible);
+            assertEquals(java.util.Collections.singletonList("idli"), cache.get("breakfast"));
+            assertFalse(cache.needsRender("lunch")); assertTrue(cache.needsRender("breakfast"));
+            assertTrue(callbacks.isEmpty());
+        } finally {
+            release.countDown(); requests.close();
+            assertTrue(worker.awaitTermination(3, TimeUnit.SECONDS));
+        }
+    }
+
     @Test public void latestFailureIsDeliveredButCancelledFailureIsSuppressed() throws Exception {
         ExecutorService worker = Executors.newSingleThreadExecutor();
         BlockingQueue<Runnable> callbacks = new LinkedBlockingQueue<>();

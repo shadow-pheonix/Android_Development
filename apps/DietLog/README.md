@@ -22,6 +22,7 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 
 ## Current functionality
 
+- Add beside Breakfast, Lunch, Snacks or Dinner opens meal-specific Andhra food suggestions, with a separate background-loaded cache for each meal. Typed search still searches the entire offline catalogue.
 - Refined daily targets with optional measured body fat, lab resting calories, observed stable-weight maintenance intake and training type. [Calculation rules and sources](TARGET_CALCULATIONS.md) explain input priority, macro budgets, automatic/custom targets and age-specific estimates. Optional fields do not trigger setup for returning users.
 - Startup Google Drive sign-in restores existing backups before deciding whether personal-profile setup is needed. A valid saved profile opens Home directly; only missing/incomplete profiles need setup.
 - Optional Google Drive sign-in or Continue without login after the launch animation, before first-run profile setup. The choice is remembered on this device and Drive can be connected later from Profile.
@@ -116,6 +117,31 @@ sex/DOB, stale weight-loss rates, recomposition protein, macro-budget edge cases
 manual overrides, existing goals and invalid non-finite values.
 
 ## Bundled food catalogue
+
+### Suggestions by meal (0.7.35)
+
+The All shortcut and empty search now use the selected meal rather than one shared
+favourites list. Breakfast has 18 suggestions including pesarattu, idli, dosa/upma,
+eggs, milk and chutneys. Lunch has 18 suggestions led by cooked rice, pappu, curries
+and vegetable fries. Snacks has 16 suggestions including fruit, nuts, puffed rice,
+eggs, milk and tea-time foods. Dinner has 18 suggestions led by chapati, rice, dal,
+curd rice and curries, with khichdi and tiffin alternatives.
+
+`tools/meal_foods.json` defines stable catalogue IDs and optional readable labels;
+the builder writes an indexed `meal_foods` table and verifies that every production
+suggestion resolves to complete INDB/IFCT/USDA nutrition. Cooked dishes cannot turn
+into a packaged mix through keyword matching. Milk is explicitly whole cow milk;
+boiled eggs and plain omelette use the corresponding USDA cooked records. Source
+nutrition, serving data, food IDs and photo assignments remain unchanged. These
+suggestions help choose foods to log; they are not a prescribed menu or portion plan.
+
+Add buttons pass their meal through the existing logging context, and a captured
+meal key controls both the query and delivery. Each meal keeps an immutable cache;
+changing the meal refreshes rows even when the previous meal was already displayed.
+Typing, selecting a history shortcut, or leaving Search invalidates older callbacks.
+Revisiting the same suggestions reuses cached rows. Navigation still opens before
+worker queries, and diagnostic logs contain meal keys, counts and durations only.
+Search queries, Recent, Frequent, Favorites and barcode lookup remain unrestricted.
 
 ### Andhra favourites and search (0.7.32)
 
@@ -268,7 +294,7 @@ feedback are preserved.
 ### Search responsiveness and gentler navigation (0.7.17)
 
 The selection pill now uses a 450 ms slide with a gentler start. Opening Search
-shows the page before requesting foods. Popular foods are loaded once per activity
+shows the page before requesting foods. Suggestions are loaded once per meal per activity
 on a serial database worker and cached, so returning to Search reuses both the
 cached foods and the existing popular rows. Typed searches also run on that worker.
 Loading feedback appears while results are pending. New requests, history shortcuts

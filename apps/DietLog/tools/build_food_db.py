@@ -3,8 +3,10 @@ import argparse, csv, json, math, re, sqlite3
 from pathlib import Path
 if __package__:
     from .food_search_index import build_search_index
+    from .meal_recommendations import build_meal_recommendations
 else:
     from food_search_index import build_search_index
+    from meal_recommendations import build_meal_recommendations
 
 KJ_PER_KCAL = 4.184
 SCHEMA = '''
@@ -352,6 +354,7 @@ def main():
     if args.indb: stats['indb']=import_indb_xlsx(conn,args.indb)
     stats['regional_foods'], stats['search_terms'] = build_search_index(conn)
     total,packaged,macros=validate(conn)
+    stats['meal_suggestions'] = build_meal_recommendations(conn, strict=total >= 26000)
     stats.update(total=total,packaged=packaged,complete_core_macros=macros)
     for k,v in stats.items(): conn.execute('INSERT INTO metadata(key,value) VALUES(?,?)',(k,str(v)))
     conn.execute('INSERT INTO metadata(key,value) VALUES(?,?)',('schema_version','2'))
