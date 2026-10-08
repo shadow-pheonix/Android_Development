@@ -15,7 +15,8 @@ class SearchIndexTest(unittest.TestCase):
                 ('INDB-ASC127', 'Tamarind rice (Chintapandu pulihora)', 'INDB', None),
                 ('INDB-ASC126', 'Curd rice (Perugu annam)', 'INDB', None),
                 ('OFF-001', 'Upma mix', 'OFF', 'Example'),
-                ('INDB-BFP039', 'Semolina upma (Suji/Rava upma)', 'INDB', None)]:
+                ('INDB-BFP039', 'Semolina upma (Suji/Rava upma)', 'INDB', None),
+                ('OFF-002', 'Chiken curry', 'OFF', 'Example')]:
             insert(self.c, payload(code=code, name=name, source=source, brand=brand,
                                   calories_100g=140, protein_100g=4, carbs_100g=25, fat_100g=2))
         build_search_index(self.c)
@@ -59,8 +60,11 @@ class SearchIndexTest(unittest.TestCase):
         self.assertEqual('పెసరట్టు', normalize('పెసరట్టు'))
 
     def test_every_food_is_indexed_once(self):
-        self.assertEqual(5, self.c.execute('SELECT count(*) FROM foods_search').fetchone()[0])
+        self.assertEqual(6, self.c.execute('SELECT count(*) FROM foods_search').fetchone()[0])
         self.assertEqual('1', self.c.execute("SELECT value FROM metadata WHERE key='search_version'").fetchone()[0])
+
+    def test_misspelled_catalogue_names_are_indexed_under_canonical_spelling(self):
+        self.assertEqual(['OFF-002'], self.matches('"chicken*" AND "curry*"'))
 
 class BuilderTest(unittest.TestCase):
     def test_merge_fixture_and_micronutrient_units(self):

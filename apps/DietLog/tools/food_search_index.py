@@ -5,6 +5,9 @@ import re
 import unicodedata
 from pathlib import Path
 
+SPELLINGS = {'chiken': 'chicken', 'chciken': 'chicken', 'panner': 'paneer',
+             'briyani': 'biryani', 'biriyani': 'biryani', 'basmathi': 'basmati'}
+
 
 def normalize(value):
     value = unicodedata.normalize('NFKD', value or '').lower()
@@ -41,6 +44,9 @@ def build_search_index(conn):
         rowid, code, name, brand, category = row
         name, brand, category = normalize(name), normalize(brand), normalize(category)
         alias = aliases.get(code, '')
+        canonical_name = ' '.join(SPELLINGS.get(t, t) for t in name.split())
+        if canonical_name != name:
+            alias = '\n'.join(filter(None, [alias, canonical_name]))
         conn.execute('INSERT INTO foods_search(docid,name,brand,aliases,category) VALUES(?,?,?,?,?)',
                      (rowid, name, brand, alias, category))
         terms.update(set(re.findall(r'\b[a-z][a-z0-9]{2,31}\b', name + ' ' + brand + ' ' + alias)))
