@@ -35,6 +35,7 @@ public final class OnboardingController {
     private final EditText name, age, height, weight, target;
     private final Spinner sex, goal, level;
     private final TextView dob, title, subtitle, stepText, next, error;
+    private final OptionalTargetDetails optionalDetails;
     private int step;
     private String birthIso = "";
     private boolean complete;
@@ -62,6 +63,7 @@ public final class OnboardingController {
         bindOptions(sex, "Select sex", ProfileSettings.Sex.values());
         bindOptions(goal, "Select a goal", ProfileSettings.Goal.values());
         bindOptions(level, "Select activity level", ProfileSettings.ActivityLevel.values());
+        optionalDetails = new OptionalTargetDetails(activity.findViewById(R.id.setupOptionalTargets), this::updatePlan);
         if (restored != null) restore(restored);
         else if (preferences.hasSavedProfile()) populate(preferences.load());
         updateBirthDate();
@@ -110,7 +112,10 @@ public final class OnboardingController {
             ProfileSettings s = readDraft(step);
             if (step == 0) ProfileSetup.validateBasics(s, LocalDate.now());
             else if (step == 1) ProfileSetup.validateMeasurements(s);
-            else ProfileSetup.validatePersonal(s, LocalDate.now());
+            else {
+                ProfileSetup.validatePersonal(s, LocalDate.now());
+                CalorieCalculator.calculate(s, LocalDate.now());
+            }
             hideKeyboard();
             if (step < 3) {
                 step++;
@@ -162,6 +167,8 @@ public final class OnboardingController {
                 throw new IllegalArgumentException("Choose a target above your current weight for this goal");
             s.weeklyWeightChangeKg = CalorieCalculator.recommendedWeeklyChange(s);
             s.manualCalorieOverride = false;
+            optionalDetails.readInto(s);
+            OptionalProfileDetails.validate(s);
         }
         return s;
     }
@@ -182,17 +189,7 @@ public final class OnboardingController {
 
     private void applyTargets(ProfileSettings s) {
         double calories = CalorieCalculator.calculate(s, LocalDate.now()).calorieTarget;
-        NutritionGoalCalculator.Goals macros = NutritionGoalCalculator.recommend(s, calories);
-        s.macroMode = ProfileSettings.MacroMode.GRAMS;
-        s.proteinGoalG = macros.proteinG;
-        s.carbsGoalG = macros.carbsG;
-        s.fatGoalG = macros.fatG;
-        s.fibreGoalG = macros.fibreG;
-        s.sugarLimitG = macros.sugarLimitG;
-        s.sodiumLimitMg = macros.sodiumLimitMg;
-        s.proteinPercent = s.proteinGoalG * 4 / calories * 100;
-        s.carbsPercent = s.carbsGoalG * 4 / calories * 100;
-        s.fatPercent = s.fatGoalG * 9 / calories * 100;
+        NutritionGoalCalculator.applyRecommended(s, calories, LocalDate.now());
     }
 
     private void render() {
@@ -213,12 +210,14 @@ public final class OnboardingController {
                 ProfileSettings s = readDraft(3);
                 ProfileSetup.validatePersonal(s, LocalDate.now());
                 applyTargets(s);
-                double calories = CalorieCalculator.calculate(s, LocalDate.now()).calorieTarget;
+                CalorieCalculator.Estimate estimate = CalorieCalculator.calculate(s, LocalDate.now());
+                double calories = estimate.calorieTarget;
                 ((TextView) activity.findViewById(R.id.setupCalories)).setText(String.format(Locale.getDefault(), "%,.0f kcal / day", calories));
                 ((TextView) activity.findViewById(R.id.setupMacros)).setText(String.format(Locale.getDefault(),
                         "Protein %.0f g  ·  Carbs %.0f g  ·  Fat %.0f g", s.proteinGoalG, s.carbsGoalG, s.fatGoalG));
                 ((TextView) activity.findViewById(R.id.setupSummary)).setText(String.format(Locale.getDefault(),
-                        "%s · %s\n%.1f kg → %.1f kg", s.goal, s.activityLevel, s.currentWeightKg, s.targetWeightKg));
+                        "%s · %s\n%.1f kg → %.1f kg\n%s%s", s.goal, s.activityLevel, s.currentWeightKg, s.targetWeightKg,
+                        estimate.basisLabel(), estimate.growthMaintenance ? "\nGrowth-aware maintenance; no automatic weight-loss or bulk adjustment" : ""));
             } catch (IllegalArgumentException e) {
                 step = 0; render(); return;
             }
@@ -268,6 +267,7 @@ public final class OnboardingController {
     }
 
     private void populate(ProfileSettings s) {
+        optionalDetails.populate(s);
         name.setText(s.displayName); age.setText(String.valueOf(s.ageYears));
         height.setText(String.valueOf(s.heightCm)); weight.setText(String.valueOf(s.currentWeightKg));
         target.setText(String.valueOf(s.targetWeightKg)); birthIso = s.dateOfBirthIso;
@@ -284,6 +284,7 @@ public final class OnboardingController {
         int goalIndex = goal.getSelectedItemPosition() - 1;
         state.putString("goal_name", goalIndex >= 0 ? ProfileSettings.Goal.values()[goalIndex].name() : "");
         state.putInt("level", level.getSelectedItemPosition());
+        state.putBundle("optional", optionalDetails.saveState());
         return state;
     }
 
@@ -303,5 +304,6 @@ public final class OnboardingController {
         try { goal.setSelection(ProfileSettings.Goal.valueOf(savedGoal).ordinal() + 1); }
         catch (IllegalArgumentException ignored) { goal.setSelection(0); }
         level.setSelection(state.getInt("level"));
+        optionalDetails.restoreState(state.getBundle("optional"));
     }
 }

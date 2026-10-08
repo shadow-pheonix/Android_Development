@@ -1,21 +1,30 @@
 package com.shadowphoenix.dietlog.profile;
 
+import java.time.LocalDate;
+
 public final class NutritionGoalCalculator {
     public static final class Goals {
         public final double proteinG, carbsG, fatG, fibreG, sugarLimitG, sodiumLimitMg;
-        Goals(double proteinG, double carbsG, double fatG, double fibreG, double sugarLimitG, double sodiumLimitMg) {
+        public final double freeSugarGuideG;
+        Goals(double proteinG, double carbsG, double fatG, double fibreG, double freeSugarGuideG, double sodiumLimitMg) {
             this.proteinG = proteinG;
             this.carbsG = carbsG;
             this.fatG = fatG;
             this.fibreG = fibreG;
-            this.sugarLimitG = sugarLimitG;
+            this.sugarLimitG = 0; // No automatic total-sugar ceiling: the guideline concerns free sugars.
             this.sodiumLimitMg = sodiumLimitMg;
+            this.freeSugarGuideG = freeSugarGuideG;
         }
     }
 
     private NutritionGoalCalculator() {}
 
     public static Goals recommend(ProfileSettings settings, double calorieTarget) {
+        return recommend(settings, calorieTarget, LocalDate.now());
+    }
+
+    public static Goals recommend(ProfileSettings settings, double calorieTarget, LocalDate today) {
+        OptionalProfileDetails.validate(settings);
         if (!Double.isFinite(calorieTarget) || calorieTarget < 800
                 || !Double.isFinite(settings.currentWeightKg) || settings.currentWeightKg < 25
                 || settings.currentWeightKg > 350 || settings.goal == null) {
@@ -32,17 +41,51 @@ public final class NutritionGoalCalculator {
             case MAINTAIN: proteinPerKg = 1.6; break;
             default: proteinPerKg = 1.8; break;
         }
+        int age = settings.effectiveAge(today);
+        if (age < 18) proteinPerKg = 1.0;
+        else if (settings.trainingFocus == ProfileSettings.TrainingFocus.NONE
+                && settings.goal == ProfileSettings.Goal.MAINTAIN) proteinPerKg = age >= 65 ? 1.2 : 0.83;
+        else if (settings.trainingFocus == ProfileSettings.TrainingFocus.ENDURANCE
+                && settings.goal == ProfileSettings.Goal.MAINTAIN) proteinPerKg = 1.4;
+        double desiredProtein = settings.currentWeightKg * proteinPerKg;
+        if (age >= 18 && settings.bodyFatPercent > 0 && settings.goal == ProfileSettings.Goal.CUT
+                && (settings.trainingFocus == ProfileSettings.TrainingFocus.RESISTANCE
+                || settings.trainingFocus == ProfileSettings.TrainingFocus.MIXED)) {
+            // ISSN: 2.3–3.1 g/kg fat-free mass during a resistance-trained energy deficit.
+            desiredProtein = settings.currentWeightKg * (1.0 - settings.bodyFatPercent / 100.0) * 2.6;
+        }
         // Keep weight-based recommendations inside the energy budget, even
         // with high body weights or a low manual calorie override. Reserve
         // carbohydrate energy before allocating fat; carbs use the remainder.
-        double protein = Math.min(round(settings.currentWeightKg * proteinPerKg), Math.floor(calorieTarget * 0.40 / 4.0));
-        double reservedCarbs = Math.max(200.0, calorieTarget * 0.20);
-        double fatBudgetG = Math.floor((calorieTarget - protein * 4.0 - reservedCarbs) / 9.0);
-        double fat = Math.min(round(Math.max(settings.currentWeightKg * 0.8, calorieTarget * 0.20 / 9.0)), fatBudgetG);
+        double protein = Math.min(Math.max(round(desiredProtein), Math.ceil(calorieTarget * 0.10 / 4.0)),
+                Math.floor(calorieTarget * (age < 18 ? 0.30 : 0.35) / 4.0));
+        double reservedCarbs = calorieTarget * 0.45;
+        double fatBudgetG = round((calorieTarget - protein * 4.0 - reservedCarbs) / 9.0);
+        double fat = Math.min(round(Math.max(Math.max(settings.currentWeightKg * 0.8,
+                calorieTarget * (age < 18 ? 0.25 : 0.20) / 9.0),
+                (calorieTarget * 0.35 - protein * 4.0) / 9.0)),
+                Math.min(round(calorieTarget * 0.35 / 9.0), fatBudgetG));
         double carbs = round((calorieTarget - protein * 4.0 - fat * 9.0) / 4.0);
         double fibre = round(Math.max(25.0, calorieTarget / 1000.0 * 14.0));
         double sugar = round(calorieTarget * 0.10 / 4.0);
         return new Goals(protein, carbs, fat, fibre, sugar, 2000.0);
+    }
+
+    public static void applyRecommended(ProfileSettings s, double calories, LocalDate today) {
+        Goals g = recommend(s, calories, today);
+        s.autoNutritionTargets = true;
+        s.macroMode = ProfileSettings.MacroMode.GRAMS;
+        s.proteinGoalG = g.proteinG; s.carbsGoalG = g.carbsG; s.fatGoalG = g.fatG;
+        s.fibreGoalG = g.fibreG; s.sodiumLimitMg = g.sodiumLimitMg;
+        // Catalogue sugar is total sugar. WHO's free-sugar ceiling must not be labelled a total-sugar target.
+        s.sugarLimitG = 0;
+        s.proteinPercent = g.proteinG * 4 / calories * 100;
+        s.carbsPercent = g.carbsG * 4 / calories * 100;
+        s.fatPercent = g.fatG * 9 / calories * 100;
+    }
+
+    public static void refreshRecommendedIfEnabled(ProfileSettings s, LocalDate today) {
+        if (s.autoNutritionTargets) applyRecommended(s, CalorieCalculator.calculate(s, today).calorieTarget, today);
     }
 
     public static double macroCalories(double proteinG, double carbsG, double fatG) {

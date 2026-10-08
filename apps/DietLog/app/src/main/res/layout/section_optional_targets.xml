@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+    <TextView android:id="@+id/optionalTargetsToggle" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="48dp" android:layout_marginTop="12dp" android:padding="12dp" android:gravity="center"
+        android:background="@drawable/bg_chip" android:text="Add optional details" android:textColor="@color/accent"
+        android:textSize="13sp" android:textStyle="bold" android:clickable="true" android:focusable="true" android:tag="glass:CONTROL" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp"
+        android:text="Reliable details can make calorie and protein estimates more accurate. Every field is optional; leave any blank."
+        android:textColor="@color/text_secondary" android:textSize="12sp" />
+    <LinearLayout android:id="@+id/optionalTargetsPanel" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:visibility="gone">
+        <TextView style="@style/SetupLabel" android:text="Body fat (%) · optional" android:labelFor="@id/optionalBodyFatInput" />
+        <EditText android:id="@+id/optionalBodyFatInput" style="@style/SetupInput" android:hint="e.g. 20" android:inputType="numberDecimal" android:saveEnabled="false" />
+        <TextView style="@style/SetupNote" android:text="Use a recent measured result, not a guess. This estimates lean mass; inaccurate measurements can make the estimate worse." />
+        <TextView style="@style/SetupLabel" android:text="Measured resting calories · optional" android:labelFor="@id/optionalRmrInput" />
+        <EditText android:id="@+id/optionalRmrInput" style="@style/SetupInput" android:hint="RMR in kcal / day" android:inputType="numberDecimal" android:saveEnabled="false" />
+        <TextView style="@style/SetupNote" android:text="Enter a recent resting metabolic rate from a lab test. This takes priority over the body-fat formula. Do not use exercise calories or a watch estimate." />
+        <TextView style="@style/SetupLabel" android:text="Observed maintenance calories · optional" android:labelFor="@id/optionalMaintenanceInput" />
+        <EditText android:id="@+id/optionalMaintenanceInput" style="@style/SetupInput" android:hint="Average intake in kcal / day" android:inputType="numberDecimal" android:saveEnabled="false" />
+        <TextView style="@style/SetupNote" android:text="Average food intake while your weight stayed stable for at least 2–4 weeks at your current activity. This replaces estimated maintenance and already includes activity. Leave blank if you were gaining or losing weight." />
+        <TextView style="@style/SetupLabel" android:text="Training type · optional" android:labelFor="@id/optionalTrainingSpinner" />
+        <Spinner android:id="@+id/optionalTrainingSpinner" style="@style/SetupSpinner" android:saveEnabled="false" />
+        <TextView style="@style/SetupNote" android:text="Helps personalize protein. Activity level already includes work, walking and training; exercise calories are not added twice. Measured calorie inputs are used for adults only." />
+    </LinearLayout>
+</LinearLayout>

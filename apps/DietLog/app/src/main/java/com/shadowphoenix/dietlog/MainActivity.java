@@ -2841,7 +2841,14 @@ public final class MainActivity extends Activity {
         outState.putString("active_meal", activeMealType);
         if (onboardingController != null) outState.putBundle("profile_setup", onboardingController.saveState());
         else if (pendingProfileSetup != null) outState.putBundle("profile_setup", pendingProfileSetup);
+        if (profileController != null) outState.putBundle("profile_optional", profileController.saveOptionalState());
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (profileController != null) profileController.restoreOptionalState(savedInstanceState.getBundle("profile_optional"));
     }
 
     @Override

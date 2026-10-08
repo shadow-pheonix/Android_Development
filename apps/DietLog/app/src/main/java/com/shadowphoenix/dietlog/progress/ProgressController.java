@@ -16,6 +16,7 @@ import com.shadowphoenix.dietlog.ui.FrostedUi;
 import com.shadowphoenix.dietlog.ui.FrostedSurfaceDrawable.Material;
 import com.shadowphoenix.dietlog.data.DiaryDbHelper;
 import com.shadowphoenix.dietlog.profile.ProfileController;
+import com.shadowphoenix.dietlog.profile.CalorieCalculator;
 import com.shadowphoenix.dietlog.profile.ProfileSettings;
 import com.shadowphoenix.dietlog.progress.ProgressData.DailyNutrition;
 import com.shadowphoenix.dietlog.progress.ProgressData.WeightPoint;
@@ -261,18 +262,15 @@ public final class ProgressController {
 
         List<WeightPoint> recent = diary.getWeightRange(today.minusDays(28), today);
         Double actualRate = ProgressStats.weeklyWeightRate(recent);
-        double targetRate = settings.goal.isWeightStable() ? 0.0 : settings.weeklyWeightChangeKg;
-        if (Math.abs(targetRate) < 0.01 && settings.goal.direction != 0) {
-            targetRate = settings.goal.direction *
-                    settings.currentWeightKg *
-                    settings.goal.defaultBodyWeightFractionPerWeek;
-        }
+        double targetRate = 0;
+        try { targetRate = CalorieCalculator.calculate(settings, today).weeklyWeightChangeKg; }
+        catch (IllegalArgumentException ignored) { /* Invalid imported profiles retain a neutral pace. */ }
         if (actualRate == null) {
             weightPace.setVisibility(View.GONE);
         } else {
             weightPace.setVisibility(View.VISIBLE);
             String actual = String.format(Locale.getDefault(), "Actual %+.2f kg/week", actualRate);
-            String target = String.format(Locale.getDefault(), "Goal %+.2f kg/week", targetRate);
+            String target = String.format(Locale.getDefault(), "Initial estimate %+.2f kg/week", targetRate);
             weightPace.setText(actual + "  •  " + target + System.lineSeparator() +
                     ProgressStats.paceLabel(actualRate, targetRate));
         }

@@ -52,6 +52,7 @@
                 <TextView style="@style/SetupLabel" android:text="Activity level" android:labelFor="@id/setupActivity" />
                 <Spinner android:id="@+id/setupActivity" style="@style/SetupSpinner" />
                 <TextView android:id="@+id/setupActivityNote" style="@style/SetupNote" />
+                <include android:id="@+id/setupOptionalTargets" layout="@layout/section_optional_targets" />
             </LinearLayout>
             <LinearLayout android:id="@+id/setupReview" style="@style/SetupPanel" android:visibility="gone">
                 <TextView style="@style/SetupLabel" android:text="Your daily target" />
