@@ -76,9 +76,9 @@ busy controls. Consent results still use the existing recreation-safe Activity r
 handler. The choice is device-local and does not create another cloud account or change
 Google's existing private `drive.appdata` scope. Diagnostics remains accessible.
 
-Both goal menus show Lean bulk, Body recomposition and Dirty bulk first, followed by
-Lose weight, Maintain weight, Gain weight, Cut and Custom. Stored profiles and setup
-drafts use goal names, so ordering does not change a saved goal.
+Both goal menus show Lean bulk, Cut, Body recomposition and Dirty bulk first, followed by
+Lose weight, Maintain weight, Gain weight and Custom (updated in 0.7.31). Stored
+profiles and setup drafts use goal names, so ordering does not change a saved goal.
 
 Body recomposition is a goal rather than an activity level. Mifflin–St Jeor BMR and the
 user's actual activity multiplier produce estimated maintenance calories (rounded to
