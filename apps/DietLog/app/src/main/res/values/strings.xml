@@ -19,7 +19,7 @@
     <string name="export_diagnostics">Export diagnostics</string>
     <string name="recent_entries">Today’s Food Log</string>
     <string name="empty_entries">No foods logged today.</string>
-    <string name="no_results">No offline matches.</string>
+    <string name="no_results">No matching food offline. Try its English or Telugu name, scan a barcode, or add it manually.</string>
     <string name="manual_entry">Manual Food Entry</string>
     <string name="coming_later">We’ll add this feature in a later step.</string>
 </resources>
