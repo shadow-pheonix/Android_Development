@@ -197,3 +197,12 @@ pill. The center Add button also has no ripple or pressed rim highlight. Combine
 with the existing removal of press scaling, the selection pill is now the sole
 animated feedback on the bar. Its 450 ms slide, active icon/label colors, page fade,
 click handlers and accessibility selection behavior are retained.
+
+### Darker frosted palette (0.7.24)
+
+The background is near black with much quieter teal/blue light. Cards, inputs,
+controls, navigation, ring tracks and glass rims use darker shared color resources.
+Calendars, dropdowns and other dialogs use matching opaque dark gradients for
+readability. Teal actions, macro colors, foreground text, photos and illustrations
+retain their existing colors. The sliding pill, page fade and navigation without
+tap effects remain available.

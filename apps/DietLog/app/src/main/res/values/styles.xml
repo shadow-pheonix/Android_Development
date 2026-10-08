@@ -117,7 +117,7 @@
         <item name="android:focusable">true</item>
     </style>
     <style name="FrostedDialogTheme" parent="android:style/Theme.Material.Dialog.Alert">
-        <item name="android:windowBackground">@drawable/bg_card</item>
+        <item name="android:windowBackground">@drawable/bg_calendar_dialog</item>
         <item name="android:colorBackgroundFloating">@color/surface</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
