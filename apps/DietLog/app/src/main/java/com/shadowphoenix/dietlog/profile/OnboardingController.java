@@ -280,7 +280,9 @@ public final class OnboardingController {
         state.putInt("step", step); state.putString("birth", birthIso);
         EditText[] inputs = {name, age, height, weight, target};
         for (int i = 0; i < inputs.length; i++) state.putString("input" + i, inputs[i].getText().toString());
-        state.putInt("sex", sex.getSelectedItemPosition()); state.putInt("goal", goal.getSelectedItemPosition());
+        state.putInt("sex", sex.getSelectedItemPosition());
+        int goalIndex = goal.getSelectedItemPosition() - 1;
+        state.putString("goal_name", goalIndex >= 0 ? ProfileSettings.Goal.values()[goalIndex].name() : "");
         state.putInt("level", level.getSelectedItemPosition());
         return state;
     }
@@ -290,7 +292,16 @@ public final class OnboardingController {
         birthIso = state.getString("birth", "");
         EditText[] inputs = {name, age, height, weight, target};
         for (int i = 0; i < inputs.length; i++) inputs[i].setText(state.getString("input" + i, ""));
-        sex.setSelection(state.getInt("sex")); goal.setSelection(state.getInt("goal"));
+        sex.setSelection(state.getInt("sex"));
+        String savedGoal = state.getString("goal_name", null);
+        if (savedGoal == null) {
+            String[] legacy = {"", "LOSE_WEIGHT", "MAINTAIN", "GAIN_WEIGHT", "LEAN_BULK",
+                    "DIRTY_BULK", "CUT", "CUSTOM", "RECOMPOSITION"};
+            int oldIndex = state.getInt("goal");
+            savedGoal = oldIndex >= 0 && oldIndex < legacy.length ? legacy[oldIndex] : "";
+        }
+        try { goal.setSelection(ProfileSettings.Goal.valueOf(savedGoal).ordinal() + 1); }
+        catch (IllegalArgumentException ignored) { goal.setSelection(0); }
         level.setSelection(state.getInt("level"));
     }
 }
