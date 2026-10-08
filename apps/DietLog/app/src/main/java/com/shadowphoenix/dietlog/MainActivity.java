@@ -66,6 +66,7 @@ import com.shadowphoenix.dietlog.ui.MealIllustrationView;
 import com.shadowphoenix.dietlog.ui.FrostedUi;
 import com.shadowphoenix.dietlog.ui.UiMotion;
 import com.shadowphoenix.dietlog.ui.StartupAnimation;
+import com.shadowphoenix.dietlog.ui.StartupChoiceController;
 import com.shadowphoenix.dietlog.ui.FrostedSurfaceDrawable.Material;
 import com.shadowphoenix.dietlog.ui.FrostedNavigationView;
 
@@ -106,16 +107,21 @@ public final class MainActivity extends Activity {
     private ProgressController progressController;
     private OnboardingController onboardingController;
     private StartupAnimation startupAnimation;
+    private StartupChoiceController startupChoiceController;
+    private Bundle pendingProfileSetup;
     private boolean startupFinished;
     private final ExecutorService driveExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService supabaseExecutor = Executors.newSingleThreadExecutor();
     private DriveSyncStatusStore driveSyncStatusStore;
     private SharedPreferences.OnSharedPreferenceChangeListener driveSyncStatusListener;
     private long renderedDriveDataChangeGeneration;
+    private boolean driveAuthorizationPreparing;
+    private int driveAuthorizationGeneration;
 
     private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, editProfileScreen, accountScreen, bottomNav;
     private View navHome, navSearch, navScan, navProgress, navProfile;
     private View onboardingScreen;
+    private View startupChoiceScreen;
     private UiMotion uiMotion;
     private ImageView navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon;
     private TextView navHomeLabel, navSearchLabel;
@@ -227,6 +233,31 @@ public final class MainActivity extends Activity {
         startupFinished = true;
         findViewById(R.id.startupOverlay).setVisibility(View.GONE);
         findViewById(R.id.screenContainer).setVisibility(View.VISIBLE);
+        boolean driveConnected = new DriveConnectionStore(this).getState().connected;
+        if (driveConnected || StartupChoiceController.hasChosen(this)) {
+            if (driveConnected) StartupChoiceController.markChosen(this);
+            continueStartup(restoredSetup);
+        } else {
+            pendingProfileSetup = restoredSetup;
+            startupChoiceController = new StartupChoiceController(this, this::connectGoogleDrive,
+                    this::completeStartupChoice, this::exportDiagnostics);
+            showScreen(startupChoiceScreen, -1);
+        }
+    }
+
+    private void completeStartupChoice() {
+        driveAuthorizationGeneration++;
+        driveAuthorizationPreparing = false;
+        setDriveControlsEnabled(true);
+        refreshDriveBackupUi();
+        StartupChoiceController.markChosen(this);
+        startupChoiceController = null;
+        Bundle restored = pendingProfileSetup;
+        pendingProfileSetup = null;
+        continueStartup(restored);
+    }
+
+    private void continueStartup(Bundle restoredSetup) {
         if (new ProfilePreferences(this).hasCompletedPersonalProfile()) {
             showScreen(homeScreen, 0);
         } else {
@@ -286,6 +317,7 @@ public final class MainActivity extends Activity {
         editProfileScreen = findViewById(R.id.editProfileScreen);
         accountScreen = findViewById(R.id.accountScreen);
         onboardingScreen = findViewById(R.id.onboardingScreen);
+        startupChoiceScreen = findViewById(R.id.startupChoiceScreen);
         bottomNav = findViewById(R.id.bottomNav);
 
         navHome = findViewById(R.id.navHome);
@@ -579,6 +611,8 @@ public final class MainActivity extends Activity {
     }
 
     private void connectGoogleDrive() {
+        driveAuthorizationGeneration++;
+        driveAuthorizationPreparing = true;
         new DriveSyncStatusStore(this).clearError();
         setDriveControlsEnabled(false);
         driveSyncStatus.setText("Opening Google authorization…");
@@ -586,9 +620,18 @@ public final class MainActivity extends Activity {
     }
 
     private GoogleDriveAuthorization.Callback driveAuthorizationCallback() {
+        int generation = driveAuthorizationGeneration;
+        boolean startupRequest = startupChoiceController != null
+                && startupChoiceScreen.getVisibility() == View.VISIBLE;
         return new GoogleDriveAuthorization.Callback() {
+            @Override public boolean isActive() {
+                return generation == driveAuthorizationGeneration && !isDestroyed()
+                        && (!startupRequest || (startupChoiceController != null
+                        && startupChoiceScreen.getVisibility() == View.VISIBLE));
+            }
             @Override
             public void onAuthorized(String accessToken, String accountName) {
+                driveAuthorizationPreparing = false;
                 new DriveSyncStatusStore(MainActivity.this).clearError();
                 SyncCoordinator.forceDirty(MainActivity.this, "drive-connect");
                 DriveBackupScheduler.schedulePeriodic(MainActivity.this);
@@ -597,11 +640,13 @@ public final class MainActivity extends Activity {
                     setDriveControlsEnabled(true);
                     refreshDriveBackupUi();
                     toast("Google Drive backup connected");
+                    if (startupRequest && isActive()) completeStartupChoice();
                 });
             }
 
             @Override
             public void onFailure(GoogleDriveAuthorization.Failure failure, String message, Throwable error) {
+                driveAuthorizationPreparing = false;
                 String safeMessage = message == null ? "Google Drive authorization failed" : message;
                 new DriveSyncStatusStore(MainActivity.this).markError(
                         safeMessage, failure == GoogleDriveAuthorization.Failure.REAUTH_REQUIRED);
@@ -614,6 +659,8 @@ public final class MainActivity extends Activity {
                 runOnUiThread(() -> {
                     setDriveControlsEnabled(true);
                     refreshDriveBackupUi();
+                    if (startupRequest && isActive()) startupChoiceController.showFailure(
+                            failure == GoogleDriveAuthorization.Failure.CANCELLED);
                     Toast.makeText(MainActivity.this, safeMessage, Toast.LENGTH_LONG).show();
                 });
             }
@@ -1290,8 +1337,9 @@ public final class MainActivity extends Activity {
         editProfileScreen.setVisibility(target == editProfileScreen ? View.VISIBLE : View.GONE);
         accountScreen.setVisibility(target == accountScreen ? View.VISIBLE : View.GONE);
         onboardingScreen.setVisibility(target == onboardingScreen ? View.VISIBLE : View.GONE);
+        startupChoiceScreen.setVisibility(target == startupChoiceScreen ? View.VISIBLE : View.GONE);
         boolean immersive = target == detailScreen || target == manualScreen || target == nutritionScreen
-                || target == accountScreen || target == editProfileScreen || target == onboardingScreen;
+                || target == accountScreen || target == editProfileScreen || target == onboardingScreen || target == startupChoiceScreen;
         bottomNav.setVisibility(immersive ? View.GONE : View.VISIBLE);
         target.setPadding(target.getPaddingLeft(), target.getPaddingTop(), target.getPaddingRight(),
                 immersive ? 0 : dp(100));
@@ -2644,6 +2692,12 @@ public final class MainActivity extends Activity {
         super.onResume();
         if (uiMotion != null) uiMotion.setForeground(true);
         if (startupAnimation != null) startupAnimation.resume();
+        if (driveAuthorizationPreparing) {
+            driveAuthorizationPreparing = false;
+            driveAuthorizationGeneration++;
+            setDriveControlsEnabled(true);
+        }
+        if (startupChoiceController != null && startupChoiceScreen.getVisibility() == View.VISIBLE) startupChoiceController.resume();
         if (bottomNav != null) ((FrostedNavigationView) bottomNav).refreshBackdrop();
         refreshAfterDriveDataChangeIfNeeded();
         refreshDriveBackupUi();
@@ -2664,6 +2718,7 @@ public final class MainActivity extends Activity {
         outState.putString("selected_date", selectedDate.toString());
         outState.putString("active_meal", activeMealType);
         if (onboardingController != null) outState.putBundle("profile_setup", onboardingController.saveState());
+        else if (pendingProfileSetup != null) outState.putBundle("profile_setup", pendingProfileSetup);
         super.onSaveInstanceState(outState);
     }
 
@@ -2686,6 +2741,8 @@ public final class MainActivity extends Activity {
     @Override
     public void onBackPressed() {
         if (!startupFinished) {
+            moveTaskToBack(true);
+        } else if (startupChoiceScreen.getVisibility() == View.VISIBLE) {
             moveTaskToBack(true);
         } else if (onboardingScreen.getVisibility() == View.VISIBLE) {
             if (onboardingController == null || !onboardingController.goBack()) moveTaskToBack(true);

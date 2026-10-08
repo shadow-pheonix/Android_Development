@@ -16,9 +16,15 @@ public final class NutritionGoalCalculator {
     private NutritionGoalCalculator() {}
 
     public static Goals recommend(ProfileSettings settings, double calorieTarget) {
+        if (!Double.isFinite(calorieTarget) || calorieTarget < 800
+                || !Double.isFinite(settings.currentWeightKg) || settings.currentWeightKg < 25
+                || settings.currentWeightKg > 350 || settings.goal == null) {
+            throw new IllegalArgumentException("Complete valid body details and a calorie target before generating macros");
+        }
         double proteinPerKg;
         switch (settings.goal) {
             case CUT: proteinPerKg = 2.2; break;
+            case RECOMPOSITION:
             case LOSE_WEIGHT: proteinPerKg = 2.0; break;
             case LEAN_BULK:
             case GAIN_WEIGHT: proteinPerKg = 1.8; break;
@@ -26,14 +32,14 @@ public final class NutritionGoalCalculator {
             case MAINTAIN: proteinPerKg = 1.6; break;
             default: proteinPerKg = 1.8; break;
         }
-        double protein = round(settings.currentWeightKg * proteinPerKg);
-        double fat = round(Math.max(settings.currentWeightKg * 0.8, calorieTarget * 0.20 / 9.0));
-        double remainingKcal = calorieTarget - protein * 4.0 - fat * 9.0;
-        if (remainingKcal < calorieTarget * 0.20) {
-            fat = round(settings.currentWeightKg * 0.7);
-            remainingKcal = calorieTarget - protein * 4.0 - fat * 9.0;
-        }
-        double carbs = round(Math.max(50.0, remainingKcal / 4.0));
+        // Keep weight-based recommendations inside the energy budget, even
+        // with high body weights or a low manual calorie override. Reserve
+        // carbohydrate energy before allocating fat; carbs use the remainder.
+        double protein = Math.min(round(settings.currentWeightKg * proteinPerKg), Math.floor(calorieTarget * 0.40 / 4.0));
+        double reservedCarbs = Math.max(200.0, calorieTarget * 0.20);
+        double fatBudgetG = Math.floor((calorieTarget - protein * 4.0 - reservedCarbs) / 9.0);
+        double fat = Math.min(round(Math.max(settings.currentWeightKg * 0.8, calorieTarget * 0.20 / 9.0)), fatBudgetG);
+        double carbs = round((calorieTarget - protein * 4.0 - fat * 9.0) / 4.0);
         double fibre = round(Math.max(25.0, calorieTarget / 1000.0 * 14.0));
         double sugar = round(calorieTarget * 0.10 / 4.0);
         return new Goals(protein, carbs, fat, fibre, sugar, 2000.0);
@@ -41,6 +47,22 @@ public final class NutritionGoalCalculator {
 
     public static double macroCalories(double proteinG, double carbsG, double fatG) {
         return proteinG * 4.0 + carbsG * 4.0 + fatG * 9.0;
+    }
+
+    public static void validateMacroGrams(ProfileSettings s, double calorieTarget) {
+        // Retain the normal manual-entry limits, while accepting generated
+        // targets for supported high-energy profiles. Each individual macro
+        // is bounded by the energy budget, rather than an incompatible fixed cap.
+        validateGrams(s.proteinGoalG, Math.max(500, Math.ceil(calorieTarget / 4.0)), false, "Protein");
+        validateGrams(s.carbsGoalG, Math.max(1000, Math.ceil(calorieTarget / 4.0)), true, "Carb");
+        validateGrams(s.fatGoalG, Math.max(300, Math.ceil(calorieTarget / 9.0)), false, "Fat");
+    }
+
+    private static void validateGrams(double value, double max, boolean zeroAllowed, String name) {
+        if (!Double.isFinite(value) || (zeroAllowed ? value < 0 : value <= 0) || value > max) {
+            throw new IllegalArgumentException(name + " goal must be between " + (zeroAllowed ? "0" : "1")
+                    + " and " + (int) max + " g");
+        }
     }
 
     public static double[] gramsFromPercent(double calorieTarget, double proteinPct, double carbsPct, double fatPct) {

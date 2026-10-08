@@ -30,11 +30,12 @@ public final class ProfileSettings {
     }
 
     public enum Goal {
+        LEAN_BULK("Lean bulk", 1, 0.0025, 0.10),
+        RECOMPOSITION("Body recomposition", 0, 0.0, 0.0),
+        DIRTY_BULK("Dirty bulk", 1, 0.0075, 0.25),
         LOSE_WEIGHT("Lose weight", -1, 0.005, 0.20),
         MAINTAIN("Maintain weight", 0, 0.0, 0.0),
         GAIN_WEIGHT("Gain weight", 1, 0.0035, 0.15),
-        LEAN_BULK("Lean bulk", 1, 0.0025, 0.10),
-        DIRTY_BULK("Dirty bulk", 1, 0.0075, 0.25),
         CUT("Cut", -1, 0.0070, 0.25),
         CUSTOM("Custom", 0, 0.0, 0.30);
 
@@ -49,6 +50,7 @@ public final class ProfileSettings {
             this.maxTdeeAdjustmentFraction = maxAdjustment;
         }
         @Override public String toString() { return label; }
+        public boolean isWeightStable() { return this == MAINTAIN || this == RECOMPOSITION; }
     }
 
     public enum MacroMode {

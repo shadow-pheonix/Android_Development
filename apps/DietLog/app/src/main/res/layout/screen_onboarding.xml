@@ -44,6 +44,7 @@
             <LinearLayout android:id="@+id/setupPlan" style="@style/SetupPanel" android:visibility="gone">
                 <TextView style="@style/SetupLabel" android:text="Your goal" android:labelFor="@id/setupGoal" />
                 <Spinner android:id="@+id/setupGoal" style="@style/SetupSpinner" />
+                <TextView android:id="@+id/setupGoalNote" style="@style/SetupNote" />
                 <LinearLayout android:id="@+id/setupTargetGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                     <TextView style="@style/SetupLabel" android:text="Target weight (kg)" android:labelFor="@id/setupTarget" />
                     <EditText android:id="@+id/setupTarget" style="@style/SetupInput" android:hint="Your target weight" android:inputType="numberDecimal" />

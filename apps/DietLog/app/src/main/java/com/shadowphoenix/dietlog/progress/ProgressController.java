@@ -261,7 +261,7 @@ public final class ProgressController {
 
         List<WeightPoint> recent = diary.getWeightRange(today.minusDays(28), today);
         Double actualRate = ProgressStats.weeklyWeightRate(recent);
-        double targetRate = settings.weeklyWeightChangeKg;
+        double targetRate = settings.goal.isWeightStable() ? 0.0 : settings.weeklyWeightChangeKg;
         if (Math.abs(targetRate) < 0.01 && settings.goal.direction != 0) {
             targetRate = settings.goal.direction *
                     settings.currentWeightKg *

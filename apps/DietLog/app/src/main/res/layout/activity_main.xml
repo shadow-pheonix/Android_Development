@@ -11,6 +11,7 @@
         <include android:id="@+id/editProfileScreen" layout="@layout/screen_edit_profile" android:visibility="gone" />
         <include android:id="@+id/accountScreen" layout="@layout/screen_account" android:visibility="gone" />
         <include android:id="@+id/onboardingScreen" layout="@layout/screen_onboarding" android:visibility="gone" />
+        <include android:id="@+id/startupChoiceScreen" layout="@layout/screen_startup_choice" android:visibility="gone" />
     </FrameLayout>
     <com.shadowphoenix.dietlog.ui.FrostedNavigationView android:id="@+id/bottomNav" android:layout_width="match_parent" android:layout_height="80dp" android:orientation="horizontal" android:gravity="center" android:padding="8dp" android:background="@drawable/bg_bottom_nav" android:tag="glass:NAVIGATION" android:layout_gravity="bottom" android:layout_marginHorizontal="12dp" android:layout_marginBottom="10dp" android:visibility="gone">
         <LinearLayout android:id="@+id/navHome" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center" android:background="@drawable/bg_nav_item" android:foreground="@null" android:focusable="true" android:contentDescription="Home" android:clipToOutline="true">

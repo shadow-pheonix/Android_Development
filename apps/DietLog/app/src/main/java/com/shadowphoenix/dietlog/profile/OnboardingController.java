@@ -155,12 +155,12 @@ public final class OnboardingController {
         if (throughStep >= 2) {
             s.goal = selected(goal, ProfileSettings.Goal.values(), "a goal");
             s.activityLevel = selected(level, ProfileSettings.ActivityLevel.values(), "activity level");
-            s.targetWeightKg = s.goal == ProfileSettings.Goal.MAINTAIN ? s.currentWeightKg : number(target, "Target weight");
+            s.targetWeightKg = s.goal.isWeightStable() ? s.currentWeightKg : number(target, "Target weight");
             if (s.goal.direction < 0 && s.targetWeightKg >= s.currentWeightKg)
                 throw new IllegalArgumentException("Choose a target below your current weight for this goal");
             if (s.goal.direction > 0 && s.targetWeightKg <= s.currentWeightKg)
                 throw new IllegalArgumentException("Choose a target above your current weight for this goal");
-            s.weeklyWeightChangeKg = Math.max(-2.0, Math.min(2.0, CalorieCalculator.recommendedWeeklyChange(s)));
+            s.weeklyWeightChangeKg = CalorieCalculator.recommendedWeeklyChange(s);
             s.manualCalorieOverride = false;
         }
         return s;
@@ -228,8 +228,11 @@ public final class OnboardingController {
     }
 
     private void updatePlan() {
-        boolean maintain = goal.getSelectedItemPosition() == ProfileSettings.Goal.MAINTAIN.ordinal() + 1;
-        activity.findViewById(R.id.setupTargetGroup).setVisibility(maintain ? View.GONE : View.VISIBLE);
+        int goalIndex = goal.getSelectedItemPosition() - 1;
+        boolean stable = goalIndex >= 0 && ProfileSettings.Goal.values()[goalIndex].isWeightStable();
+        activity.findViewById(R.id.setupTargetGroup).setVisibility(stable ? View.GONE : View.VISIBLE);
+        ((TextView) activity.findViewById(R.id.setupGoalNote)).setText(goalIndex == ProfileSettings.Goal.RECOMPOSITION.ordinal()
+                ? "Build muscle and lose fat while keeping weight roughly stable. Start near maintenance calories with higher protein; resistance training supports this goal." : "");
         int index = level.getSelectedItemPosition() - 1;
         ((TextView) activity.findViewById(R.id.setupActivityNote)).setText(index >= 0
                 ? ProfileSettings.ActivityLevel.values()[index].description : "Choose the level that best fits your usual week.");
@@ -277,7 +280,9 @@ public final class OnboardingController {
         state.putInt("step", step); state.putString("birth", birthIso);
         EditText[] inputs = {name, age, height, weight, target};
         for (int i = 0; i < inputs.length; i++) state.putString("input" + i, inputs[i].getText().toString());
-        state.putInt("sex", sex.getSelectedItemPosition()); state.putInt("goal", goal.getSelectedItemPosition());
+        state.putInt("sex", sex.getSelectedItemPosition());
+        int goalIndex = goal.getSelectedItemPosition() - 1;
+        state.putString("goal_name", goalIndex >= 0 ? ProfileSettings.Goal.values()[goalIndex].name() : "");
         state.putInt("level", level.getSelectedItemPosition());
         return state;
     }
@@ -287,7 +292,16 @@ public final class OnboardingController {
         birthIso = state.getString("birth", "");
         EditText[] inputs = {name, age, height, weight, target};
         for (int i = 0; i < inputs.length; i++) inputs[i].setText(state.getString("input" + i, ""));
-        sex.setSelection(state.getInt("sex")); goal.setSelection(state.getInt("goal"));
+        sex.setSelection(state.getInt("sex"));
+        String savedGoal = state.getString("goal_name", null);
+        if (savedGoal == null) {
+            String[] legacy = {"", "LOSE_WEIGHT", "MAINTAIN", "GAIN_WEIGHT", "LEAN_BULK",
+                    "DIRTY_BULK", "CUT", "CUSTOM", "RECOMPOSITION"};
+            int oldIndex = state.getInt("goal");
+            savedGoal = oldIndex >= 0 && oldIndex < legacy.length ? legacy[oldIndex] : "";
+        }
+        try { goal.setSelection(ProfileSettings.Goal.valueOf(savedGoal).ordinal() + 1); }
+        catch (IllegalArgumentException ignored) { goal.setSelection(0); }
         level.setSelection(state.getInt("level"));
     }
 }
