@@ -103,6 +103,44 @@ manual overrides, existing goals and invalid non-finite values.
 
 ## Bundled food catalogue
 
+### Andhra favourites and search (0.7.32)
+
+The default food list uses 16 reviewed INDB cooked dishes by stable catalogue code:
+annam, palakura pappu, pesarattu, idli, dosa, rava upma, perugu annam, tamarind and
+lemon pulihora, sambar, charu, egg/chicken/fish curry, bendakaya fry and garelu.
+It no longer chooses the first result of an ambiguous keyword, which could be a
+packaged mix. Regional display names and 31 Telugu/transliterated alias mappings
+leave source nutrition, food IDs, barcodes and photo assignments unchanged.
+Raw dal is labelled raw and remains distinct from cooked pappu. These are equivalent
+catalogue dishes, not nutrition claims for every Andhra household's recipe.
+
+Offline search now uses portable SQLite FTS4 with word-prefix matching in any order
+across names, brands, aliases and categories. Exact dishes/local aliases rank first,
+then name/brand matches, with category-only matches last. Complete nutrition and
+Indian cooked-food sources break relevance ties. Brand words and preparation words
+are retained; harmless connectors such as "and"/"with" are ignored and common food
+plurals are recognized. Searching `dosa batter` does not turn into a cooked-dosa recommendation.
+Barcodes still use indexed exact lookup and scanner-format normalization.
+
+Common catalogue misspellings normalize to canonical names. When normal matching
+returns nothing, an indexed spelling vocabulary supplies at most three close words
+per token, using bounded edit/adjacent-transposition distance. These results are
+labelled Close matches. English correction does not invent Telugu recipe mappings
+or drop unmatched ingredients. Unknown recipes can still be added manually.
+
+Results update 250 ms after typing stops; Search/keyboard Search runs immediately.
+Clear restores Andhra favourites, and Recent/Frequent/Favorites remain separate.
+Navigation retains a typed query. Obsolete requests are invalidated on text edits,
+tab switches, navigation and backgrounding; pending work resumes when appropriate.
+Catalogue queries run on the existing serial worker. Inputs, candidate counts and
+corrections are bounded (128 characters, eight words, 600 candidates, 30 UI results).
+Diagnostics record only query length, counts, approximate status and duration.
+
+Validation includes nine builder/index tests, thirteen Java planner/ranking tests and
+actual runtime SQL checks against the full catalogue. Representative local candidate
+queries took under 2 ms in the workspace; this excludes phone rendering and is not
+a device latency guarantee. Android CI supplies lint, unit tests and APK compilation.
+
 The build pipeline generates `app/src/main/assets/offline_foods.db` before Android compilation from pinned source snapshots:
 
 1. Open Food Facts India snapshot — 18,613 packaged products in the pinned July 2026 dataset.

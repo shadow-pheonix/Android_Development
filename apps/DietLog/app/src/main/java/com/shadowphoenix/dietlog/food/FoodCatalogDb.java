@@ -13,10 +13,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 public final class FoodCatalogDb implements AutoCloseable {
     private static final String ASSET = "offline_foods.db";
+    private static final String FOOD_SELECT = "SELECT f.*,r.display_name FROM foods f " +
+            "LEFT JOIN regional_foods r ON r.code=f.code ";
     private static final String COMPLETE_CORE_MACROS =
             "calories_100g IS NOT NULL AND protein_100g IS NOT NULL AND " +
                     "carbs_100g IS NOT NULL AND fat_100g IS NOT NULL";
@@ -54,34 +59,96 @@ public final class FoodCatalogDb implements AutoCloseable {
     }
 
     public List<CatalogFood> search(String rawQuery, int limit) {
-        String q = rawQuery == null ? "" : rawQuery.trim().toLowerCase();
+        return searchResult(rawQuery, limit).foods;
+    }
+
+    public static final class SearchResult {
+        public final List<CatalogFood> foods;
+        public final boolean corrected;
+        SearchResult(List<CatalogFood> foods, boolean corrected) { this.foods = foods; this.corrected = corrected; }
+    }
+
+    public SearchResult searchResult(String rawQuery, int limit) {
+        FoodSearch.Query query = new FoodSearch.Query(rawQuery);
+        int boundedLimit = Math.max(1, Math.min(50, limit));
+        if (query.text.isEmpty()) return new SearchResult(Collections.emptyList(), false);
+        if (query.barcode) {
+            CatalogFood food = findByBarcode(query.text);
+            return new SearchResult(food == null ? Collections.emptyList() : Collections.singletonList(food), false);
+        }
+        List<CatalogFood> results = match(query, query.match(), boundedLimit, false);
+        if (!results.isEmpty()) return new SearchResult(results, query.spellingAdjusted);
+        List<List<String>> alternatives = new ArrayList<>();
+        boolean changed = false;
+        for (String token : query.tokens) {
+            List<String> replacement = Collections.emptyList();
+            if (FoodSearch.canCorrect(token) && !hasPrefix(token)) replacement = correct(token);
+            if (replacement.isEmpty()) alternatives.add(Collections.singletonList(token));
+            else { alternatives.add(replacement); changed = true; }
+        }
+        if (changed) results = match(query, FoodSearch.expression(alternatives), boundedLimit, true);
+        return new SearchResult(results, (changed || query.spellingAdjusted) && !results.isEmpty());
+    }
+
+    private List<CatalogFood> match(FoodSearch.Query query, String expression, int limit, boolean approximate) {
+        String sql = "SELECT f.*,r.display_name,s.name AS matched_name,s.brand AS matched_brand," +
+                "s.aliases AS matched_aliases,s.category AS matched_category FROM foods_search s " +
+                "JOIN foods f ON f.rowid=s.docid LEFT JOIN regional_foods r ON r.code=f.code " +
+                "WHERE foods_search MATCH ? ORDER BY CASE WHEN s.name=? OR " +
+                "instr(char(10)||s.aliases||char(10),char(10)||?||char(10))>0 THEN 0 " +
+                "WHEN s.name LIKE ? THEN 1 ELSE 2 END, CASE WHEN (" + COMPLETE_CORE_MACROS + ") " +
+                "THEN 0 ELSE 1 END, CASE WHEN f.source='INDB' THEN 0 WHEN f.source='IFCT' " +
+                "THEN 1 WHEN f.source='USDA' THEN 2 ELSE 3 END, length(s.name),f.code LIMIT 600";
+        List<ScoredFood> matches = new ArrayList<>();
+        try (Cursor c = db.rawQuery(sql, new String[]{expression, query.text, query.text, query.text + "%"})) {
+            while (c.moveToNext()) {
+                CatalogFood food = read(c);
+                matches.add(new ScoredFood(food, FoodSearch.score(query, s(c,"matched_name"),
+                        s(c,"matched_brand"),s(c,"matched_aliases"),s(c,"matched_category"),
+                        food.source,food.hasCompleteCoreMacros(),approximate)));
+            }
+        }
+        matches.sort(Comparator.comparingInt((ScoredFood f) -> f.score)
+                .thenComparingInt(f -> f.food.name.length()).thenComparing(f -> f.food.code));
         List<CatalogFood> out = new ArrayList<>();
-        if (q.isEmpty()) return out;
-        boolean barcode = q.matches("\\d{6,14}");
-        String sql;
-        String[] args;
-        if (barcode) {
-            sql = "SELECT * FROM foods WHERE barcode=? OR search_name LIKE ? ORDER BY CASE WHEN barcode=? THEN 0 ELSE 1 END, name LIMIT ?";
-            args = new String[]{q, "%" + q + "%", q, Integer.toString(limit)};
-        } else {
-            sql = "SELECT * FROM foods WHERE search_name LIKE ? ORDER BY " +
-                    "CASE WHEN lower(name)=? AND (" + COMPLETE_CORE_MACROS + ") THEN 0 " +
-                    "WHEN lower(name) LIKE ? AND (" + COMPLETE_CORE_MACROS + ") THEN 1 " +
-                    "WHEN (" + COMPLETE_CORE_MACROS + ") THEN 2 " +
-                    "WHEN lower(name)=? THEN 3 WHEN lower(name) LIKE ? THEN 4 ELSE 5 END, " +
-                    "CASE WHEN source='INDB' THEN 0 WHEN source='IFCT' THEN 1 " +
-                    "WHEN source='USDA' THEN 2 WHEN source='OFF' THEN 3 ELSE 4 END, name LIMIT ?";
-            args = new String[]{"%" + q + "%", q, q + "%", q, q + "%", Integer.toString(limit)};
-        }
-        try (Cursor c = db.rawQuery(sql, args)) {
-            while (c.moveToNext()) out.add(read(c));
-        }
+        for (int i = 0; i < Math.min(limit, matches.size()); i++) out.add(matches.get(i).food);
         return out;
+    }
+
+    private static final class ScoredFood {
+        final CatalogFood food; final int score;
+        ScoredFood(CatalogFood food, int score) { this.food = food; this.score = score; }
+    }
+
+    private boolean hasPrefix(String token) {
+        try (Cursor c = db.rawQuery("SELECT term FROM search_terms WHERE term>=? AND term<? LIMIT 1",
+                new String[]{token, token + "\uffff"})) { return c.moveToFirst(); }
+    }
+
+    private List<String> correct(String token) {
+        Set<String> keys = FoodSearch.deletions(token);
+        String placeholders = String.join(",", Collections.nCopies(keys.size(), "?"));
+        String sql = "SELECT DISTINCT t.term,t.frequency FROM search_deletions d " +
+                "JOIN search_terms t ON t.term=d.term WHERE d.deletion IN (" + placeholders + ") " +
+                "ORDER BY t.frequency DESC,t.term LIMIT 256";
+        List<FoodSearch.Term> terms = new ArrayList<>();
+        try (Cursor c = db.rawQuery(sql, keys.toArray(new String[0]))) {
+            while (c.moveToNext()) terms.add(new FoodSearch.Term(c.getString(0),c.getInt(1)));
+        }
+        return FoodSearch.corrections(token, terms);
+    }
+
+    public List<CatalogFood> andhraFavourites() {
+        List<CatalogFood> foods = new ArrayList<>();
+        try (Cursor c = db.rawQuery(FOOD_SELECT + "WHERE r.popular=1 ORDER BY r.position", null)) {
+            while (c.moveToNext()) foods.add(read(c));
+        }
+        return foods;
     }
 
     public CatalogFood findByCode(String code) {
         if (code == null || code.trim().isEmpty()) return null;
-        try (Cursor c = db.rawQuery("SELECT * FROM foods WHERE code=? LIMIT 1", new String[]{code})) {
+        try (Cursor c = db.rawQuery(FOOD_SELECT + "WHERE f.code=? LIMIT 1", new String[]{code})) {
             return c.moveToFirst() ? read(c) : null;
         }
     }
@@ -92,7 +159,7 @@ public final class FoodCatalogDb implements AutoCloseable {
 
     public CatalogFood findByBarcode(String barcode, String format) {
         for (String candidate : BarcodeValue.lookupCandidates(barcode, format)) {
-            try (Cursor c = db.rawQuery("SELECT * FROM foods WHERE barcode=? LIMIT 1", new String[]{candidate})) {
+            try (Cursor c = db.rawQuery(FOOD_SELECT + "WHERE f.barcode=? LIMIT 1", new String[]{candidate})) {
                 if (c.moveToFirst()) return read(c);
             }
         }
@@ -100,7 +167,8 @@ public final class FoodCatalogDb implements AutoCloseable {
     }
 
     private static CatalogFood read(Cursor c) {
-        return new CatalogFood(s(c,"code"),s(c,"barcode"),s(c,"name"),s(c,"brand"),s(c,"quantity"),s(c,"category"),s(c,"source"),
+        String displayName = s(c,"display_name");
+        return new CatalogFood(s(c,"code"),s(c,"barcode"),displayName == null ? s(c,"name") : displayName,s(c,"brand"),s(c,"quantity"),s(c,"category"),s(c,"source"),
                 d(c,"calories_100g"),d(c,"protein_100g"),d(c,"carbs_100g"),d(c,"fat_100g"),d(c,"sugars_100g"),d(c,"fiber_100g"),
                 d(c,"saturated_fat_100g"),d(c,"salt_100g"),d(c,"sodium_100g"),s(c,"serving_size"),d(c,"serving_g"),s(c,"ingredients"),
                 s(c,"allergens"),s(c,"labels"),s(c,"nutriscore"),i(c,"nova"),s(c,"product_url"),s(c,"extra_json"),micros(c));

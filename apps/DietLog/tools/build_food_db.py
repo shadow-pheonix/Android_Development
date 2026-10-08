@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 import argparse, csv, json, math, re, sqlite3
 from pathlib import Path
+if __package__:
+    from .food_search_index import build_search_index
+else:
+    from food_search_index import build_search_index
 
 KJ_PER_KCAL = 4.184
 SCHEMA = '''
@@ -346,6 +350,7 @@ def main():
     if args.ifct: stats['ifct']=import_ifct(conn,args.ifct)
     if args.usda: stats['usda']=import_flat(conn,args.usda,'USDA')
     if args.indb: stats['indb']=import_indb_xlsx(conn,args.indb)
+    stats['regional_foods'], stats['search_terms'] = build_search_index(conn)
     total,packaged,macros=validate(conn)
     stats.update(total=total,packaged=packaged,complete_core_macros=macros)
     for k,v in stats.items(): conn.execute('INSERT INTO metadata(key,value) VALUES(?,?)',(k,str(v)))

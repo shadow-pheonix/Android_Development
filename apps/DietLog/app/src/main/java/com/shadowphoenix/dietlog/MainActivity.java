@@ -77,11 +77,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -100,6 +98,8 @@ public final class MainActivity extends Activity {
     private boolean popularRowsDisplayed;
     private String pendingSearchQuery;
     private boolean searchNeedsReload;
+    private boolean suppressSearchChanges;
+    private final Runnable liveSearch = this::runLiveSearch;
     private FoodPhotoLoader photoLoader;
     private ImageView detailImage;
     private TextView detailPhotoCredit;
@@ -529,6 +529,29 @@ public final class MainActivity extends Activity {
 
     private void configureSearch() {
         findViewById(R.id.searchButton).setOnClickListener(v -> search());
+        findViewById(R.id.searchClear).setOnClickListener(v -> {
+            clearSearchQuery();
+            loadPopularFoods();
+            searchInput.requestFocus();
+        });
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable value) {
+                findViewById(R.id.searchClear).setVisibility(value.length() == 0 ? View.GONE : View.VISIBLE);
+                if (suppressSearchChanges || catalog == null) return;
+                cancelLiveSearch();
+                foodRequests.cancel(); // Invalidate old results as soon as text changes.
+                pendingSearchQuery = value.toString().trim();
+                searchNeedsReload = searchScreen.getVisibility() != View.VISIBLE;
+                if (searchNeedsReload) return;
+                if (pendingSearchQuery.isEmpty()) loadPopularFoods();
+                else {
+                    searchSectionTitle.setText("Searching…");
+                    searchInput.postDelayed(liveSearch, 250);
+                }
+            }
+        });
         searchInput.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                     (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
@@ -538,19 +561,19 @@ public final class MainActivity extends Activity {
             return false;
         });
         shortcutAll.setOnClickListener(v -> {
-            searchInput.setText("");
+            clearSearchQuery();
             loadPopularFoods();
         });
         shortcutRecent.setOnClickListener(v -> {
-            searchInput.setText("");
+            clearSearchQuery();
             loadRecentFoods();
         });
         shortcutFrequent.setOnClickListener(v -> {
-            searchInput.setText("");
+            clearSearchQuery();
             loadFrequentFoods();
         });
         shortcutFavorites.setOnClickListener(v -> {
-            searchInput.setText("");
+            clearSearchQuery();
             loadFavoriteFoods();
         });
         findViewById(R.id.manualEntryButton).setOnClickListener(v -> showManualEntry(null, null));
@@ -1324,6 +1347,7 @@ public final class MainActivity extends Activity {
 
     private void showScreen(View target, int navIndex) {
         if (target != searchScreen && searchScreen.getVisibility() == View.VISIBLE && foodRequests != null) {
+            cancelLiveSearch();
             searchNeedsReload = pendingSearchQuery != null;
             foodRequests.cancel();
         }
@@ -1349,11 +1373,7 @@ public final class MainActivity extends Activity {
         if (!immersive) bottomNav.postDelayed(refreshFrostedNavigation, 750);
         if (!immersive) updateNavColors(navIndex);
         uiMotion.enterScreen(target);
-        if (target == searchScreen && searchNeedsReload && pendingSearchQuery != null) {
-            searchNeedsReload = false;
-            if (pendingSearchQuery.isEmpty()) loadPopularFoods();
-            else requestSearch(pendingSearchQuery);
-        }
+        if (target == searchScreen) resumePendingSearch();
     }
 
     private final Runnable refreshFrostedNavigation = () -> {
@@ -1866,13 +1886,42 @@ public final class MainActivity extends Activity {
 
     private void openSearchScreen(String mealType, boolean clearQuery) {
         setActiveMeal(mealType);
-        if (clearQuery) searchInput.setText("");
+        if (clearQuery) clearSearchQuery();
+        searchNeedsReload = false;
         // Navigation starts immediately; catalogue work never runs in the click handler.
         showScreen(searchScreen, 1);
-        if (catalog != null) loadPopularFoods();
+        search();
+    }
+
+    private void cancelLiveSearch() {
+        if (searchInput != null) searchInput.removeCallbacks(liveSearch);
+    }
+
+    private void runLiveSearch() {
+        if (searchScreen != null && searchScreen.getVisibility() == View.VISIBLE) search();
+    }
+
+    private void resumePendingSearch() {
+        if (searchScreen != null && searchScreen.getVisibility() == View.VISIBLE
+                && searchNeedsReload && pendingSearchQuery != null) {
+            searchNeedsReload = false;
+            if (pendingSearchQuery.isEmpty()) loadPopularFoods();
+            else requestSearch(pendingSearchQuery);
+        }
+    }
+
+    private void clearSearchQuery() {
+        cancelLiveSearch();
+        foodRequests.cancel();
+        suppressSearchChanges = true;
+        searchInput.setText("");
+        suppressSearchChanges = false;
+        pendingSearchQuery = null;
+        searchNeedsReload = false;
     }
 
     private void search() {
+        cancelLiveSearch();
         if (catalog == null) return;
         String q = searchInput.getText().toString().trim();
         if (q.isEmpty()) {
@@ -1883,20 +1932,22 @@ public final class MainActivity extends Activity {
     }
 
     private void requestSearch(String q) {
+        cancelLiveSearch();
         pendingSearchQuery = q;
         searchNeedsReload = false;
         selectShortcutTab(null);
-        searchSectionTitle.setText("Search results");
-        showSearchStatus("Searching foods…");
+        searchSectionTitle.setText("Searching…");
         foodRequests.submit(() -> {
             long started = SystemClock.elapsedRealtime();
-            List<CatalogFood> results = catalog.search(q, 30);
-            AppLogger.i("Offline search queryLength=" + q.length() + " results=" + results.size()
+            FoodCatalogDb.SearchResult results = catalog.searchResult(q, 30);
+            AppLogger.i("Offline search queryLength=" + q.length() + " results=" + results.foods.size()
+                    + " approximate=" + results.corrected
                     + " elapsedMs=" + (SystemClock.elapsedRealtime() - started));
             return results;
         }, results -> {
             pendingSearchQuery = null;
-            renderFoodResults(results);
+            searchSectionTitle.setText(results.corrected ? "Close matches" : "Search results");
+            renderFoodResults(results.foods);
         }, this::searchFailed);
     }
 
@@ -1939,11 +1990,12 @@ public final class MainActivity extends Activity {
     }
 
     private void loadPopularFoods() {
+        cancelLiveSearch();
         if (catalog == null) return;
         foodRequests.cancel();
         searchNeedsReload = false;
         selectShortcutTab(shortcutAll);
-        searchSectionTitle.setText("Popular foods");
+        searchSectionTitle.setText("Andhra favourites");
         List<CatalogFood> cached = popularFoods;
         if (cached != null) {
             pendingSearchQuery = null;
@@ -1971,18 +2023,7 @@ public final class MainActivity extends Activity {
     }
 
     private List<CatalogFood> queryPopularFoods() {
-        String[] queries = {"idli", "upma", "biryani", "paneer", "bread", "dosa", "milk"};
-        List<CatalogFood> foods = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
-        for (String q : queries) {
-            for (CatalogFood food : catalog.search(q, 20)) {
-                if (food.hasCompleteCoreMacros() && food.code != null && seen.add(food.code)) {
-                    foods.add(food);
-                    break;
-                }
-            }
-        }
-        return foods;
+        return catalog.andhraFavourites();
     }
 
     private void showSearchStatus(String message) {
@@ -2003,6 +2044,7 @@ public final class MainActivity extends Activity {
     }
 
     private void loadRecentFoods() {
+        cancelLiveSearch();
         foodRequests.cancel();
         pendingSearchQuery = null;
         searchNeedsReload = false;
@@ -2012,6 +2054,7 @@ public final class MainActivity extends Activity {
     }
 
     private void loadFrequentFoods() {
+        cancelLiveSearch();
         foodRequests.cancel();
         pendingSearchQuery = null;
         searchNeedsReload = false;
@@ -2021,6 +2064,7 @@ public final class MainActivity extends Activity {
     }
 
     private void loadFavoriteFoods() {
+        cancelLiveSearch();
         foodRequests.cancel();
         pendingSearchQuery = null;
         searchNeedsReload = false;
@@ -2699,6 +2743,7 @@ public final class MainActivity extends Activity {
         }
         if (startupChoiceController != null && startupChoiceScreen.getVisibility() == View.VISIBLE) startupChoiceController.resume();
         if (bottomNav != null) ((FrostedNavigationView) bottomNav).refreshBackdrop();
+        resumePendingSearch();
         refreshAfterDriveDataChangeIfNeeded();
         refreshDriveBackupUi();
         refreshSupabaseBackupUi();
@@ -2763,6 +2808,11 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
+        cancelLiveSearch();
+        if (foodRequests != null && pendingSearchQuery != null) {
+            searchNeedsReload = true;
+            foodRequests.cancel();
+        }
         if (startupAnimation != null) startupAnimation.pause();
         if (uiMotion != null) uiMotion.setForeground(false);
         super.onPause();
@@ -2770,6 +2820,7 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        cancelLiveSearch();
         FoodCatalogDb closingCatalog = catalog;
         if (foodRequests != null) foodRequests.close(() -> {
             if (closingCatalog != null) closingCatalog.close();

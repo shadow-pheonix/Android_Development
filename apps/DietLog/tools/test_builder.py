@@ -4,6 +4,68 @@ import subprocess, sys
 
 ROOT=Path(__file__).resolve().parents[1]
 
+class SearchIndexTest(unittest.TestCase):
+    def setUp(self):
+        from tools.build_food_db import SCHEMA, insert, payload
+        from tools.food_search_index import build_search_index
+        self.c = sqlite3.connect(':memory:')
+        self.c.executescript(SCHEMA)
+        for code, name, source, brand in [
+                ('INDB-OSR103', 'Moong bean dosa (Pesarattu)', 'INDB', None),
+                ('INDB-ASC127', 'Tamarind rice (Chintapandu pulihora)', 'INDB', None),
+                ('INDB-ASC126', 'Curd rice (Perugu annam)', 'INDB', None),
+                ('OFF-001', 'Upma mix', 'OFF', 'Example'),
+                ('INDB-BFP039', 'Semolina upma (Suji/Rava upma)', 'INDB', None),
+                ('OFF-002', 'Chiken curry', 'OFF', 'Example')]:
+            insert(self.c, payload(code=code, name=name, source=source, brand=brand,
+                                  calories_100g=140, protein_100g=4, carbs_100g=25, fat_100g=2))
+        build_search_index(self.c)
+
+    def tearDown(self):
+        self.c.close()
+
+    def matches(self, expression):
+        return [r[0] for r in self.c.execute('SELECT f.code FROM foods_search s JOIN foods f '
+            'ON f.rowid=s.docid WHERE foods_search MATCH ?', (expression,))]
+
+    def test_telugu_and_transliteration_match_existing_dishes(self):
+        self.assertEqual(['INDB-OSR103'], self.matches('"పెసరట్టు*"'))
+        self.assertEqual(['INDB-OSR103'], self.matches('"pesaratu*"'))
+        self.assertEqual(['INDB-ASC126'], self.matches('"perugu*" AND "annam*"'))
+
+    def test_words_match_in_any_order_and_prefixes(self):
+        self.assertEqual(['INDB-ASC127'], self.matches('"rice*" AND "tam*"'))
+        self.assertEqual(['OFF-001'], self.matches('"example*" AND "upma*"'))
+
+    def test_popular_foods_exclude_packaged_mixes(self):
+        rows = self.c.execute('SELECT f.source FROM regional_foods r JOIN foods f ON f.code=r.code '
+                              'WHERE r.popular=1').fetchall()
+        self.assertEqual(4, len(rows))
+        self.assertTrue(all(r[0] == 'INDB' for r in rows))
+
+    def test_typo_index_can_retrieve_a_transposed_term(self):
+        # pesarattu -> pesartatu: two single deletions share a candidate key.
+        query = 'pesartatu'
+        deletions = {query[:i] + query[i+1:] for i in range(len(query))}
+        candidates = {r[0] for d in deletions for r in self.c.execute(
+            'SELECT term FROM search_deletions WHERE deletion=?', (d,))}
+        self.assertIn('pesarattu', candidates)
+
+    def test_unknown_recipe_does_not_become_a_different_recipe(self):
+        self.assertEqual([], self.matches('"gongura*" AND "pappu*"'))
+
+    def test_normalization_preserves_telugu_and_folds_accents(self):
+        from tools.food_search_index import normalize
+        self.assertEqual('cafe curd rice', normalize(' CAFÉ / curd-rice '))
+        self.assertEqual('పెసరట్టు', normalize('పెసరట్టు'))
+
+    def test_every_food_is_indexed_once(self):
+        self.assertEqual(6, self.c.execute('SELECT count(*) FROM foods_search').fetchone()[0])
+        self.assertEqual('1', self.c.execute("SELECT value FROM metadata WHERE key='search_version'").fetchone()[0])
+
+    def test_misspelled_catalogue_names_are_indexed_under_canonical_spelling(self):
+        self.assertEqual(['OFF-002'], self.matches('"chicken*" AND "curry*"'))
+
 class BuilderTest(unittest.TestCase):
     def test_merge_fixture_and_micronutrient_units(self):
         with tempfile.TemporaryDirectory() as d:
