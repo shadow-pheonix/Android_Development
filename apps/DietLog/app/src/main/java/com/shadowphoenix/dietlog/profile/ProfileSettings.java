@@ -13,10 +13,10 @@ public final class ProfileSettings {
 
     public enum ActivityLevel {
         SEDENTARY("Sedentary", "Mostly seated, little structured exercise", 1.20),
-        LIGHT("Lightly active", "Light exercise 1–3 days/week", 1.375),
-        MODERATE("Moderately active", "Moderate exercise 3–5 days/week", 1.55),
-        VERY_ACTIVE("Very active", "Hard exercise 6–7 days/week", 1.725),
-        EXTREME("Extremely active", "Very hard training or physical job", 1.90);
+        LIGHT("Lightly active", "Some daily walking and light exercise across the week", 1.375),
+        MODERATE("Moderately active", "Regular daily movement and moderate exercise", 1.55),
+        VERY_ACTIVE("Very active", "Active days with frequent hard exercise or physical work", 1.725),
+        EXTREME("Extremely active", "Heavy physical work plus training, or very demanding daily training", 1.90);
 
         public final String label;
         public final String description;
@@ -60,6 +60,14 @@ public final class ProfileSettings {
         @Override public String toString() { return label; }
     }
 
+    public enum TrainingFocus {
+        UNSPECIFIED("Not specified"), NONE("No structured training"),
+        RESISTANCE("Strength / resistance"), ENDURANCE("Endurance / cardio"), MIXED("Strength and cardio");
+        public final String label;
+        TrainingFocus(String label) { this.label = label; }
+        @Override public String toString() { return label; }
+    }
+
     public String displayName = "";
     public String avatarUri = "";
     public String dateOfBirthIso = "";
@@ -83,6 +91,12 @@ public final class ProfileSettings {
     public double fibreGoalG = 30.0;
     public double sugarLimitG = 50.0;
     public double sodiumLimitMg = 2000.0;
+    // Zero means omitted. These details never determine whether onboarding is complete.
+    public double bodyFatPercent = 0.0;
+    public double measuredRmrKcal = 0.0;
+    public double observedMaintenanceKcal = 0.0;
+    public TrainingFocus trainingFocus = TrainingFocus.UNSPECIFIED;
+    public boolean autoNutritionTargets = false;
 
     public int effectiveAge(LocalDate today) {
         if (dateOfBirthIso != null && !dateOfBirthIso.trim().isEmpty()) {

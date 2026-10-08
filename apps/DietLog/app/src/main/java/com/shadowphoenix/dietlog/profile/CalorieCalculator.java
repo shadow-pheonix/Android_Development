@@ -5,6 +5,13 @@ import java.time.LocalDate;
 public final class CalorieCalculator {
     private static final double KCAL_PER_KG_BODY_MASS = 7700.0;
 
+    public enum RestingMethod {
+        MIFFLIN("Height, weight and age"), CUNNINGHAM("Measured body fat"),
+        MEASURED("Measured resting calories"), SCHOFIELD("Age-specific growth estimate");
+        public final String label;
+        RestingMethod(String label) { this.label = label; }
+    }
+
     public static final class Estimate {
         public final double bmr;
         public final double tdee;
@@ -12,15 +19,26 @@ public final class CalorieCalculator {
         public final double dailyAdjustment;
         public final double weeklyWeightChangeKg;
         public final boolean manualOverride;
+        public final RestingMethod restingMethod;
+        public final boolean observedMaintenance, minimumApplied, growthMaintenance;
 
         Estimate(double bmr, double tdee, double calorieTarget, double dailyAdjustment,
-                 double weeklyWeightChangeKg, boolean manualOverride) {
+                 double weeklyWeightChangeKg, boolean manualOverride, RestingMethod restingMethod,
+                 boolean observedMaintenance, boolean minimumApplied, boolean growthMaintenance) {
             this.bmr = bmr;
             this.tdee = tdee;
             this.calorieTarget = calorieTarget;
             this.dailyAdjustment = dailyAdjustment;
             this.weeklyWeightChangeKg = weeklyWeightChangeKg;
             this.manualOverride = manualOverride;
+            this.restingMethod = restingMethod;
+            this.observedMaintenance = observedMaintenance;
+            this.minimumApplied = minimumApplied;
+            this.growthMaintenance = growthMaintenance;
+        }
+
+        public String basisLabel() {
+            return observedMaintenance ? "Observed maintenance; activity already included" : restingMethod.label;
         }
     }
 
@@ -31,13 +49,30 @@ public final class CalorieCalculator {
         int age = settings.effectiveAge(today);
         double sexConstant = settings.sex == ProfileSettings.Sex.MALE ? 5.0 : -161.0;
         double bmr = 10.0 * settings.currentWeightKg + 6.25 * settings.heightCm - 5.0 * age + sexConstant;
-        double tdee = bmr * settings.activityLevel.multiplier;
+        RestingMethod method = RestingMethod.MIFFLIN;
+        boolean adolescent = age < 18;
+        if (adolescent) {
+            // FAO/WHO/UNU Schofield 10–18-year equations; adult body-composition calibration is not used.
+            bmr = settings.sex == ProfileSettings.Sex.MALE
+                    ? 17.686 * settings.currentWeightKg + 658.2 : 13.384 * settings.currentWeightKg + 692.6;
+            method = RestingMethod.SCHOFIELD;
+        } else if (settings.measuredRmrKcal > 0) {
+            bmr = settings.measuredRmrKcal;
+            method = RestingMethod.MEASURED;
+        } else if (settings.bodyFatPercent > 0) {
+            // Cunningham (1980): 500 + 22 × measured lean body mass in kg.
+            bmr = 500.0 + 22.0 * settings.currentWeightKg * (1.0 - settings.bodyFatPercent / 100.0);
+            method = RestingMethod.CUNNINGHAM;
+        }
+        boolean observed = !adolescent && settings.observedMaintenanceKcal > 0;
+        double tdee = observed ? settings.observedMaintenanceKcal
+                : bmr * settings.activityLevel.multiplier * (adolescent ? 1.01 : 1.0);
 
         double weeklyRate = resolveWeeklyRate(settings);
         double requestedDailyAdjustment = weeklyRate * KCAL_PER_KG_BODY_MASS / 7.0;
         double maxAdjustment = tdee * settings.goal.maxTdeeAdjustmentFraction;
         double boundedAdjustment;
-        if (settings.goal.isWeightStable()) {
+        if (settings.goal.isWeightStable() || adolescent) {
             boundedAdjustment = 0.0;
             weeklyRate = 0.0;
         } else if (settings.goal == ProfileSettings.Goal.CUSTOM) {
@@ -49,15 +84,20 @@ public final class CalorieCalculator {
             weeklyRate = boundedAdjustment * 7.0 / KCAL_PER_KG_BODY_MASS;
         }
 
+        boolean minimumApplied = !settings.manualCalorieOverride && tdee + boundedAdjustment < 1200.0;
         double calculatedTarget = roundToNearest10(Math.max(1200.0, tdee + boundedAdjustment));
         double target = settings.manualCalorieOverride
                 ? roundToNearest10(settings.manualCalorieTarget)
                 : calculatedTarget;
-        double displayedAdjustment = (!settings.manualCalorieOverride && settings.goal.isWeightStable())
+        double displayedAdjustment = (!settings.manualCalorieOverride && !minimumApplied
+                && (settings.goal.isWeightStable() || adolescent))
                 ? 0.0 : target - tdee;
+        // This is an initial energy-equivalent pace, not a dynamic weight-loss forecast.
+        // Reflect rounding, the calorie floor and manual overrides instead of the uncapped request.
+        weeklyRate = displayedAdjustment * 7.0 / KCAL_PER_KG_BODY_MASS;
         return new Estimate(
                 round1(bmr), round1(tdee), target, round1(displayedAdjustment), round3(weeklyRate),
-                settings.manualCalorieOverride);
+                settings.manualCalorieOverride, method, observed, minimumApplied, adolescent);
     }
 
     public static double recommendedWeeklyChange(ProfileSettings settings) {
@@ -76,6 +116,7 @@ public final class CalorieCalculator {
     }
 
     private static void validate(ProfileSettings settings, LocalDate today) {
+        OptionalProfileDetails.validate(settings);
         if (!Double.isFinite(settings.currentWeightKg) || settings.currentWeightKg < 25 || settings.currentWeightKg > 350) {
             throw new IllegalArgumentException("Current weight must be between 25 and 350 kg");
         }

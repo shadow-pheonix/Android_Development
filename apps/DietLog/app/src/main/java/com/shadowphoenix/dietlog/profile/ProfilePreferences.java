@@ -52,6 +52,12 @@ public final class ProfilePreferences {
         s.fibreGoalG = getDouble("fibreGoalG", s.fibreGoalG);
         s.sugarLimitG = getDouble("sugarLimitG", s.sugarLimitG);
         s.sodiumLimitMg = getDouble("sodiumLimitMg", s.sodiumLimitMg);
+        s.bodyFatPercent = getDouble("bodyFatPercent", 0.0);
+        s.measuredRmrKcal = getDouble("measuredRmrKcal", 0.0);
+        s.observedMaintenanceKcal = getDouble("observedMaintenanceKcal", 0.0);
+        s.trainingFocus = enumValue(ProfileSettings.TrainingFocus.class,
+                prefs.getString("trainingFocus", s.trainingFocus.name()), s.trainingFocus);
+        s.autoNutritionTargets = prefs.getBoolean("autoNutritionTargets", false);
         return s;
     }
 
@@ -65,6 +71,7 @@ public final class ProfilePreferences {
     }
 
     private void save(ProfileSettings s, boolean personalComplete) {
+        OptionalProfileDetails.validate(s);
         SharedPreferences.Editor e = prefs.edit();
         e.putBoolean("profileSaved", true);
         e.putBoolean("personalProfileComplete", personalComplete);
@@ -91,6 +98,11 @@ public final class ProfilePreferences {
         putDouble(e, "fibreGoalG", s.fibreGoalG);
         putDouble(e, "sugarLimitG", s.sugarLimitG);
         putDouble(e, "sodiumLimitMg", s.sodiumLimitMg);
+        putDouble(e, "bodyFatPercent", s.bodyFatPercent);
+        putDouble(e, "measuredRmrKcal", s.measuredRmrKcal);
+        putDouble(e, "observedMaintenanceKcal", s.observedMaintenanceKcal);
+        e.putString("trainingFocus", s.trainingFocus.name());
+        e.putBoolean("autoNutritionTargets", s.autoNutritionTargets);
         e.putLong("_sync_updated_at", System.currentTimeMillis());
         e.apply();
         SyncCoordinator.markUserDataChanged(appContext, "profile-save");
