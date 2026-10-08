@@ -22,6 +22,7 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 
 ## Current functionality
 
+- Refined daily targets with optional measured body fat, lab resting calories, observed stable-weight maintenance intake and training type. [Calculation rules and sources](TARGET_CALCULATIONS.md) explain input priority, macro budgets, automatic/custom targets and age-specific estimates. Optional fields do not trigger setup for returning users.
 - Startup Google Drive sign-in restores existing backups before deciding whether personal-profile setup is needed. A valid saved profile opens Home directly; only missing/incomplete profiles need setup.
 - Optional Google Drive sign-in or Continue without login after the launch animation, before first-run profile setup. The choice is remembered on this device and Drive can be connected later from Profile.
 - Body recomposition goal with maintenance-calorie estimates, no planned weekly scale-weight change and higher recommended protein; actual activity level remains a separate calorie multiplier.

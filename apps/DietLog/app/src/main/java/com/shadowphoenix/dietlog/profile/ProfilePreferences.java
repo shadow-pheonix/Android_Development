@@ -58,6 +58,8 @@ public final class ProfilePreferences {
         s.trainingFocus = enumValue(ProfileSettings.TrainingFocus.class,
                 prefs.getString("trainingFocus", s.trainingFocus.name()), s.trainingFocus);
         s.autoNutritionTargets = prefs.getBoolean("autoNutritionTargets", false);
+        try { NutritionGoalCalculator.refreshRecommendedIfEnabled(s, LocalDate.now()); }
+        catch (IllegalArgumentException ignored) { /* Keep invalid legacy data editable without forcing optional setup. */ }
         return s;
     }
 
@@ -72,6 +74,7 @@ public final class ProfilePreferences {
 
     private void save(ProfileSettings s, boolean personalComplete) {
         OptionalProfileDetails.validate(s);
+        NutritionGoalCalculator.refreshRecommendedIfEnabled(s, LocalDate.now());
         SharedPreferences.Editor e = prefs.edit();
         e.putBoolean("profileSaved", true);
         e.putBoolean("personalProfileComplete", personalComplete);

@@ -68,7 +68,7 @@ public final class CalorieCalculator {
         double tdee = observed ? settings.observedMaintenanceKcal
                 : bmr * settings.activityLevel.multiplier * (adolescent ? 1.01 : 1.0);
 
-        double weeklyRate = resolveWeeklyRate(settings);
+        double weeklyRate = resolveWeeklyRate(settings, today);
         double requestedDailyAdjustment = weeklyRate * KCAL_PER_KG_BODY_MASS / 7.0;
         double maxAdjustment = tdee * settings.goal.maxTdeeAdjustmentFraction;
         double boundedAdjustment;
@@ -101,18 +101,23 @@ public final class CalorieCalculator {
     }
 
     public static double recommendedWeeklyChange(ProfileSettings settings) {
+        return recommendedWeeklyChange(settings, LocalDate.now());
+    }
+
+    public static double recommendedWeeklyChange(ProfileSettings settings, LocalDate today) {
+        if (settings.effectiveAge(today) < 18) return 0.0;
         if (settings.goal.isWeightStable() || settings.goal == ProfileSettings.Goal.CUSTOM) return 0.0;
         double magnitude = settings.currentWeightKg * settings.goal.defaultBodyWeightFractionPerWeek;
         return round3(clamp(magnitude * settings.goal.direction, -2.0, 2.0));
     }
 
-    private static double resolveWeeklyRate(ProfileSettings settings) {
+    private static double resolveWeeklyRate(ProfileSettings settings, LocalDate today) {
         if (settings.goal.isWeightStable()) return 0.0;
         if (Math.abs(settings.weeklyWeightChangeKg) >= 0.01) {
             if (settings.goal == ProfileSettings.Goal.CUSTOM) return settings.weeklyWeightChangeKg;
             return Math.abs(settings.weeklyWeightChangeKg) * settings.goal.direction;
         }
-        return recommendedWeeklyChange(settings);
+        return recommendedWeeklyChange(settings, today);
     }
 
     private static void validate(ProfileSettings settings, LocalDate today) {

@@ -72,6 +72,7 @@ public final class PersonalizedTargetsTest {
         assertEquals(2970, e.calorieTarget, 0.001);
         assertEquals(0, e.weeklyWeightChangeKg, 0.001);
         assertTrue(e.growthMaintenance); assertFalse(e.observedMaintenance);
+        assertEquals(0, CalorieCalculator.recommendedWeeklyChange(s, TODAY), 0);
         s.sex = ProfileSettings.Sex.FEMALE;
         assertEquals(1629.5, CalorieCalculator.calculate(s, TODAY).bmr, 0.1);
         s.ageYears = 18;
@@ -135,6 +136,25 @@ public final class PersonalizedTargetsTest {
         ProfileSettings s = new ProfileSettings(); s.measuredRmrKcal = 499; assertInvalid(s);
         s.measuredRmrKcal = 0; s.observedMaintenanceKcal = 999; assertInvalid(s);
         s.observedMaintenanceKcal = 0; s.trainingFocus = null; assertInvalid(s);
+    }
+
+    @Test public void profileChangesOnlyRecalculateTargetsAfterExplicitOptIn() {
+        ProfileSettings s = new ProfileSettings();
+        s.proteinGoalG = 123; s.carbsGoalG = 222; s.fatGoalG = 66; s.sugarLimitG = 40;
+        s.observedMaintenanceKcal = 2600;
+        NutritionGoalCalculator.refreshRecommendedIfEnabled(s, TODAY);
+        assertEquals(123, s.proteinGoalG, 0.001); assertEquals(222, s.carbsGoalG, 0.001);
+        assertEquals(66, s.fatGoalG, 0.001); assertEquals(40, s.sugarLimitG, 0.001);
+        s.autoNutritionTargets = true;
+        NutritionGoalCalculator.refreshRecommendedIfEnabled(s, TODAY);
+        assertEquals(2600, NutritionGoalCalculator.macroCalories(s.proteinGoalG, s.carbsGoalG, s.fatGoalG), 2);
+        s.observedMaintenanceKcal = 2200;
+        NutritionGoalCalculator.refreshRecommendedIfEnabled(s, TODAY);
+        assertEquals(2200, NutritionGoalCalculator.macroCalories(s.proteinGoalG, s.carbsGoalG, s.fatGoalG), 2);
+        s.autoNutritionTargets = false; double carbs = s.carbsGoalG;
+        s.observedMaintenanceKcal = 2400;
+        NutritionGoalCalculator.refreshRecommendedIfEnabled(s, TODAY);
+        assertEquals(carbs, s.carbsGoalG, 0.001);
     }
 
     private static void assertInvalid(ProfileSettings s) {

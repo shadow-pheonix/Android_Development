@@ -82,7 +82,10 @@ public final class ProfileController {
 
     public double getCalorieGoal() {
         if (!hasSavedProfile) return LEGACY_CALORIE_GOAL;
-        try { return CalorieCalculator.calculate(settings, LocalDate.now()).calorieTarget; }
+        try {
+            NutritionGoalCalculator.refreshRecommendedIfEnabled(settings, LocalDate.now());
+            return CalorieCalculator.calculate(settings, LocalDate.now()).calorieTarget;
+        }
         catch (RuntimeException ignored) { return LEGACY_CALORIE_GOAL; }
     }
 
@@ -442,6 +445,7 @@ public final class ProfileController {
         optionalDetails.restoreState(state.getBundle("optional"));
         autoNutritionTargets = state.getBoolean("autoNutrition", settings.autoNutritionTargets);
         displayedMacroMode = (ProfileSettings.MacroMode) macroModeSpinner.getSelectedItem();
+        displayedGoal = (ProfileSettings.Goal) goalSpinner.getSelectedItem();
         suppressCallbacks = false;
         refreshPreview();
     }
@@ -686,7 +690,11 @@ public final class ProfileController {
     private double required(EditText input, String label) {
         String raw = input.getText().toString().trim();
         if (raw.isEmpty()) throw new IllegalArgumentException("Enter " + label);
-        try { return Double.parseDouble(raw); }
+        try {
+            double value = Double.parseDouble(raw.replace(',', '.'));
+            if (!Double.isFinite(value)) throw new IllegalArgumentException("Invalid " + label);
+            return value;
+        }
         catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid " + label); }
     }
 
@@ -720,7 +728,7 @@ public final class ProfileController {
         double value;
         try { value = Double.parseDouble(raw); }
         catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid " + label); }
-        if (value < 0) throw new IllegalArgumentException(label + " cannot be negative");
+        if (!Double.isFinite(value) || value < 0) throw new IllegalArgumentException(label + " must be a finite, non-negative number");
         return value;
     }
 

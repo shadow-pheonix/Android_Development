@@ -84,6 +84,10 @@ public final class NutritionGoalCalculator {
         s.fatPercent = g.fatG * 9 / calories * 100;
     }
 
+    public static void refreshRecommendedIfEnabled(ProfileSettings s, LocalDate today) {
+        if (s.autoNutritionTargets) applyRecommended(s, CalorieCalculator.calculate(s, today).calorieTarget, today);
+    }
+
     public static double macroCalories(double proteinG, double carbsG, double fatG) {
         return proteinG * 4.0 + carbsG * 4.0 + fatG * 9.0;
     }
