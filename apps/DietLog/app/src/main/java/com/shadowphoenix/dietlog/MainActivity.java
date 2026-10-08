@@ -118,7 +118,7 @@ public final class MainActivity extends Activity {
     private TextView supabaseConnectionStatus, supabaseSyncStatus, supabaseConnectButton;
     private TextView supabaseSyncNowButton, supabaseRestoreButton, supabaseDisconnectButton;
     private View supabaseConnectedActions;
-    private TextView profileAccountStatus, profileAccountAction;
+    private TextView accountStatus, profileAccountAction;
 
     private RingProgressView caloriesRing, proteinRing, carbsRing, fatRing;
     private TextView calorieValue, calorieGoalText, calorieLeft, proteinValue, carbsValue, fatValue;
@@ -303,7 +303,7 @@ public final class MainActivity extends Activity {
         supabaseSyncNowButton = findViewById(R.id.supabaseSyncNowButton);
         supabaseRestoreButton = findViewById(R.id.supabaseRestoreButton);
         supabaseDisconnectButton = findViewById(R.id.supabaseDisconnectButton);
-        profileAccountStatus = findViewById(R.id.profileAccountStatus);
+        accountStatus = findViewById(R.id.accountStatus);
         profileAccountAction = findViewById(R.id.profileAccountAction);
         searchSectionTitle = findViewById(R.id.searchSectionTitle);
         searchMealTargetText = findViewById(R.id.searchMealTarget);
@@ -417,7 +417,7 @@ public final class MainActivity extends Activity {
     }
 
     private void refreshAccountUi() {
-        if (profileAccountStatus == null || profileAccountAction == null) return;
+        if (accountStatus == null || profileAccountAction == null) return;
 
         DriveConnectionStore.State drive = new DriveConnectionStore(this).getState();
         SupabaseConnectionStore.State supabase = new SupabaseConnectionStore(this).getState();
@@ -441,7 +441,7 @@ public final class MainActivity extends Activity {
         }
 
         if (!connected) {
-            profileAccountStatus.setText("Not signed in • local data stays on this device");
+            accountStatus.setText("Not signed in • local data stays on this device");
             profileAccountAction.setText("Log in / sign up");
             styleCloudConnectButton(profileAccountAction, true);
             return;
@@ -451,9 +451,9 @@ public final class MainActivity extends Activity {
         String providers = AccountIdentity.providerLabel(drive.connected, supabase.connected);
 
         if (identity.isEmpty()) {
-            profileAccountStatus.setText(providers + " connected");
+            accountStatus.setText(providers + " connected");
         } else {
-            profileAccountStatus.setText("Signed in as " + identity + " • " + providers);
+            accountStatus.setText("Signed in as " + identity + " • " + providers);
         }
         profileAccountAction.setText("Manage account");
         styleCloudConnectButton(profileAccountAction, false);

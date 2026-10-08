@@ -4,7 +4,6 @@
         <TextView style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Profile" android:includeFontPadding="false" />
         <TextView style="@style/Text.Body" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="Your goals, made personal." android:includeFontPadding="false" />
         <include layout="@layout/section_profile_personal" />
-        <include layout="@layout/section_profile_account" />
         <include layout="@layout/section_profile_summary" />
         <include layout="@layout/section_profile_goal" />
         <include layout="@layout/section_profile_nutrition" />

@@ -31,6 +31,7 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 - The centre Scan button opens the camera barcode scanner directly, preserving the selected diary date and meal. EAN-13, EAN-8, UPC-A and UPC-E use exact offline catalogue lookup; scanning is also available from Search.
 - Numeric barcode lookup remains available through normal search.
 - Tap a search result to populate the logger and view product/nutrition details.
+- Profile places Edit profile and Log in / sign up side by side. Signed-in users see Manage account in the same spot; connection status and sync controls live on the account page.
 - SQLite meal history with micronutrient snapshots for new logs and offline-catalog enrichment for older compatible entries.
 - Optional Google Drive `appDataFolder` backup/sync: local-first writes, background upload/merge, per-device snapshots, deletion tombstones, and rolling recovery history.
 - Optional Supabase cloud sync alongside Drive: passwordless email-code accounts, Android-Keystore-encrypted refresh sessions, RLS-protected per-user snapshots, background merge/upload, manual restore, and rolling recovery history.

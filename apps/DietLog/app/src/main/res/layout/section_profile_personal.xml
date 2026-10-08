@@ -12,6 +12,9 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Tap photo to change" android:textColor="@color/text_tertiary" android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
-        <TextView android:id="@+id/profileEditProfileButton" android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center" android:background="@drawable/bg_chip" android:text="Edit profile" android:textColor="@color/accent" android:textSize="13sp" android:textStyle="bold" style="@style/Action" android:layout_marginTop="16dp" android:tag="glass:CONTROL" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/profileEditProfileButton" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:background="@drawable/bg_chip" android:text="Edit profile" android:textColor="@color/accent" android:textSize="12sp" android:textStyle="bold" android:includeFontPadding="false" style="@style/Action" android:paddingStart="8dp" android:paddingEnd="8dp" android:tag="glass:CONTROL" />
+            <TextView android:id="@+id/profileAccountAction" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginStart="8dp" android:gravity="center" android:background="@drawable/bg_button_primary" android:text="Log in / sign up" android:textColor="@color/background" android:textSize="12sp" android:textStyle="bold" android:includeFontPadding="false" style="@style/Action" android:paddingStart="8dp" android:paddingEnd="8dp" android:tag="glass:ACTION" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>
