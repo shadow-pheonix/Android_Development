@@ -24,8 +24,12 @@ The Indian Nutrient Databank (Jaacks Lab) supplies 1,014 cooked Indian dishes an
 
 ## Offline food photos
 
-Product photos are from Open Food Facts contributors and are licensed CC BY-SA 3.0: https://creativecommons.org/licenses/by-sa/3.0/. Selected front photos are matched by exact catalogue barcode.
+The curated 8 October 2026 image bundle uses primary product images from official manufacturer pages and visually reviewed stock photos. It contains no Open Food Facts community photos or Wikimedia images. This changes image sources only, not the nutrition dataset notices above.
 
-Representative ingredient/dish photos are from Wikimedia Commons under the individual CC BY, CC BY-SA, CC0 or public-domain terms recorded in `app/src/main/assets/food_photos.json`. That manifest provides per-image authorship, source pages, license links, content hashes and modification notices. Images have been resized, metadata stripped and compressed as WebP. Share-alike images remain under their recorded licenses. Photo credits are accessible from each illustrated food's detail page, including links to the source and license. These image licenses do not change the licenses of the nutrition datasets above.
+Manufacturer imagery remains brand-owned and is included for the user's requested personal offline use. Sources include Britannia, English Oven, iD Fresh, Milky Mist, Yoga Bar, True Elements, Happilo, Farmley, Epigamia, Nakpro, Nestlé Maggi, Orkla India/MTR and Cadbury. Brand/product matches are explicitly reviewed; pack size and regional design may differ. When a product's own brand image is unavailable, a clean package image of the same product type may represent it and is clearly labelled as such.
+
+Pexels stock photographs illustrate cooked dishes and ingredient families under the Pexels License: https://www.pexels.com/license/. A Milky Mist studio paneer image also illustrates the paneer ingredient family under the brand-owned terms above. Preparation can differ from the representative photo.
+
+`app/src/main/assets/food_photos.json` provides per-image credits, terms, source links, content hashes and modification notices. Images have been resized, metadata stripped and compressed as WebP. Food details expose Photo credits and links to the source and image terms. `tools/food_photo_sources.json` retains review notes and approved matching rules. These image terms do not change the licenses of the nutrition datasets above.
 
 Acquisition and validation instructions: `tools/PHOTO_PIPELINE.md`.

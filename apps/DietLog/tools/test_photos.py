@@ -86,3 +86,6 @@ class ManifestTests(unittest.TestCase):
             (root / asset).write_bytes(b'corrupt image')
             with self.assertRaisesRegex(ValueError, 'hash'):
                 validate(database, root)
+
+# Keep the curated matching regressions in the app's existing CI test entry point.
+from tools.test_curated_photos import CuratedPhotoTests

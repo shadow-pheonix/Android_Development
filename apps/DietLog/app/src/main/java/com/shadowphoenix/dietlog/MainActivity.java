@@ -2125,7 +2125,10 @@ public final class MainActivity extends Activity {
         detailPhotoCredit.setVisibility(View.GONE);
         detailPhotoCredit.setOnClickListener(null);
         photoLoader.bind(detailImage, detailEmoji, food.code, foodGlyph(food.name), photo -> {
-            detailPhotoCredit.setText(("product".equals(photo.kind) ? "Product photo" : "Representative photo") + " • Photo credits ›");
+            String label = "product".equals(photo.kind) ? "Official product image" :
+                    "packshot".equals(photo.presentation) ? "Representative product image" :
+                    "stock".equals(photo.provider) ? "Stock photo" : "Representative food image";
+            detailPhotoCredit.setText(label + " • Photo credits ›");
             detailPhotoCredit.setVisibility(View.VISIBLE);
             detailPhotoCredit.setOnClickListener(v -> showPhotoCredits(photo));
         });
@@ -2149,13 +2152,16 @@ public final class MainActivity extends Activity {
     }
 
     private void showPhotoCredits(FoodPhotoLoader.Photo photo) {
+        String note = "product".equals(photo.kind) ? "Packaging size or regional design may differ." :
+                "packshot".equals(photo.presentation) ? "Illustrates this product type; brand and packaging may differ." :
+                "Illustrates this food; preparation may vary.";
         new AlertDialog.Builder(this)
                 .setTitle("Photo credits")
                 .setMessage(photo.credit + "\n\n" + photo.license +
                         "\n\nResized and compressed for offline use." +
-                        ("representative".equals(photo.kind) ? "\nThis is a representative food photo; preparation may vary." : ""))
+                        "\n" + note)
                 .setPositiveButton("Source", (dialog, which) -> openPhotoLink(photo.sourceUrl))
-                .setNeutralButton("License", (dialog, which) -> openPhotoLink(photo.licenseUrl))
+                .setNeutralButton("Image terms", (dialog, which) -> openPhotoLink(photo.licenseUrl))
                 .setNegativeButton("Close", null).show();
     }
 
