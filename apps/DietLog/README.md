@@ -178,6 +178,12 @@ Dates, weekdays and the active header use the app's text colors with a teal sele
 day. The theme is also the default for other app date pickers. Relog remains limited
 to days before today; confirmation and cancellation behavior are unchanged.
 
+Diary, Relog, date of birth and weight-log calendars now share medium dialog sizing:
+320 dp in portrait and 480 dp in landscape, bounded by the available screen width
+with side margins. Oversized native header text is capped at 22 sp, and dates and
+weekdays use compact typography. Height follows the native content so rows and
+confirmation controls remain accessible; the frosted theme and date limits are retained.
+
 ### Home summary and date alignment (0.7.21)
 
 The summary is titled “Daily nutrition” to cover calories and all three macros.

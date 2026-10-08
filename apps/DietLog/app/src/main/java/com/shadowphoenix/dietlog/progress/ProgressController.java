@@ -11,6 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.shadowphoenix.dietlog.R;
+import com.shadowphoenix.dietlog.ui.CalendarDialogs;
 import com.shadowphoenix.dietlog.ui.FrostedUi;
 import com.shadowphoenix.dietlog.ui.FrostedSurfaceDrawable.Material;
 import com.shadowphoenix.dietlog.data.DiaryDbHelper;
@@ -314,7 +315,7 @@ public final class ProgressController {
         content.addView(weight, inputParams);
 
         date.setOnClickListener(v -> {
-            DatePickerDialog picker = new DatePickerDialog(activity,
+            DatePickerDialog picker = new DatePickerDialog(activity, R.style.DiaryDatePickerDialog,
                     (view, year, month, dayOfMonth) -> {
                         selected[0] = LocalDate.of(year, month + 1, dayOfMonth);
                         updateWeightDateText(date, selected[0]);
@@ -322,7 +323,7 @@ public final class ProgressController {
                     selected[0].getYear(), selected[0].getMonthValue() - 1,
                     selected[0].getDayOfMonth());
             picker.getDatePicker().setMaxDate(System.currentTimeMillis());
-            picker.show();
+            CalendarDialogs.show(picker);
         });
 
         new AlertDialog.Builder(activity)

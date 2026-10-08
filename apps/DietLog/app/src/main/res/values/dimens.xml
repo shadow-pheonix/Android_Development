@@ -1,0 +1,5 @@
+<resources>
+    <dimen name="calendar_dialog_width">320dp</dimen>
+    <dimen name="calendar_dialog_margin">24dp</dimen>
+    <dimen name="calendar_max_text_size">22sp</dimen>
+</resources>
