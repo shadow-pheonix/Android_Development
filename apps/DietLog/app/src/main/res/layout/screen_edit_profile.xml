@@ -36,6 +36,8 @@
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="Activity level" android:textColor="@color/text_secondary" android:textSize="12sp" />
             <Spinner android:id="@+id/profileActivitySpinner" android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginTop="5dp" style="@style/FrostedSpinner" />
             <TextView android:id="@+id/profileActivityDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:textColor="@color/text_tertiary" android:textSize="11sp" />
+            <include android:id="@+id/profileOptionalTargets" layout="@layout/section_optional_targets" />
+            <TextView android:id="@+id/profilePersonalTargetPreview" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:textColor="@color/text_primary" android:textSize="13sp" android:accessibilityLiveRegion="polite" />
             <TextView android:id="@+id/profileSavePersonalButton" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="14dp" android:gravity="center" android:background="@drawable/bg_button_primary" android:text="Save profile" android:textColor="@color/background" android:textSize="14sp" android:textStyle="bold" android:tag="glass:ACTION" />
         </LinearLayout>
     </LinearLayout>

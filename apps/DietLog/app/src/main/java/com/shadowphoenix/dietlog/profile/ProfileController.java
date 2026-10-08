@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -40,6 +41,9 @@ public final class ProfileController {
     private ProfileSettings settings;
     private boolean hasSavedProfile;
     private boolean suppressCallbacks;
+    private boolean autoNutritionTargets;
+    private ProfileSettings.MacroMode displayedMacroMode;
+    private OptionalTargetDetails optionalDetails;
     private ProfileSettings.Goal displayedGoal;
     private String fallbackDisplayName = "";
 
@@ -50,8 +54,9 @@ public final class ProfileController {
     private CheckBox manualCalorieCheck;
     private TextView dobButton, activityDescription, goalHint, calorieTargetText, energyBreakdown;
     private TextView macroSummary, macroWarning, headerName, headerSummary;
+    private TextView personalTargetPreview, autoNutritionNote;
     private ImageView avatarFallback;
-    private TextView currentTargetSummary, currentTargetNote, recommendedTargetSummary, macroTargetSummary;
+    private TextView currentTargetSummary, currentTargetNote, recommendedTargetSummary, recommendedTargetNote, macroTargetSummary;
     private TextView editGoalButton, editNutritionButton;
     private View goalSection, nutritionSection;
     private ImageView avatarImage;
@@ -67,6 +72,9 @@ public final class ProfileController {
     public void bind() {
         bindViews();
         setupSpinners();
+        optionalDetails = new OptionalTargetDetails(activity.findViewById(R.id.profileOptionalTargets), () -> {
+            if (!suppressCallbacks) refreshPreview();
+        });
         populateUi();
         setupInteractions();
         refreshPreview();
@@ -109,6 +117,9 @@ public final class ProfileController {
     public void updateCurrentWeightFromProgress(double weightKg) {
         if (!Double.isFinite(weightKg) || weightKg < 25.0 || weightKg > 350.0) return;
         settings.currentWeightKg = weightKg;
+        if (settings.autoNutritionTargets) {
+            NutritionGoalCalculator.applyRecommended(settings, getCalorieGoal(), LocalDate.now());
+        }
         if (hasSavedProfile) preferences.save(settings);
         populateUi();
         refreshPreview();
@@ -125,17 +136,33 @@ public final class ProfileController {
         updateSavedTargetSummary();
         try {
             CalorieCalculator.Estimate e = CalorieCalculator.calculate(draft, LocalDate.now());
+            if (autoNutritionTargets) {
+                NutritionGoalCalculator.applyRecommended(draft, e.calorieTarget, LocalDate.now());
+                populateMacroInputs(draft);
+                updateMacroModeState(draft.macroMode);
+            }
+            autoNutritionNote.setText(autoNutritionTargets
+                    ? "Recommended targets update with your profile. Editing any nutrition target keeps it custom."
+                    : "Your custom targets are kept. Generate recommended macros to follow profile changes automatically.");
             calorieTargetText.setText(String.format(Locale.getDefault(), "%,.0f kcal/day", e.calorieTarget));
             String adjustment = e.dailyAdjustment >= 0
                     ? String.format(Locale.getDefault(), "+%.0f", e.dailyAdjustment)
                     : String.format(Locale.getDefault(), "%.0f", e.dailyAdjustment);
+            String basis = e.basisLabel() + (e.manualOverride ? " • Manual calorie override" : "")
+                    + (e.minimumApplied ? " • Minimum calorie limit applied" : "")
+                    + (e.growthMaintenance ? " • Growth-aware maintenance; no automatic deficit or surplus" : "");
             energyBreakdown.setText(String.format(Locale.getDefault(),
-                    "BMR %,.0f kcal  •  TDEE %,.0f kcal  •  %s kcal/day vs maintenance%s",
-                    e.bmr, e.tdee, adjustment, e.manualOverride ? "  •  manual override" : ""));
+                    "Resting %,.0f kcal • Maintenance %,.0f kcal\n%s kcal/day vs maintenance • Initial energy-equivalent pace %+.2f kg/week\n%s",
+                    e.bmr, e.tdee, adjustment, e.weeklyWeightChangeKg, basis));
+            NutritionGoalCalculator.Goals recommended = NutritionGoalCalculator.recommend(draft, e.calorieTarget, LocalDate.now());
+            personalTargetPreview.setText(String.format(Locale.getDefault(),
+                    "Daily target %,.0f kcal\nRecommended protein %.0f g • Carbs %.0f g • Fat %.0f g\n%s",
+                    e.calorieTarget, recommended.proteinG, recommended.carbsG, recommended.fatG, basis));
             updateMacroSummary(draft, e.calorieTarget);
         } catch (IllegalArgumentException e) {
             calorieTargetText.setText("— kcal/day");
             energyBreakdown.setText(e.getMessage());
+            personalTargetPreview.setText(e.getMessage());
             macroSummary.setText("");
             macroWarning.setText("");
         }
@@ -185,6 +212,8 @@ public final class ProfileController {
         energyBreakdown = activity.findViewById(R.id.profileEnergyBreakdown);
         macroSummary = activity.findViewById(R.id.profileMacroSummary);
         macroWarning = activity.findViewById(R.id.profileMacroWarning);
+        personalTargetPreview = activity.findViewById(R.id.profilePersonalTargetPreview);
+        autoNutritionNote = activity.findViewById(R.id.profileAutoNutritionNote);
         headerName = activity.findViewById(R.id.profileHeaderName);
         headerSummary = activity.findViewById(R.id.profileHeaderSummary);
         avatarFallback = activity.findViewById(R.id.profileAvatarFallback);
@@ -192,6 +221,7 @@ public final class ProfileController {
         currentTargetSummary = activity.findViewById(R.id.profileCurrentTargetSummary);
         currentTargetNote = activity.findViewById(R.id.profileCurrentTargetNote);
         recommendedTargetSummary = activity.findViewById(R.id.profileRecommendedTargetSummary);
+        recommendedTargetNote = activity.findViewById(R.id.profileRecommendedTargetNote);
         macroTargetSummary = activity.findViewById(R.id.profileMacroTargetSummary);
         editGoalButton = activity.findViewById(R.id.profileEditGoalButton);
         editNutritionButton = activity.findViewById(R.id.profileEditNutritionButton);
@@ -222,6 +252,8 @@ public final class ProfileController {
 
     private void populateUi() {
         suppressCallbacks = true;
+        autoNutritionTargets = settings.autoNutritionTargets;
+        optionalDetails.populate(settings);
         nameInput.setText(settings.displayName);
         ageInput.setText(String.valueOf(settings.ageYears));
         heightInput.setText(format(settings.heightCm));
@@ -243,6 +275,7 @@ public final class ProfileController {
         activitySpinner.setSelection(settings.activityLevel.ordinal());
         displayedGoal = settings.goal;
         goalSpinner.setSelection(settings.goal.ordinal());
+        displayedMacroMode = settings.macroMode;
         macroModeSpinner.setSelection(settings.macroMode.ordinal());
         updateDobText();
         showAvatar(settings.avatarUri);
@@ -260,7 +293,15 @@ public final class ProfileController {
         };
         sexSpinner.setOnItemSelectedListener(genericListener);
         activitySpinner.setOnItemSelectedListener(genericListener);
-        macroModeSpinner.setOnItemSelectedListener(genericListener);
+        macroModeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                ProfileSettings.MacroMode mode = (ProfileSettings.MacroMode) macroModeSpinner.getSelectedItem();
+                if (!suppressCallbacks && displayedMacroMode != mode) autoNutritionTargets = false;
+                displayedMacroMode = mode;
+                if (!suppressCallbacks) refreshPreview();
+            }
+        });
         goalSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onNothingSelected(AdapterView<?> parent) {}
             @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -305,9 +346,17 @@ public final class ProfileController {
             }
             @Override public void afterTextChanged(Editable s) {}
         };
-        EditText[] watched = {nameInput, ageInput, heightInput, weightInput, targetWeightInput, weeklyInput,
-                manualCaloriesInput, proteinInput, carbsInput, fatInput, proteinPctInput, carbsPctInput, fatPctInput};
+        EditText[] watched = {nameInput, ageInput, heightInput, weightInput, targetWeightInput, weeklyInput, manualCaloriesInput};
         for (EditText input : watched) input.addTextChangedListener(watcher);
+        TextWatcher customTargets = new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (!suppressCallbacks) { autoNutritionTargets = false; refreshPreview(); }
+            }
+        };
+        for (EditText input : new EditText[]{proteinInput, carbsInput, fatInput, proteinPctInput,
+                carbsPctInput, fatPctInput, fibreInput, sugarInput, sodiumInput}) input.addTextChangedListener(customTargets);
     }
 
     private boolean save() {
@@ -319,6 +368,7 @@ public final class ProfileController {
             ProfileSettings draft = readDraft(true);
             if (personal) ProfileSetup.validatePersonal(draft, LocalDate.now());
             CalorieCalculator.Estimate estimate = CalorieCalculator.calculate(draft, LocalDate.now());
+            if (draft.autoNutritionTargets) NutritionGoalCalculator.applyRecommended(draft, estimate.calorieTarget, LocalDate.now());
             if (draft.targetWeightKg < 25 || draft.targetWeightKg > 350) {
                 throw new IllegalArgumentException("Target weight must be between 25 and 350 kg");
             }
@@ -358,23 +408,42 @@ public final class ProfileController {
         try {
             ProfileSettings draft = readDraft(false);
             CalorieCalculator.Estimate e = CalorieCalculator.calculate(draft, LocalDate.now());
-            NutritionGoalCalculator.Goals goals = NutritionGoalCalculator.recommend(draft, e.calorieTarget);
-            suppressCallbacks = true;
-            proteinInput.setText(format(goals.proteinG));
-            carbsInput.setText(format(goals.carbsG));
-            fatInput.setText(format(goals.fatG));
-            fibreInput.setText(format(goals.fibreG));
-            sugarInput.setText(format(goals.sugarLimitG));
-            sodiumInput.setText(format(goals.sodiumLimitMg));
-            proteinPctInput.setText(format(goals.proteinG * 4.0 / e.calorieTarget * 100.0));
-            carbsPctInput.setText(format(goals.carbsG * 4.0 / e.calorieTarget * 100.0));
-            fatPctInput.setText(format(goals.fatG * 9.0 / e.calorieTarget * 100.0));
-            suppressCallbacks = false;
+            NutritionGoalCalculator.applyRecommended(draft, e.calorieTarget, LocalDate.now());
+            autoNutritionTargets = true;
+            populateMacroInputs(draft);
             refreshPreview();
         } catch (IllegalArgumentException e) {
             suppressCallbacks = false;
-            Toast.makeText(activity, "Complete body details before generating macro targets", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, e.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void populateMacroInputs(ProfileSettings s) {
+        boolean previous = suppressCallbacks;
+        suppressCallbacks = true;
+        displayedMacroMode = s.macroMode;
+        macroModeSpinner.setSelection(s.macroMode.ordinal());
+        proteinInput.setText(format(s.proteinGoalG)); carbsInput.setText(format(s.carbsGoalG)); fatInput.setText(format(s.fatGoalG));
+        proteinPctInput.setText(format(s.proteinPercent)); carbsPctInput.setText(format(s.carbsPercent)); fatPctInput.setText(format(s.fatPercent));
+        fibreInput.setText(optionalFormat(s.fibreGoalG)); sugarInput.setText(optionalFormat(s.sugarLimitG)); sodiumInput.setText(optionalFormat(s.sodiumLimitMg));
+        suppressCallbacks = previous;
+    }
+
+    public Bundle saveOptionalState() {
+        Bundle state = new Bundle();
+        state.putBundle("optional", optionalDetails.saveState());
+        state.putBoolean("autoNutrition", autoNutritionTargets);
+        return state;
+    }
+
+    public void restoreOptionalState(Bundle state) {
+        if (state == null) return;
+        suppressCallbacks = true;
+        optionalDetails.restoreState(state.getBundle("optional"));
+        autoNutritionTargets = state.getBoolean("autoNutrition", settings.autoNutritionTargets);
+        displayedMacroMode = (ProfileSettings.MacroMode) macroModeSpinner.getSelectedItem();
+        suppressCallbacks = false;
+        refreshPreview();
     }
 
     private ProfileSettings readDraft(boolean strict) {
@@ -411,6 +480,9 @@ public final class ProfileController {
         s.fibreGoalG = strict ? optionalNonNegative(fibreInput, "fibre goal") : nonNegativeOr(fibreInput, settings.fibreGoalG);
         s.sugarLimitG = strict ? optionalNonNegative(sugarInput, "sugar limit") : nonNegativeOr(sugarInput, settings.sugarLimitG);
         s.sodiumLimitMg = strict ? optionalNonNegative(sodiumInput, "sodium limit") : nonNegativeOr(sodiumInput, settings.sodiumLimitMg);
+        optionalDetails.readInto(s);
+        s.autoNutritionTargets = autoNutritionTargets;
+        if (strict) OptionalProfileDetails.validate(s);
         return s;
     }
 
@@ -457,10 +529,12 @@ public final class ProfileController {
         }
         try {
             ProfileSettings recommended = calculatorSettingsWithoutManualOverride(settings);
-            double recommendedCalories = CalorieCalculator.calculate(recommended, LocalDate.now()).calorieTarget;
-            recommendedTargetSummary.setText(targetSummary(recommendedCalories));
+            CalorieCalculator.Estimate estimate = CalorieCalculator.calculate(recommended, LocalDate.now());
+            recommendedTargetSummary.setText(targetSummary(estimate.calorieTarget));
+            recommendedTargetNote.setText(estimate.basisLabel());
         } catch (RuntimeException ignored) {
             recommendedTargetSummary.setText("—\nkcal / day");
+            recommendedTargetNote.setText("Complete valid profile details");
         }
         macroTargetSummary.setText(String.format(Locale.getDefault(),
                 "Macros • P %.0f g • C %.0f g • F %.0f g",
@@ -479,6 +553,10 @@ public final class ProfileController {
         copy.goal = source.goal;
         copy.weeklyWeightChangeKg = source.weeklyWeightChangeKg;
         copy.manualCalorieOverride = false;
+        copy.bodyFatPercent = source.bodyFatPercent;
+        copy.measuredRmrKcal = source.measuredRmrKcal;
+        copy.observedMaintenanceKcal = source.observedMaintenanceKcal;
+        copy.trainingFocus = source.trainingFocus;
         return copy;
     }
 
@@ -492,7 +570,7 @@ public final class ProfileController {
     }
 
     private void updateActivityDescription(ProfileSettings.ActivityLevel level) {
-        activityDescription.setText(level.description + String.format(Locale.US, "  •  ×%.3f TDEE factor", level.multiplier));
+        activityDescription.setText(level.description + String.format(Locale.US, " • ×%.3f maintenance factor; includes your whole week", level.multiplier));
     }
 
     private void updateGoalHint(ProfileSettings draft) {
@@ -509,7 +587,9 @@ public final class ProfileController {
                     "Recommended starting rate: %+.2f kg/week (%.2f%% body weight/week). Calorie adjustment is capped at %.0f%% of TDEE.",
                     recommended, goal.defaultBodyWeightFractionPerWeek * 100.0, goal.maxTdeeAdjustmentFraction * 100.0));
         }
-        boolean enabled = !goal.isWeightStable();
+        boolean growing = draft.effectiveAge(LocalDate.now()) < 18;
+        if (growing) goalHint.setText("Growing teens use age-specific maintenance estimates. Automatic weight-loss or bulk adjustments are not applied.");
+        boolean enabled = !goal.isWeightStable() && !growing;
         weeklyInput.setEnabled(enabled);
         weeklyInput.setAlpha(enabled ? 1f : 0.45f);
         activity.findViewById(R.id.profileUseRecommendedRate).setEnabled(enabled);
