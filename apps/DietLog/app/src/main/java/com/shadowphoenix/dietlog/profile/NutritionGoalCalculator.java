@@ -49,6 +49,22 @@ public final class NutritionGoalCalculator {
         return proteinG * 4.0 + carbsG * 4.0 + fatG * 9.0;
     }
 
+    public static void validateMacroGrams(ProfileSettings s, double calorieTarget) {
+        // Retain the normal manual-entry limits, while accepting generated
+        // targets for supported high-energy profiles. Each individual macro
+        // is bounded by the energy budget, rather than an incompatible fixed cap.
+        validateGrams(s.proteinGoalG, Math.max(500, Math.ceil(calorieTarget / 4.0)), false, "Protein");
+        validateGrams(s.carbsGoalG, Math.max(1000, Math.ceil(calorieTarget / 4.0)), true, "Carb");
+        validateGrams(s.fatGoalG, Math.max(300, Math.ceil(calorieTarget / 9.0)), false, "Fat");
+    }
+
+    private static void validateGrams(double value, double max, boolean zeroAllowed, String name) {
+        if (!Double.isFinite(value) || (zeroAllowed ? value < 0 : value <= 0) || value > max) {
+            throw new IllegalArgumentException(name + " goal must be between " + (zeroAllowed ? "0" : "1")
+                    + " and " + (int) max + " g");
+        }
+    }
+
     public static double[] gramsFromPercent(double calorieTarget, double proteinPct, double carbsPct, double fatPct) {
         return new double[]{
                 calorieTarget * proteinPct / 100.0 / 4.0,

@@ -61,6 +61,8 @@ public final class RecompositionCalculatorTest {
                     NutritionGoalCalculator.Goals g = NutritionGoalCalculator.recommend(s, calories);
                     assertTrue(g.proteinG > 0 && g.fatG > 0 && g.carbsG >= 50);
                     assertEquals(calories, NutritionGoalCalculator.macroCalories(g.proteinG, g.carbsG, g.fatG), 2.0);
+                    s.proteinGoalG = g.proteinG; s.carbsGoalG = g.carbsG; s.fatGoalG = g.fatG;
+                    NutritionGoalCalculator.validateMacroGrams(s, calories);
                 }
             }
         }

@@ -333,7 +333,7 @@ public final class ProfileController {
                 draft.carbsGoalG = grams[1];
                 draft.fatGoalG = grams[2];
             } else {
-                validateMacroGrams(draft);
+                NutritionGoalCalculator.validateMacroGrams(draft, estimate.calorieTarget);
                 draft.proteinPercent = draft.proteinGoalG * 4.0 / estimate.calorieTarget * 100.0;
                 draft.carbsPercent = draft.carbsGoalG * 4.0 / estimate.calorieTarget * 100.0;
                 draft.fatPercent = draft.fatGoalG * 9.0 / estimate.calorieTarget * 100.0;
@@ -601,12 +601,6 @@ public final class ProfileController {
             avatarImage.setVisibility(View.GONE);
             avatarFallback.setVisibility(View.VISIBLE);
         }
-    }
-
-    private static void validateMacroGrams(ProfileSettings s) {
-        if (s.proteinGoalG <= 0 || s.proteinGoalG > 500) throw new IllegalArgumentException("Protein goal must be between 1 and 500 g");
-        if (s.carbsGoalG < 0 || s.carbsGoalG > 1000) throw new IllegalArgumentException("Carb goal must be between 0 and 1000 g");
-        if (s.fatGoalG <= 0 || s.fatGoalG > 300) throw new IllegalArgumentException("Fat goal must be between 1 and 300 g");
     }
 
     private double required(EditText input, String label) {
