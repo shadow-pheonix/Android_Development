@@ -22,6 +22,7 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 
 ## Current functionality
 
+- Startup Google Drive sign-in restores existing backups before deciding whether personal-profile setup is needed. A valid saved profile opens Home directly; only missing/incomplete profiles need setup.
 - Optional Google Drive sign-in or Continue without login after the launch animation, before first-run profile setup. The choice is remembered on this device and Drive can be connected later from Profile.
 - Body recomposition goal with maintenance-calorie estimates, no planned weekly scale-weight change and higher recommended protein; actual activity level remains a separate calorie multiplier.
 - A brief animated FuelNote launch screen, followed by guided profile setup for users without completed personal details. Setup covers age/DOB, sex, measurements, goal and activity, then previews calculated calorie and macro targets before saving.
@@ -42,7 +43,19 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 
 Barcode decoding uses ZXing Core under the Apache License 2.0; camera capture uses Android Camera2 directly so scanning has no runtime network/service dependency.
 
-## Startup and first-run setup (0.7.29)
+## Startup and first-run setup
+
+### Drive profile recovery (0.7.33)
+
+Fresh installations wait for a foreground backup check/merge after Drive authorization,
+including snapshots from this device ID. The restored completion marker and profile
+validation decide whether setup is needed. Interrupted recovery resumes after Activity
+recreation or restart; background Drive uploads wait until it finishes. Failed checks
+offer retry or guest mode and do not classify the account as new. Choosing guest mode
+after failure disconnects Drive locally without deleting the remote backup. Diagnostics
+record recovery outcome and snapshot counts, without profile values or access tokens.
+
+### Launch and personal details (0.7.29)
 
 Fresh activity launches reveal the FuelNote mark and wordmark over the frosted scene
 in about one second. The animation pauses in the background, is skipped for disabled

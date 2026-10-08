@@ -47,6 +47,8 @@ import com.shadowphoenix.dietlog.profile.ProfileController;
 import com.shadowphoenix.dietlog.profile.ProfileSettings;
 import com.shadowphoenix.dietlog.profile.ProfilePreferences;
 import com.shadowphoenix.dietlog.profile.OnboardingController;
+import com.shadowphoenix.dietlog.profile.StartupPreferences;
+import com.shadowphoenix.dietlog.profile.StartupRecoveryRequest;
 import com.shadowphoenix.dietlog.progress.ProgressController;
 import com.shadowphoenix.dietlog.sync.DriveBackupScheduler;
 import com.shadowphoenix.dietlog.sync.DriveRestoreManager;
@@ -59,6 +61,7 @@ import com.shadowphoenix.dietlog.sync.supabase.SupabaseAuthClient;
 import com.shadowphoenix.dietlog.sync.supabase.SupabaseConfig;
 import com.shadowphoenix.dietlog.sync.supabase.SupabaseConnectionStore;
 import com.shadowphoenix.dietlog.sync.drive.DriveConnectionStore;
+import com.shadowphoenix.dietlog.sync.drive.DriveRestClient;
 import com.shadowphoenix.dietlog.sync.drive.GoogleDriveAuthorization;
 import com.shadowphoenix.dietlog.ui.CalendarDialogs;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
@@ -111,6 +114,8 @@ public final class MainActivity extends Activity {
     private Bundle pendingProfileSetup;
     private boolean startupFinished;
     private final ExecutorService driveExecutor = Executors.newSingleThreadExecutor();
+    private final StartupRecoveryRequest startupRecovery =
+            new StartupRecoveryRequest(driveExecutor, this::runOnUiThread);
     private final ExecutorService supabaseExecutor = Executors.newSingleThreadExecutor();
     private DriveSyncStatusStore driveSyncStatusStore;
     private SharedPreferences.OnSharedPreferenceChangeListener driveSyncStatusListener;
@@ -234,15 +239,77 @@ public final class MainActivity extends Activity {
         findViewById(R.id.startupOverlay).setVisibility(View.GONE);
         findViewById(R.id.screenContainer).setVisibility(View.VISIBLE);
         boolean driveConnected = new DriveConnectionStore(this).getState().connected;
-        if (driveConnected || StartupChoiceController.hasChosen(this)) {
+        boolean restoreNeeded = new StartupPreferences(this).needsDriveRestore(
+                driveConnected, new ProfilePreferences(this).hasCompletedPersonalProfile());
+        if (!restoreNeeded && (driveConnected || StartupChoiceController.hasChosen(this))) {
             if (driveConnected) StartupChoiceController.markChosen(this);
             continueStartup(restoredSetup);
         } else {
             pendingProfileSetup = restoredSetup;
             startupChoiceController = new StartupChoiceController(this, this::connectGoogleDrive,
-                    this::completeStartupChoice, this::exportDiagnostics);
+                    this::continueStartupWithoutLogin, this::exportDiagnostics);
             showScreen(startupChoiceScreen, -1);
+            if (restoreNeeded) restoreStartupProfile(null);
         }
+    }
+
+    private void continueStartupWithoutLogin() {
+        if (startupRecovery.isRunning()) return;
+        if (new StartupPreferences(this).hasPendingDriveRestore()) {
+            // Guest mode after a failed recovery must not upload a replacement profile later.
+            DriveBackupScheduler.cancel(this);
+            new DriveConnectionStore(this).clear();
+            if (driveSyncStatusStore != null) driveSyncStatusStore.clear();
+            AppLogger.i("Startup Drive recovery skipped; continuing without login");
+        }
+        completeStartupChoice();
+    }
+
+    private void restoreStartupProfile(String authorizedToken) {
+        if (startupRecovery.isRunning() || startupChoiceController == null) return;
+        new StartupPreferences(this).beginDriveRestore();
+        startupChoiceController.showRestoring();
+        driveAuthorizationPreparing = false;
+        setDriveControlsEnabled(false);
+        final android.content.Context context = getApplicationContext();
+        AppLogger.i("Startup Drive recovery started");
+        startupRecovery.start(() -> {
+            String token = authorizedToken != null ? authorizedToken
+                    : GoogleDriveAuthorization.requestSilentTokenBlocking(context).accessToken;
+            DriveRestoreManager.MergeResult result = new DriveRestoreManager().mergeDriveSnapshots(
+                    context, token, SyncCoordinator.getState(context).deviceId, true);
+            if (result.snapshotsApplied > 0) {
+                new DriveSyncStatusStore(context).markRemoteMerge(result.snapshotsApplied, result.changed);
+            }
+            AppLogger.i("Startup Drive recovery completed snapshots=" + result.snapshotsApplied
+                    + " profileComplete=" + new ProfilePreferences(context).hasCompletedPersonalProfile());
+        }, () -> {
+            if (isDestroyed() || startupChoiceController == null) return;
+            profileController.reloadFromPreferences();
+            progressController.refresh();
+            refreshHome();
+            if (new ProfilePreferences(this).hasCompletedPersonalProfile()) pendingProfileSetup = null;
+            completeStartupChoice();
+            scheduleConnectedDriveBackup();
+        }, error -> {
+            if (isDestroyed() || startupChoiceController == null) return;
+            AppLogger.e("Startup Drive recovery failed", error);
+            boolean authorizationFailed = error instanceof GoogleDriveAuthorization.AuthorizationException
+                    || (error instanceof DriveRestClient.DriveHttpException
+                    && (((DriveRestClient.DriveHttpException) error).statusCode == 401
+                    || ((DriveRestClient.DriveHttpException) error).statusCode == 403));
+            if (authorizationFailed) new DriveConnectionStore(this).clear();
+            new DriveSyncStatusStore(this).markError("Could not restore the startup Drive backup", authorizationFailed);
+            setDriveControlsEnabled(true);
+            refreshDriveBackupUi();
+            startupChoiceController.showRestoreFailure();
+        });
+    }
+
+    private void scheduleConnectedDriveBackup() {
+        SyncCoordinator.forceDirty(this, "drive-connect");
+        DriveBackupScheduler.schedulePeriodic(this);
+        DriveBackupScheduler.scheduleImmediate(this);
     }
 
     private void completeStartupChoice() {
@@ -634,6 +701,11 @@ public final class MainActivity extends Activity {
     }
 
     private void connectGoogleDrive() {
+        if (startupChoiceController != null
+                && new DriveConnectionStore(this).getState().connected) {
+            restoreStartupProfile(null);
+            return;
+        }
         driveAuthorizationGeneration++;
         driveAuthorizationPreparing = true;
         new DriveSyncStatusStore(this).clearError();
@@ -654,12 +726,17 @@ public final class MainActivity extends Activity {
             }
             @Override
             public void onAuthorized(String accessToken, String accountName) {
+                if (!isActive()) return;
                 driveAuthorizationPreparing = false;
                 new DriveSyncStatusStore(MainActivity.this).clearError();
-                SyncCoordinator.forceDirty(MainActivity.this, "drive-connect");
-                DriveBackupScheduler.schedulePeriodic(MainActivity.this);
-                DriveBackupScheduler.scheduleImmediate(MainActivity.this);
                 runOnUiThread(() -> {
+                    if (!isActive()) return;
+                    if (startupRequest && (new StartupPreferences(MainActivity.this).hasPendingDriveRestore()
+                            || !new ProfilePreferences(MainActivity.this).hasCompletedPersonalProfile())) {
+                        restoreStartupProfile(accessToken);
+                        return;
+                    }
+                    scheduleConnectedDriveBackup();
                     setDriveControlsEnabled(true);
                     refreshDriveBackupUi();
                     toast("Google Drive backup connected");
@@ -2828,6 +2905,7 @@ public final class MainActivity extends Activity {
         else if (closingCatalog != null) closingCatalog.close();
         if (uiMotion != null) uiMotion.close();
         if (startupAnimation != null) startupAnimation.close();
+        startupRecovery.close();
         if (bottomNav != null) bottomNav.removeCallbacks(refreshFrostedNavigation);
         if (photoLoader != null) photoLoader.close();
         driveExecutor.shutdownNow();
