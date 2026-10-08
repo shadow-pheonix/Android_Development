@@ -19,6 +19,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.shadowphoenix.dietlog.R;
+import com.shadowphoenix.dietlog.ui.CalendarDialogs;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -532,7 +533,7 @@ public final class ProfileController {
         LocalDate initial;
         try { initial = LocalDate.parse(settings.dateOfBirthIso); }
         catch (RuntimeException ignored) { initial = LocalDate.now().minusYears(Math.max(13, intOr(ageInput, 25))); }
-        DatePickerDialog dialog = new DatePickerDialog(activity, (view, year, month, day) -> {
+        DatePickerDialog dialog = new DatePickerDialog(activity, R.style.DiaryDatePickerDialog, (view, year, month, day) -> {
             LocalDate selected = LocalDate.of(year, month + 1, day);
             if (selected.isAfter(LocalDate.now())) {
                 Toast.makeText(activity, "Date of birth cannot be in the future", Toast.LENGTH_SHORT).show();
@@ -545,7 +546,7 @@ public final class ProfileController {
             refreshPreview();
         }, initial.getYear(), initial.getMonthValue() - 1, initial.getDayOfMonth());
         dialog.getDatePicker().setMaxDate(System.currentTimeMillis());
-        dialog.show();
+        CalendarDialogs.show(dialog);
     }
 
     private void updateDobText() {

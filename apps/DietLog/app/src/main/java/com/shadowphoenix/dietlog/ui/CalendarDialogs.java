@@ -14,7 +14,7 @@ import android.widget.TextView;
 
 import com.shadowphoenix.dietlog.R;
 
-/** Medium native calendars, retaining normal touch targets and font scaling. */
+/** Medium native calendars, retaining native interactions and font scaling. */
 public final class CalendarDialogs {
     private CalendarDialogs() {}
 

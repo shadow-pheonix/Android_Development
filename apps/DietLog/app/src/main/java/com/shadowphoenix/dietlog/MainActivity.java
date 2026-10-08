@@ -58,6 +58,7 @@ import com.shadowphoenix.dietlog.sync.supabase.SupabaseConfig;
 import com.shadowphoenix.dietlog.sync.supabase.SupabaseConnectionStore;
 import com.shadowphoenix.dietlog.sync.drive.DriveConnectionStore;
 import com.shadowphoenix.dietlog.sync.drive.GoogleDriveAuthorization;
+import com.shadowphoenix.dietlog.ui.CalendarDialogs;
 import com.shadowphoenix.dietlog.ui.RingProgressView;
 import com.shadowphoenix.dietlog.ui.MealIllustrationView;
 import com.shadowphoenix.dietlog.ui.FrostedUi;
@@ -1222,7 +1223,7 @@ public final class MainActivity extends Activity {
                 (view, year, month, dayOfMonth) -> selectDate(LocalDate.of(year, month + 1, dayOfMonth)),
                 selectedDate.getYear(), selectedDate.getMonthValue() - 1, selectedDate.getDayOfMonth());
         picker.setTitle(R.string.choose_diary_date);
-        picker.show();
+        CalendarDialogs.show(picker);
     }
 
     private void renderDateNavigation() {
@@ -1526,7 +1527,7 @@ public final class MainActivity extends Activity {
         long maxMillis = today.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - 1;
         picker.getDatePicker().setMaxDate(maxMillis);
         picker.setTitle("Choose day to relog");
-        picker.show();
+        CalendarDialogs.show(picker);
     }
 
     private void confirmRelogDate(LocalDate sourceDate) {
