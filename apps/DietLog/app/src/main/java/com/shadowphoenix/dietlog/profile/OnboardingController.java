@@ -160,7 +160,7 @@ public final class OnboardingController {
                 throw new IllegalArgumentException("Choose a target below your current weight for this goal");
             if (s.goal.direction > 0 && s.targetWeightKg <= s.currentWeightKg)
                 throw new IllegalArgumentException("Choose a target above your current weight for this goal");
-            s.weeklyWeightChangeKg = CalorieCalculator.recommendedWeeklyChange(s);
+            s.weeklyWeightChangeKg = Math.max(-2.0, Math.min(2.0, CalorieCalculator.recommendedWeeklyChange(s)));
             s.manualCalorieOverride = false;
         }
         return s;
