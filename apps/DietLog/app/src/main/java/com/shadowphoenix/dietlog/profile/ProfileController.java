@@ -40,6 +40,7 @@ public final class ProfileController {
     private ProfileSettings settings;
     private boolean hasSavedProfile;
     private boolean suppressCallbacks;
+    private ProfileSettings.Goal displayedGoal;
     private String fallbackDisplayName = "";
 
     private EditText nameInput, ageInput, heightInput, weightInput, targetWeightInput, weeklyInput, manualCaloriesInput;
@@ -240,6 +241,7 @@ public final class ProfileController {
         sodiumInput.setText(optionalFormat(settings.sodiumLimitMg));
         sexSpinner.setSelection(settings.sex.ordinal());
         activitySpinner.setSelection(settings.activityLevel.ordinal());
+        displayedGoal = settings.goal;
         goalSpinner.setSelection(settings.goal.ordinal());
         macroModeSpinner.setSelection(settings.macroMode.ordinal());
         updateDobText();
@@ -264,6 +266,12 @@ public final class ProfileController {
             @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (suppressCallbacks) return;
                 ProfileSettings draft = readDraft(false);
+                boolean changed = displayedGoal != draft.goal;
+                displayedGoal = draft.goal;
+                if (changed && draft.goal == ProfileSettings.Goal.RECOMPOSITION) {
+                    targetWeightInput.setText(format(draft.currentWeightKg));
+                    applyRecommendedMacros();
+                }
                 if (draft.goal != ProfileSettings.Goal.CUSTOM) {
                     weeklyInput.setText(formatSigned(CalorieCalculator.recommendedWeeklyChange(draft)));
                 }
@@ -378,10 +386,11 @@ public final class ProfileController {
         s.sex = (ProfileSettings.Sex) sexSpinner.getSelectedItem();
         s.heightCm = strict ? required(heightInput, "height") : numberOr(heightInput, settings.heightCm);
         s.currentWeightKg = strict ? required(weightInput, "current weight") : numberOr(weightInput, settings.currentWeightKg);
-        s.targetWeightKg = strict ? required(targetWeightInput, "target weight") : numberOr(targetWeightInput, settings.targetWeightKg);
         s.activityLevel = (ProfileSettings.ActivityLevel) activitySpinner.getSelectedItem();
         s.goal = (ProfileSettings.Goal) goalSpinner.getSelectedItem();
-        s.weeklyWeightChangeKg = numberOr(weeklyInput, 0.0);
+        s.targetWeightKg = s.goal == ProfileSettings.Goal.RECOMPOSITION ? s.currentWeightKg
+                : (strict ? required(targetWeightInput, "target weight") : numberOr(targetWeightInput, settings.targetWeightKg));
+        s.weeklyWeightChangeKg = s.goal.isWeightStable() ? 0.0 : numberOr(weeklyInput, 0.0);
         s.manualCalorieOverride = manualCalorieCheck.isChecked();
         s.manualCalorieTarget = strict && s.manualCalorieOverride
                 ? required(manualCaloriesInput, "manual calorie target")
@@ -488,7 +497,9 @@ public final class ProfileController {
 
     private void updateGoalHint(ProfileSettings draft) {
         ProfileSettings.Goal goal = draft.goal;
-        if (goal == ProfileSettings.Goal.MAINTAIN) {
+        if (goal == ProfileSettings.Goal.RECOMPOSITION) {
+            goalHint.setText("Recomposition starts at estimated maintenance calories with no planned weekly weight change. Recommended macros start at 2 g protein/kg, adjusted to fit your calorie budget. Use recommended macros in Nutrition; resistance training supports this goal.");
+        } else if (goal == ProfileSettings.Goal.MAINTAIN) {
             goalHint.setText("Maintenance keeps the calorie target at estimated TDEE.");
         } else if (goal == ProfileSettings.Goal.CUSTOM) {
             goalHint.setText("Custom accepts a signed weekly change: negative to lose, positive to gain. Adjustment is capped at ±30% of TDEE.");
@@ -498,7 +509,7 @@ public final class ProfileController {
                     "Recommended starting rate: %+.2f kg/week (%.2f%% body weight/week). Calorie adjustment is capped at %.0f%% of TDEE.",
                     recommended, goal.defaultBodyWeightFractionPerWeek * 100.0, goal.maxTdeeAdjustmentFraction * 100.0));
         }
-        boolean enabled = goal != ProfileSettings.Goal.MAINTAIN;
+        boolean enabled = !goal.isWeightStable();
         weeklyInput.setEnabled(enabled);
         weeklyInput.setAlpha(enabled ? 1f : 0.45f);
         activity.findViewById(R.id.profileUseRecommendedRate).setEnabled(enabled);

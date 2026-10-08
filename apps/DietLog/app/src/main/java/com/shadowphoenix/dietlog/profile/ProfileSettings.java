@@ -36,7 +36,8 @@ public final class ProfileSettings {
         LEAN_BULK("Lean bulk", 1, 0.0025, 0.10),
         DIRTY_BULK("Dirty bulk", 1, 0.0075, 0.25),
         CUT("Cut", -1, 0.0070, 0.25),
-        CUSTOM("Custom", 0, 0.0, 0.30);
+        CUSTOM("Custom", 0, 0.0, 0.30),
+        RECOMPOSITION("Body recomposition", 0, 0.0, 0.0);
 
         public final String label;
         public final int direction;
@@ -49,6 +50,7 @@ public final class ProfileSettings {
             this.maxTdeeAdjustmentFraction = maxAdjustment;
         }
         @Override public String toString() { return label; }
+        public boolean isWeightStable() { return this == MAINTAIN || this == RECOMPOSITION; }
     }
 
     public enum MacroMode {
