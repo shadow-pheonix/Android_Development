@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 
 import com.shadowphoenix.dietlog.sync.SyncCoordinator;
 
+import java.time.LocalDate;
+
 public final class ProfilePreferences {
     private static final String FILE = "dietlog_profile";
     private final SharedPreferences prefs;
@@ -16,6 +18,12 @@ public final class ProfilePreferences {
     }
 
     public boolean hasSavedProfile() { return prefs.getBoolean("profileSaved", false); }
+
+    public boolean hasCompletedPersonalProfile() {
+        Boolean complete = prefs.contains("personalProfileComplete")
+                ? prefs.getBoolean("personalProfileComplete", false) : null;
+        return !ProfileSetup.needsSetup(complete, hasSavedProfile(), load(), LocalDate.now());
+    }
 
     public ProfileSettings load() {
         ProfileSettings s = new ProfileSettings();
@@ -48,8 +56,18 @@ public final class ProfilePreferences {
     }
 
     public void save(ProfileSettings s) {
+        save(s, hasCompletedPersonalProfile());
+    }
+
+    public void savePersonalProfile(ProfileSettings s) {
+        ProfileSetup.validatePersonal(s, LocalDate.now());
+        save(s, true);
+    }
+
+    private void save(ProfileSettings s, boolean personalComplete) {
         SharedPreferences.Editor e = prefs.edit();
         e.putBoolean("profileSaved", true);
+        e.putBoolean("personalProfileComplete", personalComplete);
         e.putString("displayName", s.displayName == null ? "" : s.displayName.trim());
         e.putString("avatarUri", s.avatarUri == null ? "" : s.avatarUri);
         e.putString("dateOfBirthIso", s.dateOfBirthIso == null ? "" : s.dateOfBirthIso);

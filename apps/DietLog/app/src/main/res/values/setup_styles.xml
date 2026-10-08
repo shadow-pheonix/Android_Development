@@ -1,0 +1,40 @@
+<resources>
+    <style name="SetupPanel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">24dp</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:padding">18dp</item>
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:tag">glass:CARD</item>
+    </style>
+    <style name="SetupLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">12dp</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+    <style name="SetupInput" parent="Input.Dark">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:saveEnabled">false</item>
+    </style>
+    <style name="SetupSpinner" parent="FrostedSpinner">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">52dp</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:saveEnabled">false</item>
+    </style>
+    <style name="SetupNote" parent="Text.Body">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">12dp</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+</resources>

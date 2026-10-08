@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/appRoot" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_frosted_scene">
-    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:id="@+id/screenContainer">
+    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:id="@+id/screenContainer" android:visibility="invisible">
         <include android:id="@+id/homeScreen" layout="@layout/screen_home" />
         <include android:id="@+id/searchScreen" layout="@layout/screen_search" android:visibility="gone" />
         <include android:id="@+id/detailScreen" layout="@layout/screen_detail" android:visibility="gone" />
@@ -10,8 +10,9 @@
         <include android:id="@+id/profileScreen" layout="@layout/screen_profile" android:visibility="gone" />
         <include android:id="@+id/editProfileScreen" layout="@layout/screen_edit_profile" android:visibility="gone" />
         <include android:id="@+id/accountScreen" layout="@layout/screen_account" android:visibility="gone" />
+        <include android:id="@+id/onboardingScreen" layout="@layout/screen_onboarding" android:visibility="gone" />
     </FrameLayout>
-    <com.shadowphoenix.dietlog.ui.FrostedNavigationView android:id="@+id/bottomNav" android:layout_width="match_parent" android:layout_height="80dp" android:orientation="horizontal" android:gravity="center" android:padding="8dp" android:background="@drawable/bg_bottom_nav" android:tag="glass:NAVIGATION" android:layout_gravity="bottom" android:layout_marginHorizontal="12dp" android:layout_marginBottom="10dp">
+    <com.shadowphoenix.dietlog.ui.FrostedNavigationView android:id="@+id/bottomNav" android:layout_width="match_parent" android:layout_height="80dp" android:orientation="horizontal" android:gravity="center" android:padding="8dp" android:background="@drawable/bg_bottom_nav" android:tag="glass:NAVIGATION" android:layout_gravity="bottom" android:layout_marginHorizontal="12dp" android:layout_marginBottom="10dp" android:visibility="gone">
         <LinearLayout android:id="@+id/navHome" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center" android:background="@drawable/bg_nav_item" android:foreground="@null" android:focusable="true" android:contentDescription="Home" android:clipToOutline="true">
             <ImageView android:id="@+id/navHomeIcon" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_ui_home" android:tint="@color/text_secondary" android:importantForAccessibility="no" />
             <TextView android:id="@+id/navHomeLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Home" android:textColor="@color/text_secondary" android:textSize="11sp" android:importantForAccessibility="no" />
@@ -35,4 +36,5 @@
             <TextView android:id="@+id/navProfileLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Profile" android:textColor="@color/text_secondary" android:textSize="11sp" android:importantForAccessibility="no" />
         </LinearLayout>
     </com.shadowphoenix.dietlog.ui.FrostedNavigationView>
+    <include android:id="@+id/startupOverlay" layout="@layout/startup_overlay" />
 </FrameLayout>
