@@ -28,7 +28,7 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 - Manual logging by grams and per-100 g nutrition.
 - Fully offline food search after installation; no runtime food API and no API keys.
 - Bundled food photos in search, recent/frequent/favorite foods, diary entries and food details; official brand product images, representative package fallbacks and reviewed stock food photos with source credits.
-- Camera barcode scanning for EAN-13, EAN-8, UPC-A and UPC-E with exact offline catalogue lookup.
+- The centre Scan button opens the camera barcode scanner directly, preserving the selected diary date and meal. EAN-13, EAN-8, UPC-A and UPC-E use exact offline catalogue lookup; scanning is also available from Search.
 - Numeric barcode lookup remains available through normal search.
 - Tap a search result to populate the logger and view product/nutrition details.
 - SQLite meal history with micronutrient snapshots for new logs and offline-catalog enrichment for older compatible entries.

@@ -46,7 +46,7 @@ public final class FrostedNavigationView extends LinearLayout {
         selection = new FrostedSurfaceDrawable(context, FrostedSurfaceDrawable.Material.SELECTION);
     }
 
-    /** The target must be a direct tab child; Add remains a separate action. */
+    /** The target must be a direct tab child; Scan remains a separate action. */
     public void setSelectedTab(View tab) {
         if (tab == null || tab.getParent() != this) throw new IllegalArgumentException("Tab must belong to navigation");
         if (selectedTab == tab) return;

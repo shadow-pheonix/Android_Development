@@ -107,7 +107,7 @@ public final class MainActivity extends Activity {
     private long renderedDriveDataChangeGeneration;
 
     private View homeScreen, searchScreen, detailScreen, manualScreen, nutritionScreen, progressScreen, profileScreen, editProfileScreen, accountScreen, bottomNav;
-    private View navHome, navSearch, navAdd, navProgress, navProfile;
+    private View navHome, navSearch, navScan, navProgress, navProfile;
     private UiMotion uiMotion;
     private ImageView navHomeIcon, navSearchIcon, navProgressIcon, navProfileIcon;
     private TextView navHomeLabel, navSearchLabel;
@@ -254,7 +254,7 @@ public final class MainActivity extends Activity {
 
         navHome = findViewById(R.id.navHome);
         navSearch = findViewById(R.id.navSearch);
-        navAdd = findViewById(R.id.navAdd);
+        navScan = findViewById(R.id.navScan);
         navProgress = findViewById(R.id.navProgress);
         navProfile = findViewById(R.id.navProfile);
         navHomeIcon = findViewById(R.id.navHomeIcon);
@@ -365,10 +365,7 @@ public final class MainActivity extends Activity {
     private void configureNavigation() {
         navHome.setOnClickListener(v -> showScreen(homeScreen, 0));
         navSearch.setOnClickListener(v -> openSearchScreen(defaultMealType(), false));
-        navAdd.setOnClickListener(v -> {
-            setActiveMeal(defaultMealType());
-            showManualEntry(null, null);
-        });
+        navScan.setOnClickListener(v -> startBarcodeScan());
         navProgress.setOnClickListener(v -> {
             if (progressController != null) progressController.refresh();
             showScreen(progressScreen, 2);
