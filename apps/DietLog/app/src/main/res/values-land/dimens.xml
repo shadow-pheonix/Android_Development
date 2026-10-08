@@ -1,0 +1,4 @@
+<resources>
+    <!-- Native landscape calendars place the header beside the month grid. -->
+    <dimen name="calendar_dialog_width">480dp</dimen>
+</resources>

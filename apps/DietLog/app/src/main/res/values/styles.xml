@@ -18,6 +18,8 @@
 
     <style name="DiaryDatePickerDialog" parent="FrostedDialogTheme">
         <item name="android:windowBackground">@drawable/bg_calendar_dialog</item>
+        <item name="android:windowMinWidthMajor">@dimen/calendar_dialog_width</item>
+        <item name="android:windowMinWidthMinor">@dimen/calendar_dialog_width</item>
         <item name="android:fontFamily">sans-serif</item>
         <item name="android:colorAccent">@color/accent</item>
         <item name="android:datePickerStyle">@style/DiaryCalendarDatePicker</item>
@@ -40,14 +42,17 @@
 
     <style name="DiaryCalendarHeaderText" parent="android:style/TextAppearance.Material.Headline">
         <item name="android:textColor">@color/calendar_header_text</item>
+        <item name="android:textSize">@dimen/calendar_max_text_size</item>
     </style>
 
     <style name="DiaryCalendarDayText" parent="android:style/TextAppearance.Material.Body1">
         <item name="android:textColor">@color/calendar_day_text</item>
+        <item name="android:textSize">13sp</item>
     </style>
 
     <style name="DiaryCalendarWeekText" parent="android:style/TextAppearance.Material.Caption">
         <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">11sp</item>
     </style>
 
     <style name="Text.Title">
