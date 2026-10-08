@@ -29,9 +29,10 @@ import java.util.regex.Pattern;
 public final class FoodPhotoLoader implements AutoCloseable {
     private static final Pattern ASSET_PATH = Pattern.compile("food_photos/[a-f0-9]{64}\\.webp");
     public static final class Photo {
-        public final String asset, credit, license, licenseUrl, sourceUrl, kind;
+        public final String asset, credit, license, licenseUrl, sourceUrl, kind, provider, presentation;
         Photo(JsonReader reader) throws IOException {
             String path = null, author = null, terms = null, termsUrl = null, source = null, type = null;
+            String origin = null, layout = null;
             reader.beginObject();
             while (reader.hasNext()) {
                 switch (reader.nextName()) {
@@ -41,12 +42,17 @@ public final class FoodPhotoLoader implements AutoCloseable {
                     case "license_url": termsUrl = reader.nextString(); break;
                     case "source_url": source = reader.nextString(); break;
                     case "kind": type = reader.nextString(); break;
+                    case "provider": origin = reader.nextString(); break;
+                    case "presentation": layout = reader.nextString(); break;
                     default: reader.skipValue();
                 }
             }
             reader.endObject();
             if (path == null || !ASSET_PATH.matcher(path).matches() ||
-                    author == null || terms == null || termsUrl == null || source == null || type == null) {
+                    author == null || terms == null || termsUrl == null || source == null ||
+                    !("product".equals(type) || "representative".equals(type)) ||
+                    !("stock".equals(origin) || "official_brand".equals(origin)) ||
+                    !("packshot".equals(layout) || "food".equals(layout))) {
                 throw new IOException("Invalid photo metadata");
             }
             asset = path;
@@ -55,6 +61,8 @@ public final class FoodPhotoLoader implements AutoCloseable {
             licenseUrl = termsUrl;
             sourceUrl = source;
             kind = type;
+            provider = origin;
+            presentation = layout;
         }
     }
 
@@ -79,7 +87,7 @@ public final class FoodPhotoLoader implements AutoCloseable {
                 reader.beginObject();
                 while (reader.hasNext() && !closed) {
                     switch (reader.nextName()) {
-                        case "schema_version": supportedSchema = reader.nextInt() == 1; break;
+                        case "schema_version": supportedSchema = reader.nextInt() == 2; break;
                         case "foods":
                             reader.beginObject();
                             while (reader.hasNext()) foods.put(reader.nextName(), reader.nextString());
@@ -131,9 +139,9 @@ public final class FoodPhotoLoader implements AutoCloseable {
             Bitmap decoded = bitmap;
             main.post(() -> {
                 if (closed || image.getTag() != token) return;
-                boolean product = "product".equals(photo.kind);
-                image.setScaleType(product ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER_CROP);
-                image.setBackgroundColor(product ? Color.WHITE : Color.TRANSPARENT);
+                boolean packshot = "packshot".equals(photo.presentation);
+                image.setScaleType(packshot ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER_CROP);
+                image.setBackgroundColor(packshot ? Color.WHITE : Color.TRANSPARENT);
                 image.setImageBitmap(decoded);
                 fallback.setVisibility(View.GONE);
                 image.setVisibility(View.VISIBLE);
