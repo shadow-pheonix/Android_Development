@@ -27,3 +27,5 @@ Work branch: `feature/personalized-diet-planner`.
 Implementation checkpoints and their evidence are recorded here as each stage completes.
 
 Checkpoint 1: preference/intent foundation implemented. Four Java regression tests passed locally with Java 17 and JUnit 4.13.2: duplicate-day bounds, explicit exclusion precedence, recency/meal learning, separate feedback reasons and input validation. No app UI or diary data changes in this checkpoint.
+
+Checkpoint 2: 31 meal combinations reference 20 pinned IFCT/USDA ingredients, with explicit raw/cooked price states, oil/salt amounts and preparation steps. Eight cumulative Java tests and two catalogue tests passed; all 31 existing Python tests passed. The complete 28,102-food database was rebuilt locally. Reference prices are illustrative editable estimates, not live market data; allergy cross-contact and product labels remain the user’s responsibility.

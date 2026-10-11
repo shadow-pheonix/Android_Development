@@ -1,0 +1,1228 @@
+{
+  "schema": 1,
+  "price_note": "Illustrative editable rupees per 100 g in the named raw/cooked state; not live local prices. October 2026 starter estimates.",
+  "foods": {
+    "rice": {
+      "code": "IFCT-A015",
+      "name": "Rice",
+      "state": "raw",
+      "tags": [
+        "grain"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 6
+    },
+    "moong": {
+      "code": "IFCT-B010",
+      "name": "Moong dal",
+      "state": "raw",
+      "tags": [
+        "pulse"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 14
+    },
+    "toor": {
+      "code": "IFCT-B021",
+      "name": "Toor dal",
+      "state": "raw",
+      "tags": [
+        "pulse"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 18
+    },
+    "spinach": {
+      "code": "IFCT-C033",
+      "name": "Spinach",
+      "state": "raw",
+      "tags": [
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 8
+    },
+    "tomato": {
+      "code": "IFCT-D076",
+      "name": "Tomato",
+      "state": "raw",
+      "tags": [
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 6
+    },
+    "onion": {
+      "code": "IFCT-G017",
+      "name": "Onion",
+      "state": "raw",
+      "tags": [
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 5
+    },
+    "oil": {
+      "code": "IFCT-T012",
+      "name": "Sunflower oil",
+      "state": "as sold",
+      "tags": [
+        "oil"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 16
+    },
+    "salt": {
+      "code": "USDA-173468",
+      "name": "Salt",
+      "state": "as sold",
+      "tags": [
+        "salt"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 2
+    },
+    "milk": {
+      "code": "IFCT-L002",
+      "name": "Whole cow milk",
+      "state": "as sold",
+      "tags": [
+        "dairy"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 6
+    },
+    "banana": {
+      "code": "IFCT-E012",
+      "name": "Banana",
+      "state": "edible portion",
+      "tags": [
+        "fruit"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 6
+    },
+    "guava": {
+      "code": "IFCT-E028",
+      "name": "Guava",
+      "state": "edible portion",
+      "tags": [
+        "fruit"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 10
+    },
+    "atta": {
+      "code": "IFCT-A019",
+      "name": "Whole wheat atta",
+      "state": "raw",
+      "tags": [
+        "grain",
+        "gluten"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 5
+    },
+    "carrot": {
+      "code": "IFCT-F002",
+      "name": "Carrot",
+      "state": "raw",
+      "tags": [
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 6
+    },
+    "oats": {
+      "code": "USDA-169705",
+      "name": "Plain oats",
+      "state": "dry",
+      "tags": [
+        "grain",
+        "gluten"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 18
+    },
+    "tofu": {
+      "code": "USDA-172475",
+      "name": "Plain firm tofu",
+      "state": "as sold",
+      "tags": [
+        "soy",
+        "pulse"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 35
+    },
+    "chickpeas": {
+      "code": "USDA-173757",
+      "name": "Plain cooked chickpeas",
+      "state": "cooked",
+      "tags": [
+        "pulse"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 12
+    },
+    "curd": {
+      "code": "USDA-171284",
+      "name": "Plain curd",
+      "state": "as sold",
+      "tags": [
+        "dairy"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 10
+    },
+    "egg": {
+      "code": "USDA-173424",
+      "name": "Boiled egg",
+      "state": "cooked edible portion",
+      "tags": [
+        "egg"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 16
+    },
+    "peanuts": {
+      "code": "USDA-173806",
+      "name": "Unsalted roasted peanuts",
+      "state": "ready to eat",
+      "tags": [
+        "peanut"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 16
+    },
+    "chicken": {
+      "code": "IFCT-N003",
+      "name": "Skinless chicken breast",
+      "state": "raw edible portion",
+      "tags": [
+        "meat",
+        "chicken"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 30
+    }
+  },
+  "recipes": [
+    {
+      "id": "meal:oats_milk",
+      "name": "Oats, milk and banana",
+      "meal_mask": 1,
+      "prep_minutes": 10,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 380,
+      "instructions": "Cook the dry oats in milk and water. Serve with the banana.",
+      "ingredients": [
+        {
+          "food": "oats",
+          "grams": 60
+        },
+        {
+          "food": "milk",
+          "grams": 200
+        },
+        {
+          "food": "banana",
+          "grams": 100
+        }
+      ]
+    },
+    {
+      "id": "meal:oats_curd",
+      "name": "Overnight oats with curd and guava",
+      "meal_mask": 1,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 360,
+      "instructions": "Soak plain oats in curd overnight in the refrigerator. Add guava before eating.",
+      "ingredients": [
+        {
+          "food": "oats",
+          "grams": 60
+        },
+        {
+          "food": "curd",
+          "grams": 200
+        },
+        {
+          "food": "guava",
+          "grams": 100
+        }
+      ]
+    },
+    {
+      "id": "meal:pesarattu",
+      "name": "Pesarattu with tomato",
+      "meal_mask": 9,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 300,
+      "instructions": "Soak moong in advance, grind with water, and make two pancakes using the listed oil. Serve with the cooked tomato and onion. No additional chutney included.",
+      "ingredients": [
+        {
+          "food": "moong",
+          "grams": 80
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 80
+        },
+        {
+          "food": "oil",
+          "grams": 7
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:egg_oats",
+      "name": "Boiled eggs with oats and fruit",
+      "meal_mask": 1,
+      "prep_minutes": 12,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 430,
+      "instructions": "Prepare plain oats with milk and water. Serve with two peeled boiled eggs and banana.",
+      "ingredients": [
+        {
+          "food": "egg",
+          "grams": 100
+        },
+        {
+          "food": "oats",
+          "grams": 50
+        },
+        {
+          "food": "milk",
+          "grams": 150
+        },
+        {
+          "food": "banana",
+          "grams": 100
+        }
+      ]
+    },
+    {
+      "id": "meal:moong_chilla",
+      "name": "Moong and carrot chilla",
+      "meal_mask": 9,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 350,
+      "instructions": "Soak moong ahead, grind, stir in grated carrot and onion. Cook pancakes using the measured oil.",
+      "ingredients": [
+        {
+          "food": "moong",
+          "grams": 90
+        },
+        {
+          "food": "carrot",
+          "grams": 80
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "oil",
+          "grams": 7
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:tofu_scramble",
+      "name": "Tofu scramble and chapatis",
+      "meal_mask": 9,
+      "prep_minutes": 20,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 420,
+      "instructions": "Make chapatis from the atta and water. Cook tofu, onion and tomato in the measured oil.",
+      "ingredients": [
+        {
+          "food": "tofu",
+          "grams": 150
+        },
+        {
+          "food": "atta",
+          "grams": 60
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:curd_fruit",
+      "name": "Curd, banana and roasted peanuts",
+      "meal_mask": 5,
+      "prep_minutes": 3,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 395,
+      "instructions": "Combine plain curd and banana. Add unsalted roasted peanuts.",
+      "ingredients": [
+        {
+          "food": "curd",
+          "grams": 250
+        },
+        {
+          "food": "banana",
+          "grams": 120
+        },
+        {
+          "food": "peanuts",
+          "grams": 25
+        }
+      ]
+    },
+    {
+      "id": "meal:chana_salad",
+      "name": "Chickpea, carrot and tomato salad",
+      "meal_mask": 5,
+      "prep_minutes": 8,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 360,
+      "instructions": "Use fully cooked, cooled chickpeas. Mix with washed carrot and tomato.",
+      "ingredients": [
+        {
+          "food": "chickpeas",
+          "grams": 200
+        },
+        {
+          "food": "carrot",
+          "grams": 80
+        },
+        {
+          "food": "tomato",
+          "grams": 80
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    },
+    {
+      "id": "meal:rice_moong",
+      "name": "Rice with moong dal and spinach",
+      "meal_mask": 10,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 650,
+      "instructions": "Weigh grain and dal dry. Cook dal with spinach, tomato and onion. Use the listed oil and salt. Cook rice with water or make chapatis from atta.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 80
+        },
+        {
+          "food": "moong",
+          "grams": 65
+        },
+        {
+          "food": "spinach",
+          "grams": 120
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:atta_moong",
+      "name": "Chapatis with moong dal and spinach",
+      "meal_mask": 10,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 650,
+      "instructions": "Weigh grain and dal dry. Cook dal with spinach, tomato and onion. Use the listed oil and salt. Cook rice with water or make chapatis from atta.",
+      "ingredients": [
+        {
+          "food": "atta",
+          "grams": 80
+        },
+        {
+          "food": "moong",
+          "grams": 65
+        },
+        {
+          "food": "spinach",
+          "grams": 120
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:rice_toor",
+      "name": "Rice with pappu and spinach",
+      "meal_mask": 10,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 650,
+      "instructions": "Weigh grain and dal dry. Cook dal with spinach, tomato and onion. Use the listed oil and salt. Cook rice with water or make chapatis from atta.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 80
+        },
+        {
+          "food": "toor",
+          "grams": 65
+        },
+        {
+          "food": "spinach",
+          "grams": 120
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:atta_toor",
+      "name": "Chapatis with pappu and spinach",
+      "meal_mask": 10,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 650,
+      "instructions": "Weigh grain and dal dry. Cook dal with spinach, tomato and onion. Use the listed oil and salt. Cook rice with water or make chapatis from atta.",
+      "ingredients": [
+        {
+          "food": "atta",
+          "grams": 80
+        },
+        {
+          "food": "toor",
+          "grams": 65
+        },
+        {
+          "food": "spinach",
+          "grams": 120
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:khichdi",
+      "name": "Vegetable moong khichdi",
+      "meal_mask": 10,
+      "prep_minutes": 30,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 700,
+      "instructions": "Cook dry rice and moong together with the vegetables and water. Add only the listed oil and salt.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 70
+        },
+        {
+          "food": "moong",
+          "grams": 75
+        },
+        {
+          "food": "carrot",
+          "grams": 100
+        },
+        {
+          "food": "spinach",
+          "grams": 80
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:curd_rice",
+      "name": "Curd rice with chickpea salad",
+      "meal_mask": 10,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 700,
+      "instructions": "Cook rice, cool promptly and mix with curd. Serve cooked chickpeas and carrot alongside.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 70
+        },
+        {
+          "food": "curd",
+          "grams": 200
+        },
+        {
+          "food": "chickpeas",
+          "grams": 150
+        },
+        {
+          "food": "carrot",
+          "grams": 80
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:chicken_rice",
+      "name": "Chicken, rice and vegetables",
+      "meal_mask": 10,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 650,
+      "instructions": "Cook rice separately. Thoroughly cook the raw chicken with onion and tomato in the listed oil; cook carrots alongside.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 85
+        },
+        {
+          "food": "chicken",
+          "grams": 160
+        },
+        {
+          "food": "carrot",
+          "grams": 100
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:chicken_roti",
+      "name": "Chicken, chapatis and spinach",
+      "meal_mask": 10,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 580,
+      "instructions": "Make chapatis from atta and water. Thoroughly cook chicken with onion, tomato and spinach using the listed oil.",
+      "ingredients": [
+        {
+          "food": "atta",
+          "grams": 85
+        },
+        {
+          "food": "chicken",
+          "grams": 160
+        },
+        {
+          "food": "spinach",
+          "grams": 120
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:tofu_rice",
+      "name": "Tofu, rice and vegetable bowl",
+      "meal_mask": 10,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 650,
+      "instructions": "Cook rice. Stir-fry tofu and vegetables using the measured oil. Combine.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 80
+        },
+        {
+          "food": "tofu",
+          "grams": 200
+        },
+        {
+          "food": "carrot",
+          "grams": 100
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:tofu_roti",
+      "name": "Tofu curry and chapatis",
+      "meal_mask": 10,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 570,
+      "instructions": "Make chapatis. Cook tofu with spinach, tomato and onion in the listed oil.",
+      "ingredients": [
+        {
+          "food": "atta",
+          "grams": 85
+        },
+        {
+          "food": "tofu",
+          "grams": 200
+        },
+        {
+          "food": "spinach",
+          "grams": 100
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:egg_rice",
+      "name": "Egg rice with vegetables",
+      "meal_mask": 10,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 620,
+      "instructions": "Cook rice and vegetables with the measured oil. Serve with three peeled boiled eggs.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 85
+        },
+        {
+          "food": "egg",
+          "grams": 150
+        },
+        {
+          "food": "carrot",
+          "grams": 100
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:egg_roti",
+      "name": "Eggs, chapatis and vegetable curry",
+      "meal_mask": 10,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 530,
+      "instructions": "Prepare chapatis and the listed vegetables. Serve with three peeled boiled eggs.",
+      "ingredients": [
+        {
+          "food": "atta",
+          "grams": 85
+        },
+        {
+          "food": "egg",
+          "grams": 150
+        },
+        {
+          "food": "spinach",
+          "grams": 100
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:chana_rice",
+      "name": "Chickpeas, rice and carrot curry",
+      "meal_mask": 10,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 720,
+      "instructions": "Cook rice. Simmer fully cooked chickpeas with carrot, onion and tomato in the listed oil.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 80
+        },
+        {
+          "food": "chickpeas",
+          "grams": 220
+        },
+        {
+          "food": "carrot",
+          "grams": 100
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:chana_roti",
+      "name": "Chickpea curry with chapatis",
+      "meal_mask": 10,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Indian",
+      "yield_grams": 650,
+      "instructions": "Make chapatis and simmer fully cooked chickpeas with spinach, onion and tomato.",
+      "ingredients": [
+        {
+          "food": "atta",
+          "grams": 85
+        },
+        {
+          "food": "chickpeas",
+          "grams": 220
+        },
+        {
+          "food": "spinach",
+          "grams": 100
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:rice_dal_curd",
+      "name": "Rice, pappu and curd",
+      "meal_mask": 10,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 720,
+      "instructions": "Cook dry rice and dal separately. Add spinach, onion, tomato and measured oil to the dal; serve with plain curd.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 75
+        },
+        {
+          "food": "toor",
+          "grams": 65
+        },
+        {
+          "food": "curd",
+          "grams": 150
+        },
+        {
+          "food": "spinach",
+          "grams": 100
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:banana_peanuts",
+      "name": "Banana and roasted peanuts",
+      "meal_mask": 4,
+      "prep_minutes": 2,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 150,
+      "instructions": "Serve banana with unsalted roasted peanuts.",
+      "ingredients": [
+        {
+          "food": "banana",
+          "grams": 120
+        },
+        {
+          "food": "peanuts",
+          "grams": 30
+        }
+      ]
+    },
+    {
+      "id": "meal:guava_curd",
+      "name": "Guava and curd",
+      "meal_mask": 4,
+      "prep_minutes": 2,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 350,
+      "instructions": "Serve washed guava with plain curd.",
+      "ingredients": [
+        {
+          "food": "guava",
+          "grams": 150
+        },
+        {
+          "food": "curd",
+          "grams": 200
+        }
+      ]
+    },
+    {
+      "id": "meal:egg_fruit",
+      "name": "Boiled eggs and guava",
+      "meal_mask": 4,
+      "prep_minutes": 2,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 250,
+      "instructions": "Use two peeled, fully cooked boiled eggs; serve with guava.",
+      "ingredients": [
+        {
+          "food": "egg",
+          "grams": 100
+        },
+        {
+          "food": "guava",
+          "grams": 150
+        }
+      ]
+    },
+    {
+      "id": "meal:milk_banana",
+      "name": "Milk and banana",
+      "meal_mask": 4,
+      "prep_minutes": 2,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 350,
+      "instructions": "Serve pasteurized milk with banana.",
+      "ingredients": [
+        {
+          "food": "milk",
+          "grams": 250
+        },
+        {
+          "food": "banana",
+          "grams": 100
+        }
+      ]
+    },
+    {
+      "id": "meal:chana_snack",
+      "name": "Chickpea and tomato snack",
+      "meal_mask": 4,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 230.5,
+      "instructions": "Mix fully cooked chickpeas and washed tomato.",
+      "ingredients": [
+        {
+          "food": "chickpeas",
+          "grams": 150
+        },
+        {
+          "food": "tomato",
+          "grams": 80
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    },
+    {
+      "id": "meal:tofu_salad",
+      "name": "Tofu and carrot salad",
+      "meal_mask": 4,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 330,
+      "instructions": "Use ready-to-eat plain tofu according to its label. Mix with washed vegetables.",
+      "ingredients": [
+        {
+          "food": "tofu",
+          "grams": 150
+        },
+        {
+          "food": "carrot",
+          "grams": 100
+        },
+        {
+          "food": "tomato",
+          "grams": 80
+        }
+      ]
+    },
+    {
+      "id": "meal:curd_oats_lunch",
+      "name": "Cold oats, curd and chickpeas",
+      "meal_mask": 10,
+      "prep_minutes": 8,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 610,
+      "instructions": "Soak oats in curd in the refrigerator ahead. Serve cooked chickpeas and carrot separately.",
+      "ingredients": [
+        {
+          "food": "oats",
+          "grams": 60
+        },
+        {
+          "food": "curd",
+          "grams": 250
+        },
+        {
+          "food": "chickpeas",
+          "grams": 200
+        },
+        {
+          "food": "carrot",
+          "grams": 100
+        }
+      ]
+    },
+    {
+      "id": "meal:chana_tofu_bowl",
+      "name": "Chickpea and tofu salad bowl",
+      "meal_mask": 10,
+      "prep_minutes": 10,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 650.5,
+      "instructions": "Use fully cooked chickpeas and ready-to-eat tofu. Combine with washed vegetables.",
+      "ingredients": [
+        {
+          "food": "chickpeas",
+          "grams": 250
+        },
+        {
+          "food": "tofu",
+          "grams": 200
+        },
+        {
+          "food": "carrot",
+          "grams": 100
+        },
+        {
+          "food": "tomato",
+          "grams": 100
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    }
+  ]
+}
