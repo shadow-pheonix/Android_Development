@@ -156,6 +156,7 @@ jobs:
           name: dietlog-debug
           path: apps/DietLog/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 7
       - name: Publish rolling DietLog release
         if: github.event_name != 'pull_request'
         env:
