@@ -207,6 +207,8 @@ public final class MainActivity extends Activity {
         configureDriveBackup();
         configureSupabaseBackup();
         configureDiagnostics();
+        findViewById(R.id.homeDietPlan).setOnClickListener(v -> openDietPlanner());
+        findViewById(R.id.profileDietPlan).setOnClickListener(v -> openDietPlanner());
         configureDateNavigation();
 
         try {
@@ -2661,6 +2663,12 @@ public final class MainActivity extends Activity {
         proteinInput.setText("");
         carbsInput.setText("");
         fatInput.setText("");
+    }
+
+    private void openDietPlanner() {
+        android.content.Intent intent = new android.content.Intent(this, com.shadowphoenix.dietlog.planner.PlannerActivity.class);
+        intent.putExtra("day", selectedDate.toString());
+        startActivity(intent);
     }
 
     private void exportDiagnostics() {

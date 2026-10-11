@@ -27,6 +27,11 @@ public class IntentModelTest {
         assertEquals(0,IntentModel.feedbackPenalty(feedback,10,1,0),0);
         assertTrue(IntentModel.feedbackPenalty(feedback,10,1,100)>0);
     }
+    @Test public void likesAreBoundedAndDoNotEraseIndependentCostFeedback() {
+        Map<IntentModel.Feedback,Integer> f=new EnumMap<>(IntentModel.Feedback.class);
+        f.put(IntentModel.Feedback.LIKED,100);assertEquals(-2,IntentModel.feedbackPenalty(f,10,1,100),0);
+        f.put(IntentModel.Feedback.EXPENSIVE,2);assertEquals(0,IntentModel.feedbackPenalty(f,10,1,100),0);
+    }
     @Test public void rejectsInvalidBudgetsAndEmptyRoutine() {
         PlannerProfile p=new PlannerProfile();p.dailyBudget=Double.NaN;
         try {p.validate();fail();}catch(IllegalArgumentException expected){}

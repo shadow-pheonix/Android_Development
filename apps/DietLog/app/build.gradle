@@ -20,6 +20,7 @@ if (signingConfigPath) {
 android {
     namespace 'com.shadowphoenix.dietlog'
     compileSdk 35
+    buildToolsVersion "35.0.0"
 
     defaultConfig {
         applicationId 'com.shadowphoenix.dietlog'

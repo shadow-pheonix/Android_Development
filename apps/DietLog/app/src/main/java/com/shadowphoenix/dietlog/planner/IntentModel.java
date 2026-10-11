@@ -46,6 +46,7 @@ public final class IntentModel {
         return Math.min(5, counts.getOrDefault(Feedback.DISLIKED, 0) * 1.0)
                 + Math.min(2, counts.getOrDefault(Feedback.EXPENSIVE, 0) * Math.min(1, cost / 100))
                 + Math.min(2, counts.getOrDefault(Feedback.TOO_SLOW, 0) * prepMinutes / 45.0)
-                + Math.min(2, counts.getOrDefault(Feedback.TOO_MUCH, 0) * Math.max(0, portionScale - 0.5));
+                + Math.min(2, counts.getOrDefault(Feedback.TOO_MUCH, 0) * Math.max(0, portionScale - 0.5))
+                - Math.min(2, counts.getOrDefault(Feedback.LIKED, 0) * 0.5);
     }
 }

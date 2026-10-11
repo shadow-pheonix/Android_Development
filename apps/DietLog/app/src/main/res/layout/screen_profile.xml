@@ -5,6 +5,7 @@
         <TextView style="@style/Text.Body" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="Your goals, made personal." android:includeFontPadding="false" />
         <include layout="@layout/section_profile_personal" />
         <include layout="@layout/section_profile_summary" />
+        <Button android:id="@+id/profileDietPlan" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:text="My diet plan and eating preferences" android:textAllCaps="false" android:textColor="@color/accent" android:background="@drawable/bg_chip" android:tag="glass:CONTROL" />
         <include layout="@layout/section_profile_goal" />
         <include layout="@layout/section_profile_nutrition" />
         <include layout="@layout/section_profile_diagnostics" />
