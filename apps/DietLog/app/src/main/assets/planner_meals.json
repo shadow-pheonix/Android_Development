@@ -10,7 +10,11 @@
         "grain"
       ],
       "ingredients_known": true,
-      "reference_price_per_100g": 6
+      "reference_price_per_100g": 6,
+      "preference_ids": [
+        "IFCT-A015",
+        "USDA-168878"
+      ]
     },
     "moong": {
       "code": "IFCT-B010",
@@ -205,6 +209,539 @@
       ],
       "ingredients_known": true,
       "reference_price_per_100g": 30
+    },
+    "whole_moong": {
+      "code": "IFCT-B011",
+      "name": "Whole green gram",
+      "state": "dry",
+      "tags": [
+        "pulse"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 14,
+      "preference_ids": [
+        "IFCT-B011",
+        "USDA-174257"
+      ]
+    },
+    "urad": {
+      "code": "IFCT-B003",
+      "name": "Urad dal",
+      "state": "dry",
+      "tags": [
+        "pulse"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 16
+    },
+    "chana_dal": {
+      "code": "IFCT-B001",
+      "name": "Chana dal",
+      "state": "dry",
+      "tags": [
+        "pulse"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 12
+    },
+    "rava": {
+      "code": "IFCT-A022",
+      "name": "Wheat semolina",
+      "state": "dry",
+      "tags": [
+        "grain",
+        "gluten"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 7
+    },
+    "rice_flakes": {
+      "code": "IFCT-A011",
+      "name": "Plain rice flakes (atukulu)",
+      "state": "dry",
+      "tags": [
+        "grain"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 8
+    },
+    "puffed_rice": {
+      "code": "IFCT-A012",
+      "name": "Plain puffed rice (maramaralu)",
+      "state": "ready to eat",
+      "tags": [
+        "grain"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 12
+    },
+    "ragi": {
+      "code": "IFCT-A010",
+      "name": "Ragi, finely milled",
+      "state": "dry",
+      "tags": [
+        "grain"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 9
+    },
+    "tamarind": {
+      "code": "IFCT-E064",
+      "name": "Tamarind pulp",
+      "state": "edible portion",
+      "tags": [
+        "fruit"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 20
+    },
+    "cumin": {
+      "code": "IFCT-G025",
+      "name": "Cumin seeds",
+      "state": "dry",
+      "tags": [
+        "spice"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 70
+    },
+    "mustard": {
+      "code": "IFCT-H013",
+      "name": "Mustard seeds",
+      "state": "dry",
+      "tags": [
+        "spice",
+        "mustard"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 30
+    },
+    "curry_leaves": {
+      "code": "IFCT-G010",
+      "name": "Curry leaves",
+      "state": "raw",
+      "tags": [
+        "spice"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 20
+    },
+    "coriander": {
+      "code": "IFCT-G009",
+      "name": "Coriander leaves",
+      "state": "raw",
+      "tags": [
+        "spice"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 20
+    },
+    "chilli": {
+      "code": "IFCT-G008",
+      "name": "Green chillies",
+      "state": "raw",
+      "tags": [
+        "spice"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 12
+    },
+    "red_chilli": {
+      "code": "IFCT-G022",
+      "name": "Dry red chilli, ground",
+      "state": "dry",
+      "tags": [
+        "spice"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 40
+    },
+    "turmeric": {
+      "code": "IFCT-G033",
+      "name": "Turmeric powder",
+      "state": "dry",
+      "tags": [
+        "spice"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 30
+    },
+    "ginger": {
+      "code": "IFCT-G014",
+      "name": "Fresh ginger",
+      "state": "raw",
+      "tags": [
+        "spice"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 20
+    },
+    "garlic": {
+      "code": "IFCT-G011",
+      "name": "Garlic",
+      "state": "raw",
+      "tags": [
+        "spice"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 20
+    },
+    "lemon": {
+      "code": "IFCT-E033",
+      "name": "Lemon juice",
+      "state": "fresh",
+      "tags": [
+        "fruit"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 15
+    },
+    "brinjal": {
+      "code": "IFCT-D010",
+      "name": "Brinjal",
+      "state": "raw",
+      "tags": [
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 7
+    },
+    "okra": {
+      "code": "IFCT-D056",
+      "name": "Okra (bendakaya)",
+      "state": "raw",
+      "tags": [
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 8
+    },
+    "bottle_gourd": {
+      "code": "IFCT-D007",
+      "name": "Bottle gourd (sorakaya)",
+      "state": "raw",
+      "tags": [
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 5
+    },
+    "ridge_gourd": {
+      "code": "IFCT-D068",
+      "name": "Ridge gourd (beerakaya)",
+      "state": "raw",
+      "tags": [
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 8
+    },
+    "cabbage": {
+      "code": "IFCT-C015",
+      "name": "Green cabbage",
+      "state": "raw",
+      "tags": [
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 5
+    },
+    "potato": {
+      "code": "IFCT-F006",
+      "name": "Potato",
+      "state": "raw",
+      "tags": [
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 5
+    },
+    "cucumber": {
+      "code": "IFCT-D045",
+      "name": "Round cucumber (dosakaya)",
+      "state": "raw",
+      "tags": [
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 6
+    },
+    "peas": {
+      "code": "IFCT-D061",
+      "name": "Fresh peas",
+      "state": "raw",
+      "tags": [
+        "pulse",
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 15
+    },
+    "coconut": {
+      "code": "IFCT-H007",
+      "name": "Fresh coconut kernel",
+      "state": "edible portion",
+      "tags": [
+        "coconut"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 30
+    },
+    "sesame": {
+      "code": "USDA-170152",
+      "name": "Toasted sesame kernels, unsalted",
+      "state": "ready to eat",
+      "tags": [
+        "sesame"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 40
+    },
+    "fish": {
+      "code": "USDA-175176",
+      "name": "Tilapia",
+      "state": "raw edible portion",
+      "tags": [
+        "fish"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 35
+    },
+    "cooked_rice": {
+      "code": "USDA-168878",
+      "name": "Plain cooked white rice",
+      "state": "cooked",
+      "tags": [
+        "grain"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 8,
+      "preference_ids": [
+        "IFCT-A015",
+        "USDA-168878"
+      ]
+    },
+    "cooked_millet": {
+      "code": "USDA-168871",
+      "name": "Plain cooked millet",
+      "state": "cooked",
+      "tags": [
+        "grain"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 10
+    },
+    "cooked_lentils": {
+      "code": "USDA-172421",
+      "name": "Plain cooked lentils",
+      "state": "cooked",
+      "tags": [
+        "pulse"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 12
+    },
+    "cooked_moong": {
+      "code": "USDA-174257",
+      "name": "Plain cooked whole green gram",
+      "state": "cooked",
+      "tags": [
+        "pulse"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 14,
+      "preference_ids": [
+        "IFCT-B011",
+        "USDA-174257"
+      ]
+    },
+    "corn": {
+      "code": "USDA-169999",
+      "name": "Plain boiled sweetcorn",
+      "state": "cooked",
+      "tags": [
+        "grain",
+        "vegetable"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 15
+    },
+    "almonds": {
+      "code": "IFCT-H001",
+      "name": "Almonds",
+      "state": "edible portion",
+      "tags": [
+        "tree_nut"
+      ],
+      "ingredients_known": true,
+      "reference_price_per_100g": 85
+    },
+    "ready_idli": {
+      "code": "INDB-ASC144",
+      "name": "Purchased idli",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 16,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_dosa": {
+      "code": "INDB-BFP148",
+      "name": "Purchased plain dosa",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 20,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_upma": {
+      "code": "INDB-BFP039",
+      "name": "Purchased rava upma",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish",
+        "grain",
+        "gluten"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 15,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_garelu": {
+      "code": "INDB-BFP436",
+      "name": "Purchased minapa garelu",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish",
+        "pulse"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 25,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_pulihora": {
+      "code": "INDB-ASC127",
+      "name": "Purchased tamarind pulihora",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish",
+        "grain"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 18,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_pappu": {
+      "code": "INDB-BFP172",
+      "name": "Purchased spinach pappu",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish",
+        "pulse",
+        "vegetable"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 18,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_sambar": {
+      "code": "INDB-ASC167",
+      "name": "Purchased sambar",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 15,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_charu": {
+      "code": "INDB-BFP176",
+      "name": "Purchased chintapandu charu",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 12,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_roti": {
+      "code": "INDB-ASC096",
+      "name": "Purchased chapati",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish",
+        "grain"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 16,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_brinjal": {
+      "code": "INDB-ASC187",
+      "name": "Purchased stuffed brinjal curry",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish",
+        "vegetable"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 22,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_chicken": {
+      "code": "INDB-ASC240",
+      "name": "Purchased chicken curry",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish",
+        "meat",
+        "chicken"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 40,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_perugu": {
+      "code": "INDB-ASC126",
+      "name": "Purchased perugu annam",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish",
+        "grain",
+        "dairy"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 18,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_bajji": {
+      "code": "INDB-BFP416",
+      "name": "Purchased mirchi bajji",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 25,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
+    },
+    "ready_chikki": {
+      "code": "INDB-ASC382",
+      "name": "Purchased peanut chikki",
+      "state": "cooked, ready to eat",
+      "tags": [
+        "prepared_dish",
+        "peanut"
+      ],
+      "ingredients_known": false,
+      "reference_price_per_100g": 30,
+      "composition_note": "Pinned INDB dish nutrition; source has no complete ingredient list. Purchased recipes vary; composition cannot establish dietary or allergy suitability."
     }
   },
   "recipes": [
@@ -230,7 +767,9 @@
           "food": "banana",
           "grams": 100
         }
-      ]
+      ],
+      "family": "oats",
+      "primary_meal": 0
     },
     {
       "id": "meal:oats_curd",
@@ -240,7 +779,7 @@
       "requires_cooking": false,
       "cuisine": "Indian",
       "yield_grams": 360,
-      "instructions": "Soak plain oats in curd overnight in the refrigerator. Add guava before eating.",
+      "instructions": "Soak plain oats in curd overnight in the refrigerator. Add guava before eating. Use plain oats labelled suitable for soaking; overnight chilling is additional elapsed time.",
       "ingredients": [
         {
           "food": "oats",
@@ -254,20 +793,22 @@
           "food": "guava",
           "grams": 100
         }
-      ]
+      ],
+      "family": "oats",
+      "primary_meal": 0
     },
     {
       "id": "meal:pesarattu",
       "name": "Pesarattu with tomato",
-      "meal_mask": 9,
+      "meal_mask": 1,
       "prep_minutes": 25,
       "requires_cooking": true,
       "cuisine": "Andhra",
       "yield_grams": 300,
-      "instructions": "Soak moong in advance, grind with water, and make two pancakes using the listed oil. Serve with the cooked tomato and onion. No additional chutney included.",
+      "instructions": "Soak whole green gram for 6-8 hours beforehand. Grind with ginger, chilli and cumin; add salt. Spread into pesarattu on a hot pan using the measured oil, scatter onion, and serve with tomato. The 25 minutes cover grinding and cooking after soaking.",
       "ingredients": [
         {
-          "food": "moong",
+          "food": "whole_moong",
           "grams": 80
         },
         {
@@ -285,8 +826,22 @@
         {
           "food": "salt",
           "grams": 1
+        },
+        {
+          "food": "ginger",
+          "grams": 5
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "cumin",
+          "grams": 1
         }
-      ]
+      ],
+      "family": "pesarattu",
+      "primary_meal": 0
     },
     {
       "id": "meal:egg_oats",
@@ -314,12 +869,14 @@
           "food": "banana",
           "grams": 100
         }
-      ]
+      ],
+      "family": "oats",
+      "primary_meal": 0
     },
     {
       "id": "meal:moong_chilla",
       "name": "Moong and carrot chilla",
-      "meal_mask": 9,
+      "meal_mask": 1,
       "prep_minutes": 25,
       "requires_cooking": true,
       "cuisine": "Indian",
@@ -346,12 +903,14 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "chilla",
+      "primary_meal": 0
     },
     {
       "id": "meal:tofu_scramble",
       "name": "Tofu scramble and chapatis",
-      "meal_mask": 9,
+      "meal_mask": 1,
       "prep_minutes": 20,
       "requires_cooking": true,
       "cuisine": "Indian",
@@ -382,12 +941,14 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "tofu_scramble",
+      "primary_meal": 0
     },
     {
       "id": "meal:curd_fruit",
       "name": "Curd, banana and roasted peanuts",
-      "meal_mask": 5,
+      "meal_mask": 1,
       "prep_minutes": 3,
       "requires_cooking": false,
       "cuisine": "Indian",
@@ -406,12 +967,14 @@
           "food": "peanuts",
           "grams": 25
         }
-      ]
+      ],
+      "family": "curd_fruit",
+      "primary_meal": 0
     },
     {
       "id": "meal:chana_salad",
       "name": "Chickpea, carrot and tomato salad",
-      "meal_mask": 5,
+      "meal_mask": 1,
       "prep_minutes": 8,
       "requires_cooking": false,
       "cuisine": "Indian",
@@ -434,7 +997,9 @@
           "food": "salt",
           "grams": 0.5
         }
-      ]
+      ],
+      "family": "chickpea_salad",
+      "primary_meal": 0
     },
     {
       "id": "meal:rice_moong",
@@ -474,7 +1039,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "pappu",
+      "primary_meal": 1
     },
     {
       "id": "meal:atta_moong",
@@ -514,7 +1081,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "pappu",
+      "primary_meal": 3
     },
     {
       "id": "meal:rice_toor",
@@ -554,7 +1123,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "pappu",
+      "primary_meal": 1
     },
     {
       "id": "meal:atta_toor",
@@ -594,7 +1165,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "pappu",
+      "primary_meal": 3
     },
     {
       "id": "meal:khichdi",
@@ -638,11 +1211,13 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "khichdi",
+      "primary_meal": 1
     },
     {
       "id": "meal:curd_rice",
-      "name": "Curd rice with chickpea salad",
+      "name": "Perugu annam with chickpea salad",
       "meal_mask": 10,
       "prep_minutes": 25,
       "requires_cooking": true,
@@ -670,7 +1245,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "perugu_annam",
+      "primary_meal": 1
     },
     {
       "id": "meal:chicken_rice",
@@ -710,7 +1287,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "chicken_curry",
+      "primary_meal": 1
     },
     {
       "id": "meal:chicken_roti",
@@ -750,7 +1329,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "chicken_curry",
+      "primary_meal": 3
     },
     {
       "id": "meal:tofu_rice",
@@ -790,7 +1371,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "tofu_curry",
+      "primary_meal": 1
     },
     {
       "id": "meal:tofu_roti",
@@ -830,7 +1413,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "tofu_curry",
+      "primary_meal": 3
     },
     {
       "id": "meal:egg_rice",
@@ -870,7 +1455,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "egg_curry",
+      "primary_meal": 1
     },
     {
       "id": "meal:egg_roti",
@@ -910,7 +1497,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "egg_curry",
+      "primary_meal": 3
     },
     {
       "id": "meal:chana_rice",
@@ -950,7 +1539,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "chickpea_curry",
+      "primary_meal": 1
     },
     {
       "id": "meal:chana_roti",
@@ -990,7 +1581,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "chickpea_curry",
+      "primary_meal": 3
     },
     {
       "id": "meal:rice_dal_curd",
@@ -1034,7 +1627,9 @@
           "food": "salt",
           "grams": 1
         }
-      ]
+      ],
+      "family": "pappu",
+      "primary_meal": 1
     },
     {
       "id": "meal:banana_peanuts",
@@ -1054,7 +1649,9 @@
           "food": "peanuts",
           "grams": 30
         }
-      ]
+      ],
+      "family": "fruit_nuts",
+      "primary_meal": 2
     },
     {
       "id": "meal:guava_curd",
@@ -1074,7 +1671,9 @@
           "food": "curd",
           "grams": 200
         }
-      ]
+      ],
+      "family": "fruit_curd",
+      "primary_meal": 2
     },
     {
       "id": "meal:egg_fruit",
@@ -1094,7 +1693,9 @@
           "food": "guava",
           "grams": 150
         }
-      ]
+      ],
+      "family": "egg_fruit",
+      "primary_meal": 2
     },
     {
       "id": "meal:milk_banana",
@@ -1114,7 +1715,9 @@
           "food": "banana",
           "grams": 100
         }
-      ]
+      ],
+      "family": "milk_fruit",
+      "primary_meal": 2
     },
     {
       "id": "meal:chana_snack",
@@ -1138,7 +1741,9 @@
           "food": "salt",
           "grams": 0.5
         }
-      ]
+      ],
+      "family": "chickpea_salad",
+      "primary_meal": 2
     },
     {
       "id": "meal:tofu_salad",
@@ -1162,7 +1767,9 @@
           "food": "tomato",
           "grams": 80
         }
-      ]
+      ],
+      "family": "tofu_salad",
+      "primary_meal": 2
     },
     {
       "id": "meal:curd_oats_lunch",
@@ -1172,7 +1779,7 @@
       "requires_cooking": false,
       "cuisine": "Indian",
       "yield_grams": 610,
-      "instructions": "Soak oats in curd in the refrigerator ahead. Serve cooked chickpeas and carrot separately.",
+      "instructions": "Soak plain oats labelled suitable for soaking in curd in the refrigerator overnight. Use already-cooked plain chickpeas, purchased or prepared beforehand and refrigerated; serve them and washed carrot separately. The 8 minutes cover serving and assembly; overnight refrigeration adds elapsed time.",
       "ingredients": [
         {
           "food": "oats",
@@ -1190,7 +1797,9 @@
           "food": "carrot",
           "grams": 100
         }
-      ]
+      ],
+      "family": "oats_salad",
+      "primary_meal": 1
     },
     {
       "id": "meal:chana_tofu_bowl",
@@ -1222,7 +1831,2492 @@
           "food": "salt",
           "grams": 0.5
         }
+      ],
+      "family": "chickpea_tofu_salad",
+      "primary_meal": 1
+    },
+    {
+      "id": "meal:idli_chutney",
+      "name": "Idli with coconut chutney",
+      "family": "idli",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 330,
+      "instructions": "Soak rice and urad separately 6 hours; grind with water and salt, then ferment overnight. Steam the batter as idli for 12-15 minutes until cooked through. Grind coconut, chilli and ginger with water for chutney. Listed time is grinding, steaming and chutney preparation after soaking/fermentation.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 65
+        },
+        {
+          "food": "urad",
+          "grams": 25
+        },
+        {
+          "food": "coconut",
+          "grams": 25
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "ginger",
+          "grams": 4
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:dosa_sambar",
+      "name": "Dosa with vegetable sambar",
+      "family": "dosa",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 40,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 550,
+      "instructions": "Soak rice and urad 6 hours, grind and ferment overnight. Cook toor with carrot, onion and tomato; add tamarind, coriander, cumin and chilli for sambar. Temper mustard and curry leaves in part of the oil. Pan-cook dosa with remaining oil. Listed time starts after soaking/fermentation.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 65
+        },
+        {
+          "food": "urad",
+          "grams": 20
+        },
+        {
+          "food": "toor",
+          "grams": 25
+        },
+        {
+          "food": "carrot",
+          "grams": 50
+        },
+        {
+          "food": "tomato",
+          "grams": 50
+        },
+        {
+          "food": "onion",
+          "grams": 20
+        },
+        {
+          "food": "tamarind",
+          "grams": 5
+        },
+        {
+          "food": "coriander",
+          "grams": 3
+        },
+        {
+          "food": "cumin",
+          "grams": 1
+        },
+        {
+          "food": "red_chilli",
+          "grams": 1
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "oil",
+          "grams": 6
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:rava_upma",
+      "name": "Vegetable rava upma",
+      "family": "upma",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 20,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 400,
+      "instructions": "Dry-roast semolina. Temper mustard and curry leaves in measured oil, soften onion, ginger, chilli and vegetables, add water and salt, then stir in semolina and cook until soft.",
+      "ingredients": [
+        {
+          "food": "rava",
+          "grams": 75
+        },
+        {
+          "food": "carrot",
+          "grams": 60
+        },
+        {
+          "food": "peas",
+          "grams": 40
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "ginger",
+          "grams": 5
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "oil",
+          "grams": 7
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:atukula_upma",
+      "name": "Atukula upma with peanuts",
+      "family": "atukula_upma",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 15,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 350,
+      "instructions": "Rinse rice flakes and drain briefly. Temper mustard and curry leaves in oil; cook onion, carrot and chilli. Fold in softened flakes, turmeric, salt and roasted peanuts; warm through and finish with lemon.",
+      "ingredients": [
+        {
+          "food": "rice_flakes",
+          "grams": 75
+        },
+        {
+          "food": "peanuts",
+          "grams": 20
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "carrot",
+          "grams": 50
+        },
+        {
+          "food": "lemon",
+          "grams": 10
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:garelu_chutney",
+      "name": "Minapa garelu with coconut chutney",
+      "family": "garelu",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 260,
+      "instructions": "Soak urad 4-6 hours beforehand; drain and grind to a thick batter. Mix onion, ginger, half the chilli and salt. Shape garelu and fry until fully cooked. Nutrition counts 15 g absorbed sunflower oil, not the whole fryer reservoir; weigh edible cooked portion. Grind coconut and remaining chilli with water for chutney. Listed time excludes soaking.",
+      "ingredients": [
+        {
+          "food": "urad",
+          "grams": 75
+        },
+        {
+          "food": "onion",
+          "grams": 25
+        },
+        {
+          "food": "ginger",
+          "grams": 5
+        },
+        {
+          "food": "chilli",
+          "grams": 4
+        },
+        {
+          "food": "coconut",
+          "grams": 25
+        },
+        {
+          "food": "oil",
+          "grams": 15
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:ragi_dosa",
+      "name": "Ragi dosa with tomato chutney",
+      "family": "ragi_dosa",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 380,
+      "instructions": "Finely grind the listed dry rice into flour. Mix ragi and rice flour with curd, cumin, salt and water; rest 15 minutes. Cook tomato, onion and chilli in part of the oil and mash into chutney; cook thin dosa with remaining oil. Resting adds 15 minutes elapsed time.",
+      "ingredients": [
+        {
+          "food": "ragi",
+          "grams": 65
+        },
+        {
+          "food": "rice",
+          "grams": 20
+        },
+        {
+          "food": "curd",
+          "grams": 60
+        },
+        {
+          "food": "tomato",
+          "grams": 100
+        },
+        {
+          "food": "onion",
+          "grams": 25
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "cumin",
+          "grams": 1
+        },
+        {
+          "food": "oil",
+          "grams": 6
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:dibba_rotti",
+      "name": "Dibba rotti with tomato chutney",
+      "family": "dibba_rotti",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 390,
+      "instructions": "Soak rice and urad 6 hours beforehand. Grind rice coarsely and urad smoothly; combine with ginger, cumin and salt. Cook a thick dibba rotti covered in a heavy pan, turning until the centre is fully cooked. Simmer tomato and chilli with a little of the measured oil as chutney. Listed time starts after soaking.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 65
+        },
+        {
+          "food": "urad",
+          "grams": 30
+        },
+        {
+          "food": "ginger",
+          "grams": 5
+        },
+        {
+          "food": "cumin",
+          "grams": 1
+        },
+        {
+          "food": "tomato",
+          "grams": 100
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "oil",
+          "grams": 8
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:pesarattu_upma",
+      "name": "Pesarattu with a small upma filling",
+      "family": "pesarattu",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 420,
+      "instructions": "Soak green gram 6-8 hours beforehand. Roast semolina, temper mustard and curry leaves in part of the oil, and cook a small upma with water. Grind gram with ginger, chilli, cumin and salt. Pan-cook pesarattu with onion and remaining oil; fold around the upma. Listed time excludes soaking.",
+      "ingredients": [
+        {
+          "food": "whole_moong",
+          "grams": 70
+        },
+        {
+          "food": "rava",
+          "grams": 30
+        },
+        {
+          "food": "onion",
+          "grams": 35
+        },
+        {
+          "food": "ginger",
+          "grams": 5
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "cumin",
+          "grams": 1
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "oil",
+          "grams": 7
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:tamarind_pulihora",
+      "name": "Chintapandu pulihora with chickpeas",
+      "family": "pulihora",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 30,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 520,
+      "instructions": "Cook rice. Simmer tamarind with water into a thick sauce. Temper mustard, chana dal, curry leaves and chilli in oil until dal is cooked and crisp; add turmeric, peanuts and sauce, then fold through rice. Serve with plain fully cooked chickpeas.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 80
+        },
+        {
+          "food": "chickpeas",
+          "grams": 150
+        },
+        {
+          "food": "peanuts",
+          "grams": 20
+        },
+        {
+          "food": "tamarind",
+          "grams": 15
+        },
+        {
+          "food": "chana_dal",
+          "grams": 8
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 3
+        },
+        {
+          "food": "chilli",
+          "grams": 4
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 7
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:lemon_rice_peas",
+      "name": "Nimmakaya annam with peas and peanuts",
+      "family": "lemon_rice",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 450,
+      "instructions": "Cook rice and peas. Temper mustard, chana dal, curry leaves and chilli in oil, cooking the dal through; add turmeric and peanuts. Fold into rice with peas, salt and lemon juice.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 80
+        },
+        {
+          "food": "peas",
+          "grams": 100
+        },
+        {
+          "food": "peanuts",
+          "grams": 25
+        },
+        {
+          "food": "lemon",
+          "grams": 25
+        },
+        {
+          "food": "chana_dal",
+          "grams": 8
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 3
+        },
+        {
+          "food": "chilli",
+          "grams": 4
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 7
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:tomato_pappu",
+      "name": "Tomato pappu, rice and cucumber",
+      "family": "tomato_pappu",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 720,
+      "instructions": "Pressure-cook toor, tomato, onion, chilli, turmeric and tamarind with water until soft. Cook rice separately. Temper mustard, garlic and curry leaves in oil and stir into pappu. Serve washed sliced cucumber alongside.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 75
+        },
+        {
+          "food": "toor",
+          "grams": 65
+        },
+        {
+          "food": "tomato",
+          "grams": 160
+        },
+        {
+          "food": "onion",
+          "grams": 25
+        },
+        {
+          "food": "cucumber",
+          "grams": 100
+        },
+        {
+          "food": "tamarind",
+          "grams": 5
+        },
+        {
+          "food": "garlic",
+          "grams": 4
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:dosakaya_pappu",
+      "name": "Dosakaya pappu with rice",
+      "family": "dosakaya_pappu",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 700,
+      "instructions": "Peel and deseed dosakaya. Pressure-cook with toor, tomato, tamarind, chilli, turmeric and water. Cook rice separately. Temper mustard, garlic and curry leaves in oil and stir into the soft dal.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 75
+        },
+        {
+          "food": "toor",
+          "grams": 65
+        },
+        {
+          "food": "cucumber",
+          "grams": 180
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "tamarind",
+          "grams": 7
+        },
+        {
+          "food": "garlic",
+          "grams": 4
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:sambar_rice",
+      "name": "Vegetable sambar, rice and cabbage kura",
+      "family": "sambar",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 40,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 800,
+      "instructions": "Cook rice separately. Cook toor and vegetables except cabbage; add tamarind, coriander, cumin and red chilli for sambar. Temper mustard and curry leaves in part of the oil. Stir-fry cabbage in remaining oil and finish with coconut; serve as a separate kura.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 75
+        },
+        {
+          "food": "toor",
+          "grams": 55
+        },
+        {
+          "food": "carrot",
+          "grams": 70
+        },
+        {
+          "food": "bottle_gourd",
+          "grams": 80
+        },
+        {
+          "food": "tomato",
+          "grams": 70
+        },
+        {
+          "food": "onion",
+          "grams": 25
+        },
+        {
+          "food": "cabbage",
+          "grams": 100
+        },
+        {
+          "food": "tamarind",
+          "grams": 10
+        },
+        {
+          "food": "coconut",
+          "grams": 15
+        },
+        {
+          "food": "coriander",
+          "grams": 4
+        },
+        {
+          "food": "cumin",
+          "grams": 1
+        },
+        {
+          "food": "red_chilli",
+          "grams": 1
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "oil",
+          "grams": 7
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:bendakaya_rice",
+      "name": "Bendakaya vepudu, rice and moong dal",
+      "family": "bendakaya_vepudu",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 700,
+      "instructions": "Cook rice and moong separately. Pat washed okra dry and cut it. Temper mustard and curry leaves in oil; fry onion, garlic and okra until tender. Season with chilli, cumin and salt, and serve beside rice and dal.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 75
+        },
+        {
+          "food": "moong",
+          "grams": 55
+        },
+        {
+          "food": "okra",
+          "grams": 180
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "garlic",
+          "grams": 5
+        },
+        {
+          "food": "red_chilli",
+          "grams": 1
+        },
+        {
+          "food": "cumin",
+          "grams": 1
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "oil",
+          "grams": 9
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:gutti_vankaya",
+      "name": "Gutti vankaya kura, rice and chickpeas",
+      "family": "gutti_vankaya",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 40,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 730,
+      "instructions": "Grind peanuts, sesame, coconut, cumin, chilli and tamarind with water. Slit small brinjals and fill with this paste. Cook onion, garlic and tomato in measured oil, add stuffed brinjals, remaining paste, turmeric and water; simmer until tender. Serve with cooked rice and plain cooked chickpeas.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 75
+        },
+        {
+          "food": "brinjal",
+          "grams": 200
+        },
+        {
+          "food": "peanuts",
+          "grams": 25
+        },
+        {
+          "food": "sesame",
+          "grams": 8
+        },
+        {
+          "food": "coconut",
+          "grams": 15
+        },
+        {
+          "food": "chickpeas",
+          "grams": 100
+        },
+        {
+          "food": "onion",
+          "grams": 50
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "tamarind",
+          "grams": 8
+        },
+        {
+          "food": "garlic",
+          "grams": 5
+        },
+        {
+          "food": "red_chilli",
+          "grams": 1
+        },
+        {
+          "food": "cumin",
+          "grams": 1
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 8
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:andhra_chicken",
+      "name": "Andhra chicken kura with rice",
+      "family": "chicken_curry",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 40,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 660,
+      "instructions": "Cook rice separately. Soften onion, ginger, garlic and curry leaves in oil. Add tomato, coriander, cumin, chilli and turmeric, then chicken and water. Simmer until chicken is fully cooked throughout; serve with rice.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 80
+        },
+        {
+          "food": "chicken",
+          "grams": 170
+        },
+        {
+          "food": "onion",
+          "grams": 60
+        },
+        {
+          "food": "tomato",
+          "grams": 90
+        },
+        {
+          "food": "ginger",
+          "grams": 8
+        },
+        {
+          "food": "garlic",
+          "grams": 6
+        },
+        {
+          "food": "coriander",
+          "grams": 5
+        },
+        {
+          "food": "cumin",
+          "grams": 1
+        },
+        {
+          "food": "red_chilli",
+          "grams": 2
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 3
+        },
+        {
+          "food": "oil",
+          "grams": 8
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:fish_pulusu",
+      "name": "Chepala pulusu with rice",
+      "family": "fish_pulusu",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 670,
+      "instructions": "Cook rice separately. Cook onion, garlic, tomato and curry leaves in oil. Add tamarind water and listed spices; simmer briefly. Add deboned fish and simmer gently until fully cooked. Serve with rice.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 80
+        },
+        {
+          "food": "fish",
+          "grams": 180
+        },
+        {
+          "food": "onion",
+          "grams": 60
+        },
+        {
+          "food": "tomato",
+          "grams": 90
+        },
+        {
+          "food": "tamarind",
+          "grams": 15
+        },
+        {
+          "food": "garlic",
+          "grams": 6
+        },
+        {
+          "food": "coriander",
+          "grams": 5
+        },
+        {
+          "food": "cumin",
+          "grams": 1
+        },
+        {
+          "food": "red_chilli",
+          "grams": 2
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 3
+        },
+        {
+          "food": "oil",
+          "grams": 7
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:cabbage_kura",
+      "name": "Cabbage coconut kura, rice and pappu",
+      "family": "cabbage_kura",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 710,
+      "instructions": "Cook rice and toor separately. Temper mustard and curry leaves in oil, then soften onion and chilli. Add shredded cabbage, turmeric and salt; cook until tender and stir in coconut. Serve with rice and soft pappu.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 75
+        },
+        {
+          "food": "toor",
+          "grams": 55
+        },
+        {
+          "food": "cabbage",
+          "grams": 180
+        },
+        {
+          "food": "coconut",
+          "grams": 25
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "chilli",
+          "grams": 4
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 6
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:charu_annam",
+      "name": "Chintapandu charu, rice and chickpeas",
+      "family": "charu",
+      "meal_mask": 10,
+      "primary_meal": 3,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 730,
+      "instructions": "Cook rice. Simmer tamarind water, crushed tomato, garlic, cumin, chilli and salt as thin charu. Temper mustard and curry leaves in oil and add to charu. Serve with plain fully cooked chickpeas for a substantial side.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 75
+        },
+        {
+          "food": "chickpeas",
+          "grams": 170
+        },
+        {
+          "food": "tomato",
+          "grams": 100
+        },
+        {
+          "food": "tamarind",
+          "grams": 12
+        },
+        {
+          "food": "garlic",
+          "grams": 5
+        },
+        {
+          "food": "cumin",
+          "grams": 2
+        },
+        {
+          "food": "red_chilli",
+          "grams": 1
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 3
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:beerakaya_pappu",
+      "name": "Beerakaya pappu with chapatis",
+      "family": "beerakaya_pappu",
+      "meal_mask": 10,
+      "primary_meal": 3,
+      "prep_minutes": 40,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 650,
+      "instructions": "Peel ridge gourd and pressure-cook with toor, onion, tomato, chilli, turmeric and water. Temper mustard, garlic and curry leaves in oil and add to pappu. Knead atta with water and cook chapatis on a hot pan.",
+      "ingredients": [
+        {
+          "food": "atta",
+          "grams": 85
+        },
+        {
+          "food": "toor",
+          "grams": 60
+        },
+        {
+          "food": "ridge_gourd",
+          "grams": 200
+        },
+        {
+          "food": "onion",
+          "grams": 25
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "garlic",
+          "grams": 5
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:sorakaya_roti",
+      "name": "Sorakaya kura, chapatis and cooked lentils",
+      "family": "sorakaya_kura",
+      "meal_mask": 10,
+      "primary_meal": 3,
+      "prep_minutes": 30,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 730,
+      "instructions": "Knead atta with water and cook chapatis. Soften onion, ginger and garlic in oil; add bottle gourd, tomato, cumin, chilli, turmeric and water, and simmer until tender. Serve plain fully cooked lentils separately.",
+      "ingredients": [
+        {
+          "food": "atta",
+          "grams": 85
+        },
+        {
+          "food": "bottle_gourd",
+          "grams": 200
+        },
+        {
+          "food": "cooked_lentils",
+          "grams": 170
+        },
+        {
+          "food": "onion",
+          "grams": 40
+        },
+        {
+          "food": "tomato",
+          "grams": 80
+        },
+        {
+          "food": "ginger",
+          "grams": 5
+        },
+        {
+          "food": "garlic",
+          "grams": 4
+        },
+        {
+          "food": "cumin",
+          "grams": 1
+        },
+        {
+          "food": "red_chilli",
+          "grams": 1
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 6
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:aloo_kura_roti",
+      "name": "Aloo kura, chapatis and curd",
+      "family": "aloo_kura",
+      "meal_mask": 10,
+      "primary_meal": 3,
+      "prep_minutes": 35,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 730,
+      "instructions": "Make chapatis from atta and water. Temper mustard and curry leaves in oil; cook onion and ginger. Add diced potato, peas, tomato, chilli, turmeric and water; simmer until potato is tender. Serve curd alongside.",
+      "ingredients": [
+        {
+          "food": "atta",
+          "grams": 85
+        },
+        {
+          "food": "potato",
+          "grams": 150
+        },
+        {
+          "food": "peas",
+          "grams": 80
+        },
+        {
+          "food": "curd",
+          "grams": 150
+        },
+        {
+          "food": "onion",
+          "grams": 40
+        },
+        {
+          "food": "tomato",
+          "grams": 80
+        },
+        {
+          "food": "ginger",
+          "grams": 5
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "red_chilli",
+          "grams": 1
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 6
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:andhra_egg_roti",
+      "name": "Kodi guddu kura with chapatis",
+      "family": "egg_curry",
+      "meal_mask": 10,
+      "primary_meal": 3,
+      "prep_minutes": 30,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 640,
+      "instructions": "Make chapatis. Soften onion, ginger, garlic and curry leaves in oil; add tomato and all listed spices and simmer with water into gravy. Add three peeled fully cooked boiled eggs and warm through.",
+      "ingredients": [
+        {
+          "food": "atta",
+          "grams": 85
+        },
+        {
+          "food": "egg",
+          "grams": 150
+        },
+        {
+          "food": "onion",
+          "grams": 70
+        },
+        {
+          "food": "tomato",
+          "grams": 120
+        },
+        {
+          "food": "ginger",
+          "grams": 5
+        },
+        {
+          "food": "garlic",
+          "grams": 5
+        },
+        {
+          "food": "coriander",
+          "grams": 4
+        },
+        {
+          "food": "cumin",
+          "grams": 1
+        },
+        {
+          "food": "red_chilli",
+          "grams": 2
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "oil",
+          "grams": 7
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:ragi_sankati",
+      "name": "Ragi sankati with tomato pappu",
+      "family": "ragi_sankati",
+      "meal_mask": 10,
+      "primary_meal": 3,
+      "prep_minutes": 40,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 690,
+      "instructions": "Cook rice very soft with extra water; stir in finely milled ragi and cook while stirring until smooth and fully cooked, then shape sankati. Pressure-cook toor, tomato, onion, chilli and turmeric; temper mustard, garlic and curry leaves in oil and stir into pappu.",
+      "ingredients": [
+        {
+          "food": "ragi",
+          "grams": 55
+        },
+        {
+          "food": "rice",
+          "grams": 30
+        },
+        {
+          "food": "toor",
+          "grams": 65
+        },
+        {
+          "food": "tomato",
+          "grams": 150
+        },
+        {
+          "food": "onion",
+          "grams": 30
+        },
+        {
+          "food": "garlic",
+          "grams": 5
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:vegetable_dosa",
+      "name": "Vegetable dosa with coconut chutney",
+      "family": "dosa",
+      "meal_mask": 8,
+      "primary_meal": 3,
+      "prep_minutes": 30,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 470,
+      "instructions": "Soak rice and urad 6 hours, grind and ferment overnight beforehand. Pan-cook dosa with measured oil and finely chopped vegetables, ensuring batter cooks through. Grind coconut, ginger and chilli with water for chutney. Listed time excludes soaking and fermentation.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 65
+        },
+        {
+          "food": "urad",
+          "grams": 25
+        },
+        {
+          "food": "carrot",
+          "grams": 60
+        },
+        {
+          "food": "onion",
+          "grams": 40
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "coconut",
+          "grams": 25
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "ginger",
+          "grams": 5
+        },
+        {
+          "food": "oil",
+          "grams": 7
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:tomato_kura_roti",
+      "name": "Tomato kura, chapatis and chickpeas",
+      "family": "tomato_kura",
+      "meal_mask": 10,
+      "primary_meal": 3,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 740,
+      "instructions": "Make chapatis. Temper mustard and curry leaves in oil; cook onion, garlic and chilli. Add tomato, turmeric, salt and a little water; simmer into a thick kura. Serve with plain fully cooked chickpeas.",
+      "ingredients": [
+        {
+          "food": "atta",
+          "grams": 85
+        },
+        {
+          "food": "chickpeas",
+          "grams": 150
+        },
+        {
+          "food": "tomato",
+          "grams": 220
+        },
+        {
+          "food": "onion",
+          "grams": 40
+        },
+        {
+          "food": "garlic",
+          "grams": 5
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "turmeric",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 6
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:coconut_rice",
+      "name": "Kobbari annam with peas and chickpeas",
+      "family": "coconut_rice",
+      "meal_mask": 10,
+      "primary_meal": 3,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 560,
+      "instructions": "Cook rice and peas. Temper mustard, urad and curry leaves in oil, cooking urad until crisp and fully cooked. Stir in chilli, coconut and rice. Serve with plain fully cooked chickpeas.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 75
+        },
+        {
+          "food": "coconut",
+          "grams": 30
+        },
+        {
+          "food": "peas",
+          "grams": 70
+        },
+        {
+          "food": "chickpeas",
+          "grams": 130
+        },
+        {
+          "food": "urad",
+          "grams": 8
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 3
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 1
+        }
+      ]
+    },
+    {
+      "id": "meal:punugulu",
+      "name": "Punugulu with tomato dip",
+      "family": "punugulu",
+      "meal_mask": 4,
+      "primary_meal": 2,
+      "prep_minutes": 30,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 230,
+      "instructions": "Soak rice and urad 6 hours, grind and ferment overnight beforehand. Mix thick batter with onion, ginger, chilli and salt. Fry small spoonfuls until cooked through. Cook and mash tomato as a dip. Nutrition counts 12 g absorbed oil; the full fryer reservoir is additional equipment oil. Listed time excludes soaking/fermentation.",
+      "ingredients": [
+        {
+          "food": "rice",
+          "grams": 40
+        },
+        {
+          "food": "urad",
+          "grams": 20
+        },
+        {
+          "food": "onion",
+          "grams": 25
+        },
+        {
+          "food": "chilli",
+          "grams": 3
+        },
+        {
+          "food": "ginger",
+          "grams": 4
+        },
+        {
+          "food": "tomato",
+          "grams": 70
+        },
+        {
+          "food": "oil",
+          "grams": 12
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    },
+    {
+      "id": "meal:mirchi_bajji",
+      "name": "Mirchi bajji with tomato",
+      "family": "mirchi_bajji",
+      "meal_mask": 4,
+      "primary_meal": 2,
+      "prep_minutes": 25,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 230,
+      "instructions": "Finely mill dry chana dal and rice into flour. Mix with cumin, chilli powder, salt and water into batter. Slit and deseed large green chillies, coat and fry until batter is cooked through. Serve with washed tomato. Nutrition counts 12 g absorbed oil; the fryer needs additional oil.",
+      "ingredients": [
+        {
+          "food": "chana_dal",
+          "grams": 45
+        },
+        {
+          "food": "rice",
+          "grams": 8
+        },
+        {
+          "food": "chilli",
+          "grams": 35
+        },
+        {
+          "food": "tomato",
+          "grams": 70
+        },
+        {
+          "food": "cumin",
+          "grams": 1
+        },
+        {
+          "food": "red_chilli",
+          "grams": 0.5
+        },
+        {
+          "food": "oil",
+          "grams": 12
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    },
+    {
+      "id": "meal:senagalu_sundal",
+      "name": "Cooked senagalu with coconut",
+      "family": "senagalu",
+      "meal_mask": 4,
+      "primary_meal": 2,
+      "prep_minutes": 15,
+      "requires_cooking": true,
+      "cuisine": "Andhra",
+      "yield_grams": 193.5,
+      "instructions": "Use fully cooked chickpeas. Temper mustard, curry leaves and chilli in oil; add chickpeas and warm through. Finish with coconut, lemon and salt.",
+      "ingredients": [
+        {
+          "food": "chickpeas",
+          "grams": 160
+        },
+        {
+          "food": "coconut",
+          "grams": 15
+        },
+        {
+          "food": "mustard",
+          "grams": 1
+        },
+        {
+          "food": "curry_leaves",
+          "grams": 2
+        },
+        {
+          "food": "chilli",
+          "grams": 2
+        },
+        {
+          "food": "lemon",
+          "grams": 10
+        },
+        {
+          "food": "oil",
+          "grams": 3
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    },
+    {
+      "id": "meal:maramaralu",
+      "name": "Maramaralu, peanuts and tomato",
+      "family": "maramaralu",
+      "meal_mask": 4,
+      "primary_meal": 2,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 148.5,
+      "instructions": "Mix plain ready-to-eat puffed rice and unsalted roasted peanuts with washed tomato, onion, coriander, lemon and salt. Eat immediately before the puffed rice softens.",
+      "ingredients": [
+        {
+          "food": "puffed_rice",
+          "grams": 35
+        },
+        {
+          "food": "peanuts",
+          "grams": 20
+        },
+        {
+          "food": "tomato",
+          "grams": 60
+        },
+        {
+          "food": "onion",
+          "grams": 20
+        },
+        {
+          "food": "lemon",
+          "grams": 10
+        },
+        {
+          "food": "coriander",
+          "grams": 3
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    },
+    {
+      "id": "meal:corn_snack",
+      "name": "Boiled corn with lemon and coconut",
+      "family": "corn",
+      "meal_mask": 4,
+      "primary_meal": 2,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 188.5,
+      "instructions": "Use already-cooked plain sweetcorn, purchased or prepared beforehand and kept refrigerated. Mix with coconut, lemon, washed coriander and salt.",
+      "ingredients": [
+        {
+          "food": "corn",
+          "grams": 160
+        },
+        {
+          "food": "coconut",
+          "grams": 15
+        },
+        {
+          "food": "lemon",
+          "grams": 10
+        },
+        {
+          "food": "coriander",
+          "grams": 3
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    },
+    {
+      "id": "meal:sesame_banana",
+      "name": "Banana with toasted sesame and curd",
+      "family": "sesame_fruit",
+      "meal_mask": 4,
+      "primary_meal": 2,
+      "prep_minutes": 3,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 235,
+      "instructions": "Serve banana with plain curd and ready-to-eat unsalted toasted sesame.",
+      "ingredients": [
+        {
+          "food": "banana",
+          "grams": 100
+        },
+        {
+          "food": "sesame",
+          "grams": 15
+        },
+        {
+          "food": "curd",
+          "grams": 120
+        }
+      ]
+    },
+    {
+      "id": "meal:ready_perugu_bowl",
+      "name": "Perugu annam with cucumber and chickpeas",
+      "family": "perugu_annam",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 673.5,
+      "instructions": "Use already-cooked plain rice and chickpeas, purchased or prepared beforehand and kept refrigerated. Mix rice, curd, washed cucumber, coriander and salt; serve chickpeas alongside. No fresh cooking is included.",
+      "ingredients": [
+        {
+          "food": "cooked_rice",
+          "grams": 230
+        },
+        {
+          "food": "curd",
+          "grams": 220
+        },
+        {
+          "food": "cucumber",
+          "grams": 100
+        },
+        {
+          "food": "chickpeas",
+          "grams": 120
+        },
+        {
+          "food": "coriander",
+          "grams": 3
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    },
+    {
+      "id": "meal:ready_lemon_chana",
+      "name": "Ready rice with lemon, chickpeas and peanuts",
+      "family": "lemon_rice",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 533.5,
+      "instructions": "Use already-cooked plain rice and chickpeas, purchased or prepared beforehand and refrigerated. Mix with lemon, unsalted roasted peanuts, washed cucumber, coriander and salt. This untempered ready-rice option needs no cooking.",
+      "ingredients": [
+        {
+          "food": "cooked_rice",
+          "grams": 230
+        },
+        {
+          "food": "chickpeas",
+          "grams": 160
+        },
+        {
+          "food": "peanuts",
+          "grams": 20
+        },
+        {
+          "food": "lemon",
+          "grams": 20
+        },
+        {
+          "food": "cucumber",
+          "grams": 100
+        },
+        {
+          "food": "coriander",
+          "grams": 3
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    },
+    {
+      "id": "meal:lentil_rice_salad",
+      "name": "Ready lentil and rice salad",
+      "family": "lentil_salad",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 8,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 683.5,
+      "instructions": "Use already-cooked plain rice and lentils, purchased or prepared beforehand and refrigerated. Mix with washed vegetables, lemon, coriander and measured oil.",
+      "ingredients": [
+        {
+          "food": "cooked_rice",
+          "grams": 230
+        },
+        {
+          "food": "cooked_lentils",
+          "grams": 230
+        },
+        {
+          "food": "tomato",
+          "grams": 100
+        },
+        {
+          "food": "cucumber",
+          "grams": 100
+        },
+        {
+          "food": "lemon",
+          "grams": 15
+        },
+        {
+          "food": "coriander",
+          "grams": 3
+        },
+        {
+          "food": "oil",
+          "grams": 5
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    },
+    {
+      "id": "meal:moong_millet_salad",
+      "name": "Ready moong and millet salad",
+      "family": "moong_millet_salad",
+      "meal_mask": 10,
+      "primary_meal": 3,
+      "prep_minutes": 8,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 663.5,
+      "instructions": "Use already-cooked plain millet and whole green gram, purchased or prepared beforehand and refrigerated. Combine with washed vegetables, lemon, coriander and ready-to-eat toasted sesame.",
+      "ingredients": [
+        {
+          "food": "cooked_millet",
+          "grams": 230
+        },
+        {
+          "food": "cooked_moong",
+          "grams": 220
+        },
+        {
+          "food": "carrot",
+          "grams": 80
+        },
+        {
+          "food": "tomato",
+          "grams": 100
+        },
+        {
+          "food": "lemon",
+          "grams": 20
+        },
+        {
+          "food": "coriander",
+          "grams": 3
+        },
+        {
+          "food": "sesame",
+          "grams": 10
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    },
+    {
+      "id": "meal:tofu_sesame_rice",
+      "name": "Ready tofu and sesame rice bowl",
+      "family": "tofu_sesame_bowl",
+      "meal_mask": 10,
+      "primary_meal": 3,
+      "prep_minutes": 8,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 685.5,
+      "instructions": "Use already-cooked plain rice and ready-to-eat plain tofu according to its label, purchased or prepared beforehand. Add washed vegetables, lemon and ready-to-eat unsalted toasted sesame.",
+      "ingredients": [
+        {
+          "food": "cooked_rice",
+          "grams": 230
+        },
+        {
+          "food": "tofu",
+          "grams": 220
+        },
+        {
+          "food": "cucumber",
+          "grams": 120
+        },
+        {
+          "food": "carrot",
+          "grams": 80
+        },
+        {
+          "food": "sesame",
+          "grams": 15
+        },
+        {
+          "food": "lemon",
+          "grams": 20
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
+      ]
+    },
+    {
+      "id": "meal:bought_idli",
+      "name": "Ready idli with sambar",
+      "family": "idli",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 380,
+      "instructions": "Buy the listed dishes already cooked and ready to eat, or use safely refrigerated prepared portions. Weigh the edible portions and serve. The INDB nutrition is a reference dish estimate; the source does not provide a complete ingredient list, and purchased recipes vary. This option cannot establish dietary or allergy suitability.",
+      "ingredients": [
+        {
+          "food": "ready_idli",
+          "grams": 200
+        },
+        {
+          "food": "ready_sambar",
+          "grams": 180
+        }
+      ]
+    },
+    {
+      "id": "meal:bought_dosa",
+      "name": "Ready plain dosa with sambar",
+      "family": "dosa",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 360,
+      "instructions": "Buy the listed dishes already cooked and ready to eat, or use safely refrigerated prepared portions. Weigh the edible portions and serve. The INDB nutrition is a reference dish estimate; the source does not provide a complete ingredient list, and purchased recipes vary. This option cannot establish dietary or allergy suitability.",
+      "ingredients": [
+        {
+          "food": "ready_dosa",
+          "grams": 180
+        },
+        {
+          "food": "ready_sambar",
+          "grams": 180
+        }
+      ]
+    },
+    {
+      "id": "meal:bought_upma",
+      "name": "Ready rava upma with curd",
+      "family": "upma",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 400,
+      "instructions": "Buy the listed dishes already cooked and ready to eat, or use safely refrigerated prepared portions. Weigh the edible portions and serve. The INDB nutrition is a reference dish estimate; the source does not provide a complete ingredient list, and purchased recipes vary. This option cannot establish dietary or allergy suitability.",
+      "ingredients": [
+        {
+          "food": "ready_upma",
+          "grams": 300
+        },
+        {
+          "food": "curd",
+          "grams": 100
+        }
+      ]
+    },
+    {
+      "id": "meal:bought_garelu",
+      "name": "Ready minapa garelu with sambar",
+      "family": "garelu",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 310,
+      "instructions": "Buy the listed dishes already cooked and ready to eat, or use safely refrigerated prepared portions. Weigh the edible portions and serve. The INDB nutrition is a reference dish estimate; the source does not provide a complete ingredient list, and purchased recipes vary. This option cannot establish dietary or allergy suitability.",
+      "ingredients": [
+        {
+          "food": "ready_garelu",
+          "grams": 130
+        },
+        {
+          "food": "ready_sambar",
+          "grams": 180
+        }
+      ]
+    },
+    {
+      "id": "meal:bought_pulihora",
+      "name": "Ready pulihora with pappu",
+      "family": "pulihora",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 460,
+      "instructions": "Buy the listed dishes already cooked and ready to eat, or use safely refrigerated prepared portions. Weigh the edible portions and serve. The INDB nutrition is a reference dish estimate; the source does not provide a complete ingredient list, and purchased recipes vary. This option cannot establish dietary or allergy suitability.",
+      "ingredients": [
+        {
+          "food": "ready_pulihora",
+          "grams": 280
+        },
+        {
+          "food": "ready_pappu",
+          "grams": 180
+        }
+      ]
+    },
+    {
+      "id": "meal:bought_brinjal_rice",
+      "name": "Ready gutti vankaya, rice and pappu",
+      "family": "gutti_vankaya",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 570,
+      "instructions": "Buy the listed dishes already cooked and ready to eat, or use safely refrigerated prepared portions. Weigh the edible portions and serve. The INDB nutrition is a reference dish estimate; the source does not provide a complete ingredient list, and purchased recipes vary. This option cannot establish dietary or allergy suitability.",
+      "ingredients": [
+        {
+          "food": "ready_brinjal",
+          "grams": 180
+        },
+        {
+          "food": "cooked_rice",
+          "grams": 240
+        },
+        {
+          "food": "ready_pappu",
+          "grams": 150
+        }
+      ]
+    },
+    {
+      "id": "meal:bought_chicken_rice",
+      "name": "Ready Andhra chicken curry with rice",
+      "family": "chicken_curry",
+      "meal_mask": 10,
+      "primary_meal": 1,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 470,
+      "instructions": "Buy the listed dishes already cooked and ready to eat, or use safely refrigerated prepared portions. Weigh the edible portions and serve. The INDB nutrition is a reference dish estimate; the source does not provide a complete ingredient list, and purchased recipes vary. This option cannot establish dietary or allergy suitability.",
+      "ingredients": [
+        {
+          "food": "ready_chicken",
+          "grams": 220
+        },
+        {
+          "food": "cooked_rice",
+          "grams": 250
+        }
+      ]
+    },
+    {
+      "id": "meal:bought_charu_roti",
+      "name": "Ready chapatis, charu and pappu",
+      "family": "charu",
+      "meal_mask": 10,
+      "primary_meal": 3,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 550,
+      "instructions": "Buy the listed dishes already cooked and ready to eat, or use safely refrigerated prepared portions. Weigh the edible portions and serve. The INDB nutrition is a reference dish estimate; the source does not provide a complete ingredient list, and purchased recipes vary. This option cannot establish dietary or allergy suitability.",
+      "ingredients": [
+        {
+          "food": "ready_roti",
+          "grams": 150
+        },
+        {
+          "food": "ready_charu",
+          "grams": 220
+        },
+        {
+          "food": "ready_pappu",
+          "grams": 180
+        }
+      ]
+    },
+    {
+      "id": "meal:bought_perugu",
+      "name": "Ready perugu annam with cucumber",
+      "family": "perugu_annam",
+      "meal_mask": 10,
+      "primary_meal": 3,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 450,
+      "instructions": "Buy the listed dishes already cooked and ready to eat, or use safely refrigerated prepared portions. Weigh the edible portions and serve. The INDB nutrition is a reference dish estimate; the source does not provide a complete ingredient list, and purchased recipes vary. This option cannot establish dietary or allergy suitability.",
+      "ingredients": [
+        {
+          "food": "ready_perugu",
+          "grams": 350
+        },
+        {
+          "food": "cucumber",
+          "grams": 100
+        }
+      ]
+    },
+    {
+      "id": "meal:bought_bajji",
+      "name": "Ready mirchi bajji with guava",
+      "family": "mirchi_bajji",
+      "meal_mask": 4,
+      "primary_meal": 2,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 200,
+      "instructions": "Buy the listed dishes already cooked and ready to eat, or use safely refrigerated prepared portions. Weigh the edible portions and serve. The INDB nutrition is a reference dish estimate; the source does not provide a complete ingredient list, and purchased recipes vary. This option cannot establish dietary or allergy suitability.",
+      "ingredients": [
+        {
+          "food": "ready_bajji",
+          "grams": 100
+        },
+        {
+          "food": "guava",
+          "grams": 100
+        }
+      ]
+    },
+    {
+      "id": "meal:almond_guava",
+      "name": "Guava with almonds",
+      "family": "fruit_nuts",
+      "meal_mask": 4,
+      "primary_meal": 2,
+      "prep_minutes": 2,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 175,
+      "instructions": "Serve washed guava with plain edible almonds.",
+      "ingredients": [
+        {
+          "food": "guava",
+          "grams": 150
+        },
+        {
+          "food": "almonds",
+          "grams": 25
+        }
+      ]
+    },
+    {
+      "id": "meal:bought_chikki",
+      "name": "Peanut chikki and banana",
+      "family": "chikki",
+      "meal_mask": 4,
+      "primary_meal": 2,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 135,
+      "instructions": "Buy the listed dishes already cooked and ready to eat, or use safely refrigerated prepared portions. Weigh the edible portions and serve. The INDB nutrition is a reference dish estimate; the source does not provide a complete ingredient list, and purchased recipes vary. This option cannot establish dietary or allergy suitability.",
+      "ingredients": [
+        {
+          "food": "ready_chikki",
+          "grams": 35
+        },
+        {
+          "food": "banana",
+          "grams": 100
+        }
+      ]
+    },
+    {
+      "id": "meal:cold_atukulu",
+      "name": "Soft atukulu with banana and coconut",
+      "family": "atukula_upma",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 8,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 240,
+      "instructions": "Use plain thin rice flakes labelled suitable for eating after soaking. Rinse with drinking water, soften briefly and drain; serve with banana, fresh coconut and ready-to-eat unsalted roasted peanuts. No raw rice or cooking is required.",
+      "ingredients": [
+        {
+          "food": "rice_flakes",
+          "grams": 70
+        },
+        {
+          "food": "banana",
+          "grams": 130
+        },
+        {
+          "food": "coconut",
+          "grams": 25
+        },
+        {
+          "food": "peanuts",
+          "grams": 15
+        }
+      ]
+    },
+    {
+      "id": "meal:senagalu_breakfast",
+      "name": "Ready senagalu, banana and peanuts",
+      "family": "senagalu",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 345,
+      "instructions": "Use already-cooked plain chickpeas, purchased or prepared beforehand and kept refrigerated. Add lemon and serve with banana and unsalted roasted peanuts.",
+      "ingredients": [
+        {
+          "food": "chickpeas",
+          "grams": 180
+        },
+        {
+          "food": "banana",
+          "grams": 130
+        },
+        {
+          "food": "peanuts",
+          "grams": 25
+        },
+        {
+          "food": "lemon",
+          "grams": 10
+        }
+      ]
+    },
+    {
+      "id": "meal:millet_coconut_breakfast",
+      "name": "Ready millet with coconut, banana and sesame",
+      "family": "millet_breakfast",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 387,
+      "instructions": "Use already-cooked plain millet, purchased or prepared beforehand and kept refrigerated. Serve with banana, fresh coconut and ready-to-eat toasted sesame.",
+      "ingredients": [
+        {
+          "food": "cooked_millet",
+          "grams": 220
+        },
+        {
+          "food": "banana",
+          "grams": 130
+        },
+        {
+          "food": "coconut",
+          "grams": 25
+        },
+        {
+          "food": "sesame",
+          "grams": 12
+        }
+      ]
+    },
+    {
+      "id": "meal:tofu_guava_breakfast",
+      "name": "Ready tofu, guava and peanuts",
+      "family": "tofu_fruit",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Indian",
+      "yield_grams": 375,
+      "instructions": "Use ready-to-eat plain tofu according to its label. Serve with washed guava and unsalted roasted peanuts.",
+      "ingredients": [
+        {
+          "food": "tofu",
+          "grams": 200
+        },
+        {
+          "food": "guava",
+          "grams": 150
+        },
+        {
+          "food": "peanuts",
+          "grams": 25
+        }
+      ]
+    },
+    {
+      "id": "meal:maramaralu_breakfast",
+      "name": "Maramaralu with cooked senagalu and cucumber",
+      "family": "maramaralu",
+      "meal_mask": 1,
+      "primary_meal": 0,
+      "prep_minutes": 5,
+      "requires_cooking": false,
+      "cuisine": "Andhra",
+      "yield_grams": 358.5,
+      "instructions": "Use ready-to-eat plain puffed rice and already-cooked plain chickpeas, purchased or prepared beforehand. Mix with washed cucumber, lemon and coriander; serve peanuts alongside and eat immediately.",
+      "ingredients": [
+        {
+          "food": "puffed_rice",
+          "grams": 55
+        },
+        {
+          "food": "chickpeas",
+          "grams": 170
+        },
+        {
+          "food": "cucumber",
+          "grams": 100
+        },
+        {
+          "food": "peanuts",
+          "grams": 15
+        },
+        {
+          "food": "lemon",
+          "grams": 15
+        },
+        {
+          "food": "coriander",
+          "grams": 3
+        },
+        {
+          "food": "salt",
+          "grams": 0.5
+        }
       ]
     }
-  ]
+  ],
+  "prep_note": "Prep minutes count active preparation and cooking using ingredients in the stated raw/cooked state. Soaking, fermentation and overnight refrigeration add elapsed time where explicitly stated. No-cook options require purchased or previously prepared cooked components."
 }

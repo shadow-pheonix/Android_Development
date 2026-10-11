@@ -92,38 +92,81 @@ public final class PreferenceSetup {
         PlannerProfile suitability = p.copy();
         suitability.ratings.clear();
         suitability.aliases.clear();
-        for (int meal = 0; meal < 4; meal++) {
-            if (!p.meals[meal]) continue;
-            final int m = meal;
-            List<MealRecipe> group = new ArrayList<>();
-            for (MealRecipe recipe : recipes) {
-                int first = -1;
-                for (int slot = 0; slot < 4; slot++)
-                    if (p.meals[slot] && recipe.allowed(suitability, slot)) {
-                        first = slot;
-                        break;
-                    }
-                if (first == meal) group.add(recipe);
+        Map<Integer, List<MealRecipe>> groups = new LinkedHashMap<>();
+        for (int meal : new int[] {0, 1, 3, 2})
+            if (p.meals[meal]) groups.put(meal, new ArrayList<>());
+        for (MealRecipe recipe : recipes) {
+            int category = recipe.primaryMeal;
+            if (!groups.containsKey(category) || !recipe.allowed(suitability, category)) {
+                category = -1;
+                for (int slot : groups.keySet())
+                    if (recipe.allowed(suitability, slot)
+                            && (category == -1
+                                    || groups.get(slot).size() < groups.get(category).size()))
+                        category = slot;
             }
+            if (category >= 0) groups.get(category).add(recipe);
+        }
+        for (Map.Entry<Integer, List<MealRecipe>> entry : groups.entrySet()) {
+            int meal = entry.getKey();
+            List<MealRecipe> group = entry.getValue();
             group.sort(
                     Comparator.comparingInt(
                                     (MealRecipe r) ->
                                             p.rating(r.id) == FoodPreference.UNSET ? 0 : 1)
+                            .thenComparingInt(
+                                    r ->
+                                            !"Any".equals(p.cuisine) && p.cuisine.equals(r.cuisine)
+                                                    ? 0
+                                                    : 1)
                             .thenComparing(
                                     Comparator.comparingDouble(
                                                     (MealRecipe r) ->
                                                             relevance(
                                                                     r,
-                                                                    m,
+                                                                    meal,
                                                                     p,
                                                                     diary,
                                                                     proteinPerCalorie))
                                             .reversed())
                             .thenComparing(r -> r.id));
-            add(
-                    true,
-                    meal,
-                    group.stream().map(r -> r.id).collect(java.util.stream.Collectors.toList()));
+            // Cycle dish families, so a page explores different foods instead of four rice
+            // variants.
+            List<String> discovery = new ArrayList<>();
+            for (boolean unrated : new boolean[] {true, false}) {
+                Map<String, ArrayDeque<MealRecipe>> families = new LinkedHashMap<>();
+                for (MealRecipe recipe : group)
+                    if ((p.rating(recipe.id) == FoodPreference.UNSET) == unrated)
+                        families.computeIfAbsent(recipe.family, key -> new ArrayDeque<>())
+                                .add(recipe);
+                if ("Any".equals(p.cuisine)) {
+                    ArrayDeque<String> regional = new ArrayDeque<>(), other = new ArrayDeque<>();
+                    for (Map.Entry<String, ArrayDeque<MealRecipe>> family : families.entrySet())
+                        ("Andhra".equals(family.getValue().peekFirst().cuisine) ? regional : other)
+                                .add(family.getKey());
+                    Map<String, ArrayDeque<MealRecipe>> mixed = new LinkedHashMap<>();
+                    while (!regional.isEmpty() || !other.isEmpty()) {
+                        if (!regional.isEmpty()) {
+                            String id = regional.removeFirst();
+                            mixed.put(id, families.get(id));
+                        }
+                        if (!other.isEmpty()) {
+                            String id = other.removeFirst();
+                            mixed.put(id, families.get(id));
+                        }
+                    }
+                    families = mixed;
+                }
+                while (!families.isEmpty()) {
+                    Iterator<ArrayDeque<MealRecipe>> queues = families.values().iterator();
+                    while (queues.hasNext()) {
+                        ArrayDeque<MealRecipe> queue = queues.next();
+                        discovery.add(queue.removeFirst().id);
+                        if (queue.isEmpty()) queues.remove();
+                    }
+                }
+            }
+            add(true, meal, discovery);
         }
         // Recipe ingredients follow dishes, with ingredients from explicitly loved recipes first.
         Set<String> lovedParts = new HashSet<>();
@@ -150,7 +193,7 @@ public final class PreferenceSetup {
             MealRecipe r, int meal, PlannerProfile p, IntentModel diary, double ratio) {
         double score = !"Any".equals(p.cuisine) && p.cuisine.equals(r.cuisine) ? 2 : 0;
         for (MealRecipe.Ingredient i : r.ingredients) {
-            FoodPreference choice = p.rating(i.food.id);
+            FoodPreference choice = i.food.rating(p);
             if (choice == FoodPreference.LOVE) score += 3.0 / r.ingredients.size();
             if (choice.excludes()) score -= 6.0 / r.ingredients.size();
         }
@@ -173,7 +216,8 @@ public final class PreferenceSetup {
     }
 
     public static String selectionIdentity(PlannerProfile p) {
-        return p.diet.name()
+        return "diverse-regional-v2:"
+                + p.diet.name()
                 + new TreeSet<>(p.allergies)
                 + new TreeSet<>(p.excludedIngredients)
                 + Arrays.toString(p.meals)

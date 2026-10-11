@@ -208,6 +208,13 @@ public final class PreferenceSetupActivity extends Activity {
                         }
                         store.saveSetup(p, s);
                     }
+                    if (!s.completed
+                            && s.page >= PreferenceSetup.BASICS
+                            && !s.selectionIdentity.equals(PreferenceSetup.selectionIdentity(p))) {
+                        s.buildBatches(c.recipes, c.foods.values(), p, evidence, ratio);
+                        s.page = PreferenceSetup.BASICS;
+                        store.saveSetup(p, s);
+                    }
                     return new Object[] {p, s, c, evidence, ratio};
                 },
                 value -> {
@@ -390,6 +397,7 @@ public final class PreferenceSetupActivity extends Activity {
                 if (recipe == null) continue;
                 LinearLayout card = card();
                 text(card, recipe.name, 20, true);
+                text(card, recipe.cuisine + " · " + DayPlanner.mealName(batch.meal), 13, false);
                 StringJoiner parts = new StringJoiner(", ");
                 for (MealRecipe.Ingredient i : recipe.ingredients) parts.add(i.food.name);
                 text(card, parts.toString(), 13, false);
@@ -423,6 +431,12 @@ public final class PreferenceSetupActivity extends Activity {
                     text(
                             card,
                             "Excluded by your suitability settings, regardless of a taste rating.",
+                            13,
+                            false);
+                if (food.rating(profile).excludes() && !profile.rating(food.id).excludes())
+                    text(
+                            card,
+                            "Another preparation of this ingredient is marked Avoid or Never. That exclusion applies here too.",
                             13,
                             false);
                 ratingCard(card, id, food.name);
@@ -642,7 +656,9 @@ public final class PreferenceSetupActivity extends Activity {
         "shellfish",
         "sesame",
         "meat",
-        "honey"
+        "honey",
+        "mustard",
+        "coconut"
     };
 
     private void tags(String key, Set<String> saved) {
@@ -657,7 +673,9 @@ public final class PreferenceSetupActivity extends Activity {
             "Shellfish",
             "Sesame",
             "Meat / fish",
-            "Honey"
+            "Honey",
+            "Mustard",
+            "Coconut"
         };
         for (int i = 0; i < TAGS.length; i++)
             check(key + TAGS[i], labels[i], saved.contains(TAGS[i]));

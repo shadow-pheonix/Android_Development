@@ -1,8 +1,10 @@
 package com.shadowphoenix.dietlog.planner;
 
-import org.junit.Test;
-import java.util.*;
 import static org.junit.Assert.*;
+
+import org.junit.Test;
+
+import java.util.*;
 
 public class DayPlannerTest {
     static MealRecipe meal(String id, double kcal, double protein, double price, String tag) {
@@ -109,5 +111,77 @@ public class DayPlannerTest {
                 new DayPlanner().plan(Arrays.asList(meal("a", 500, 20, 10, "vegetable")), r);
         assertEquals(1, result.choices.size());
         assertTrue(result.totals[0] > 2400);
+    }
+
+    @Test
+    public void unavailableMealsKeepAvailableChoicesLoggedTotalsAndSeparateExplanations() {
+        MealRecipe original = meal("available", 500, 20, 10, "vegetable");
+        MealRecipe available =
+                new MealRecipe(
+                        original.id,
+                        original.name,
+                        5,
+                        10,
+                        false,
+                        original.cuisine,
+                        original.instructions,
+                        original.yieldGrams,
+                        original.ingredients);
+        DayPlanner.Request r = new DayPlanner.Request();
+        r.consumed[0] = 100;
+        DayPlanner.Result result = new DayPlanner().plan(Collections.singletonList(available), r);
+        assertEquals(2, result.choices.size());
+        double planned = 100;
+        for (DayPlanner.Choice choice : result.choices) {
+            assertTrue(choice.meal == 0 || choice.meal == 2);
+            planned += choice.recipe.nutrition(choice.scale)[0];
+        }
+        assertEquals(planned, result.totals[0], 0);
+        assertTrue(result.notes.stream().anyMatch(n -> n.contains("No suitable Lunch")));
+        assertTrue(result.notes.stream().anyMatch(n -> n.contains("No suitable Dinner")));
+        assertFalse(result.targetClose);
+        assertFalse(result.budgetMet);
+    }
+
+    @Test
+    public void allTwoHundredRecipesRemainSearchableAtHighCalorieTarget() {
+        List<MealRecipe> recipes = new ArrayList<>();
+        for (int i = 0; i < 199; i++) recipes.add(meal("low" + i, 1, 1, 100, "vegetable"));
+        recipes.add(meal("last", 1500, 50, 1, "vegetable"));
+        DayPlanner.Request r = new DayPlanner.Request();
+        r.targets = new double[] {3000, 100, 375, 100, 30, 2000, 50, 20};
+        Arrays.fill(r.profile.meals, false);
+        r.profile.meals[0] = true;
+        DayPlanner.Result result = new DayPlanner().plan(recipes, r);
+        assertEquals(1, result.choices.size());
+        assertEquals("meal:last", result.choices.get(0).recipe.id);
+        assertEquals(2, result.choices.get(0).scale, 0);
+        assertEquals(3000, result.totals[0], 0);
+    }
+
+    @Test
+    public void finitePreparedSupplyStillCannotBeReusedAfterPartialMealFailure() {
+        MealRecipe original = meal("prepared", 500, 20, 10, "vegetable");
+        MealRecipe cooked =
+                new MealRecipe(
+                        original.id,
+                        original.name,
+                        15,
+                        10,
+                        true,
+                        original.cuisine,
+                        original.instructions,
+                        original.yieldGrams,
+                        original.ingredients);
+        DayPlanner.Request r = new DayPlanner.Request();
+        r.profile.canCook = false;
+        r.readyServings.put(cooked.id, 0.5);
+        DayPlanner.Result result = new DayPlanner().plan(Collections.singletonList(cooked), r);
+        assertEquals(1, result.choices.size());
+        assertEquals(0.5, result.choices.get(0).preparedScale, 0);
+        assertEquals(250, result.totals[0], 0);
+        for (String name : Arrays.asList("Lunch", "Snacks", "Dinner"))
+            assertTrue(result.notes.stream().anyMatch(n -> n.contains(name)));
+        assertFalse(result.targetClose);
     }
 }

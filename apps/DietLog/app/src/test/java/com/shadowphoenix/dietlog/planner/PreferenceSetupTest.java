@@ -177,4 +177,67 @@ public class PreferenceSetupTest {
         p.ratings.put("rice", FoodPreference.NEVER);
         assertEquals(Double.NEGATIVE_INFINITY, after.score("rice", 1, p), 0);
     }
+
+    @Test
+    public void explicitMealCategoriesBalanceLunchAndDinnerAndRotateFamilies() throws Exception {
+        PlannerFood rice = food("rice");
+        List<MealRecipe> recipes = new ArrayList<>();
+        for (int meal : new int[] {1, 3})
+            for (int family = 0; family < 4; family++)
+                for (int variant = 0; variant < 3; variant++)
+                    recipes.add(
+                            new MealRecipe(
+                                    "r" + meal + family + variant,
+                                    "Dish",
+                                    10,
+                                    10,
+                                    true,
+                                    "Andhra",
+                                    "Cook",
+                                    100,
+                                    Collections.singletonList(new MealRecipe.Ingredient(rice, 100)),
+                                    "family" + family,
+                                    meal));
+        PlannerProfile p = new PlannerProfile();
+        p.cuisine = "Andhra";
+        PreferenceSetup setup = new PreferenceSetup();
+        setup.buildBatches(
+                recipes,
+                Collections.emptyList(),
+                p,
+                new IntentModel(Collections.emptyList(), 0),
+                0);
+        Map<String, MealRecipe> byId = new HashMap<>();
+        for (MealRecipe recipe : recipes) byId.put(recipe.id, recipe);
+        Set<String> seen = new HashSet<>();
+        Set<Integer> slots = new HashSet<>();
+        for (PreferenceSetup.Batch batch : setup.batches) {
+            slots.add(batch.meal);
+            Set<String> families = new HashSet<>();
+            for (String id : batch.ids) {
+                assertTrue(seen.add(id));
+                assertTrue(families.add(byId.get(id).family));
+                assertEquals(batch.meal, byId.get(id).primaryMeal);
+            }
+        }
+        assertEquals(new HashSet<>(Arrays.asList(1, 3)), slots);
+        assertEquals(recipes.size(), seen.size());
+    }
+
+    @Test
+    public void upgradeIdentityRefreshesOldDiscoveryWithoutErasingRatings() throws Exception {
+        PlannerProfile p = new PlannerProfile();
+        p.ratings.put("previousDish", FoodPreference.LOVE);
+        assertTrue(PreferenceSetup.selectionIdentity(p).startsWith("diverse-regional-v2:"));
+        PreferenceSetup s = new PreferenceSetup();
+        s.buildBatches(
+                Collections.singletonList(recipe("newDish", 1, food("rice"))),
+                Collections.emptyList(),
+                p,
+                new IntentModel(Collections.emptyList(), 0),
+                0);
+        assertEquals(FoodPreference.LOVE, p.rating("previousDish"));
+        assertEquals(FoodPreference.UNSET, p.rating("newDish"));
+        assertEquals(PreferenceSetup.selectionIdentity(p), s.selectionIdentity);
+    }
 }
