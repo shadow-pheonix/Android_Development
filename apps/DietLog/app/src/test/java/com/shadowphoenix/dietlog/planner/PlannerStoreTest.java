@@ -12,6 +12,7 @@ import static org.junit.Assert.*;
 public class PlannerStoreTest {
     private static final class Memory implements SharedPreferences {
         final Map<String, Object> data = new LinkedHashMap<>();
+        boolean failCommit;
 
         public Map<String, ?> getAll() {
             return new HashMap<>(data);
@@ -97,6 +98,7 @@ public class PlannerStoreTest {
                 }
 
                 public boolean commit() {
+                    if (failCommit) return false;
                     if (clear) data.clear();
                     for (String k : removed) data.remove(k);
                     data.putAll(changes);
@@ -118,6 +120,30 @@ public class PlannerStoreTest {
                         return memory;
                     }
                 });
+    }
+
+    @Test
+    public void ratingsAndResumePositionPersistAtomically() throws Exception {
+        Memory m = new Memory();
+        PlannerStore store = store(m);
+        PlannerProfile p = new PlannerProfile();
+        PreferenceSetup state = new PreferenceSetup();
+        state.batches.add(new PreferenceSetup.Batch(true, 0, Arrays.asList("meal:a")));
+        state.page = 4;
+        p.ratings.put("meal:a", FoodPreference.LOVE);
+        store.saveSetup(p, state);
+        assertEquals(4, store(m).setup().page);
+        assertEquals(FoodPreference.LOVE, store(m).profile().rating("meal:a"));
+        m.failCommit = true;
+        state.page = 5;
+        p.ratings.put("meal:a", FoodPreference.NEVER);
+        try {
+            store.saveSetup(p, state);
+            fail();
+        } catch (IllegalStateException expected) {
+        }
+        assertEquals(4, store(m).setup().page);
+        assertEquals(FoodPreference.LOVE, store(m).profile().rating("meal:a"));
     }
 
     @Test

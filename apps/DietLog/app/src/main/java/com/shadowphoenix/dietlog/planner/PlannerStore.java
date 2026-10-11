@@ -59,6 +59,10 @@ public final class PlannerStore {
     }
 
     public void saveProfile(PlannerProfile p) throws JSONException {
+        put("profile", profileJson(p).toString());
+    }
+
+    private static JSONObject profileJson(PlannerProfile p) throws JSONException {
         p.validate();
         JSONObject ratings = new JSONObject();
         for (Map.Entry<String, FoodPreference> e : p.ratings.entrySet())
@@ -82,7 +86,24 @@ public final class PlannerStore {
         JSONArray meals = new JSONArray();
         for (boolean m : p.meals) meals.put(m);
         j.put("meals", meals);
-        put("profile", j.toString());
+        return j;
+    }
+
+    public PreferenceSetup setup() throws JSONException {
+        return PreferenceSetup.fromJson(new JSONObject(prefs.getString("setup", "{}")));
+    }
+
+    /** A rating and its progress checkpoint either both persist or neither does. */
+    public void saveSetup(PlannerProfile profile, PreferenceSetup setup) throws JSONException {
+        if (!prefs.edit()
+                .putString("profile", profileJson(profile).toString())
+                .putString("setup", setup.toJson().toString())
+                .commit())
+            throw new IllegalStateException("Unable to save your preferences. Please retry.");
+    }
+
+    public void saveSetupDraft(PreferenceSetup setup) throws JSONException {
+        put("setup", setup.toJson().toString());
     }
 
     public String learningIdentity() {

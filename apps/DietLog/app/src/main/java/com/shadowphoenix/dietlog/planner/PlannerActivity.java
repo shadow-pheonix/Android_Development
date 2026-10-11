@@ -542,6 +542,8 @@ public final class PlannerActivity extends Activity {
             else r.consumedCostKnown = false;
         }
         for (int m = 0; m < 4; m++) r.remaining[m] = selected[m] && profile.meals[m];
+        // Re-read for every plan: new logs and diary corrections continuously update evidence.
+        history = diary.getPlannerHistory();
         List<IntentModel.Observation> observations = new ArrayList<>();
         for (FoodEntry e : history)
             observations.add(

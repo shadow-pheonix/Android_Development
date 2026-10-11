@@ -140,7 +140,7 @@ public final class IntentModel {
         if (preference != FoodPreference.UNSET) return preference.score;
         Evidence e = evidence.get(foodId + "|" + meal);
         return profile.learnFromHistory && e != null
-                ? Math.min(1.5, Math.log1p(e.familiarity) * 0.65)
+                ? Math.min(0.5, Math.log1p(e.familiarity) * 0.35)
                 : 0;
     }
 
