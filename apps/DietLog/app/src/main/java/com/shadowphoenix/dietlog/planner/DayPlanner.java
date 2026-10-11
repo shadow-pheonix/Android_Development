@@ -35,6 +35,7 @@ public final class DayPlanner {
         public PlannerProfile profile = new PlannerProfile();
         public double[] targets = {2000, 100, 250, 65, 30, 2000, 50, 20};
         public double[] consumed = new double[8];
+        public double[] consumedByMeal = new double[4];
         public double consumedCost;
         public boolean consumedCostKnown = true;
         public boolean[] remaining = {true, true, true, true};
@@ -76,7 +77,7 @@ public final class DayPlanner {
 
     private static final class State {
         final List<Choice> choices = new ArrayList<>();
-        final double[] totals = new double[8];
+        final double[] totals = new double[8], mealCalories = new double[4];
         final Map<String, Double> usedReady = new HashMap<>(), usedPantry = new HashMap<>();
         double cost, preference, effort, repeat, objective;
         long order;
@@ -89,6 +90,7 @@ public final class DayPlanner {
             s.usedPantry.putAll(usedPantry);
             s.choices.addAll(choices);
             System.arraycopy(totals, 0, s.totals, 0, 8);
+            System.arraycopy(mealCalories, 0, s.mealCalories, 0, 4);
             s.vegetable = vegetable;
             s.fruit = fruit;
             s.cost = cost;
@@ -108,7 +110,11 @@ public final class DayPlanner {
         if (Math.abs(energy - r.targets[0]) > Math.max(100, r.targets[0] * 0.15))
             notes.add(
                     "Your saved calorie and macro targets conflict. Targets are unchanged; review"
-                        + " them in Profile.");
+                            + " them in Profile.");
+        boolean anyRemaining = false;
+        for (int meal = 0; meal < 4; meal++)
+            anyRemaining |= r.remaining[meal] && r.profile.meals[meal];
+        if (!anyRemaining) notes.add("No remaining meals selected. Totals show only logged food.");
         State initial = new State();
         System.arraycopy(r.consumed, 0, initial.totals, 0, 8);
         initial.cost = r.consumedCost;
@@ -131,7 +137,7 @@ public final class DayPlanner {
                             initial,
                             notes,
                             "A kept meal conflicts with your current preferences or restrictions."
-                                + " Unlock or edit it.");
+                                    + " Unlock or edit it.");
                 options.add(lock);
             } else {
                 for (MealRecipe recipe : recipes) {
@@ -178,7 +184,7 @@ public final class DayPlanner {
                     State s = state.copy();
                     if (!add(s, option, r, evaluated.get(option))) continue;
                     s.order = order++;
-                    s.objective = score(s, r, progress);
+                    s.objective = score(s, r, progress, shares);
                     retain(leaders, s, BEAM_WIDTH * 3 / 4, objective);
                     retain(cheap, s, BEAM_WIDTH, cheapest);
                 }
@@ -187,7 +193,7 @@ public final class DayPlanner {
                         initial,
                         notes,
                         "Prepared portions are insufficient for the selected meals. Add cooking"
-                            + " access or change the plan.");
+                                + " access or change the plan.");
             List<State> keep = new ArrayList<>(leaders);
             keep.sort(objective);
             List<State> economical = new ArrayList<>(cheap);
@@ -204,7 +210,7 @@ public final class DayPlanner {
         List<State> within = new ArrayList<>();
         for (State s : beam) if (budget <= 0 || s.cost <= budget + 0.01) within.add(s);
         List<State> eligible = within.isEmpty() ? beam : within;
-        eligible.sort(Comparator.comparingDouble(s -> score(s, r, 1)));
+        eligible.sort(Comparator.comparingDouble(s -> score(s, r, 1, shares)));
         State best = eligible.get(0);
         boolean met = budget <= 0 || best.cost <= budget + 0.01;
         boolean close =
@@ -214,25 +220,25 @@ public final class DayPlanner {
         if (!met)
             notes.add(
                     "No budget-feasible combination was found within the available meals and search"
-                        + " limits. This estimate exceeds your daily allocation.");
+                            + " limits. This estimate exceeds your daily allocation.");
         if (!best.entered)
             notes.add(
                     "Cost uses illustrative prices or unknown logged-food cost. Enter local prices;"
-                        + " this is not a guaranteed spending limit.");
-        if (!close)
+                            + " this is not a guaranteed spending limit.");
+        if (!close && anyRemaining)
             notes.add(
                     "Closest available plan: calories or protein remain outside the target range."
-                        + " No targets or restrictions were changed.");
+                            + " No targets or restrictions were changed.");
         if (Double.isNaN(best.totals[4])
                 || Double.isNaN(best.totals[5])
                 || Double.isNaN(best.totals[6]))
             notes.add(
                     "Some fibre, sugar or sodium values are unknown. Missing data is not zero and"
-                        + " those limits cannot be verified.");
+                            + " those limits cannot be verified.");
         if (r.consumed[0] > r.targets[0])
             notes.add(
                     "Logged calories already exceed your target. Remaining meals are still offered;"
-                        + " there is no compensatory meal-skipping instruction.");
+                            + " there is no compensatory meal-skipping instruction.");
         return new Result(best.choices, best.totals, best.cost, best.entered, met, close, notes);
     }
 
@@ -242,17 +248,29 @@ public final class DayPlanner {
                 Collections.emptyList(), s.totals, s.cost, s.entered, false, false, notes);
     }
 
-    private static double[] shares(Request r) {
-        double[] shares =
+    static double[] shares(Request r) {
+        double[] base =
                 r.profile.largestMeal < 0 && r.profile.learnFromHistory
                         ? r.intent.routineShares()
                         : new double[] {0.25, 0.30, 0.15, 0.30};
-        if (r.profile.largestMeal >= 0) shares[r.profile.largestMeal] += 0.15;
+        if (r.profile.largestMeal >= 0) base[r.profile.largestMeal] += 0.15;
+        double routine = 0;
+        for (int m = 0; m < 4; m++) if (r.profile.meals[m]) routine += base[m];
+        double[] shares = new double[4];
         double sum = 0;
-        for (int i = 0; i < 4; i++)
-            if (r.remaining[i] && r.profile.meals[i]) sum += shares[i];
-            else shares[i] = 0;
-        if (sum > 0) for (int i = 0; i < 4; i++) shares[i] /= sum;
+        for (int m = 0; m < 4; m++)
+            if (r.remaining[m] && r.profile.meals[m]) {
+                shares[m] = Math.max(0, r.targets[0] * base[m] / routine - r.consumedByMeal[m]);
+                sum += shares[m];
+            }
+        if (sum == 0) {
+            for (int m = 0; m < 4; m++)
+                if (r.remaining[m] && r.profile.meals[m]) {
+                    shares[m] = base[m];
+                    sum += shares[m];
+                }
+        }
+        if (sum > 0) for (int m = 0; m < 4; m++) shares[m] /= sum;
         return shares;
     }
 
@@ -315,6 +333,7 @@ public final class DayPlanner {
         c = new Choice(c.meal, c.recipe, c.scale, prepared);
         s.usedReady.merge(c.recipe.id, prepared, Double::sum);
         for (int i = 0; i < 8; i++) s.totals[i] += evaluated.nutrition[i];
+        s.mealCalories[c.meal] += evaluated.nutrition[0];
         s.cost += evaluated.cost.amount;
         s.entered &= evaluated.cost.allPricesEntered;
         s.preference += evaluated.preference;
@@ -339,7 +358,7 @@ public final class DayPlanner {
         return true;
     }
 
-    private static double score(State s, Request r, double progress) {
+    private static double score(State s, Request r, double progress, double[] shares) {
         double value = 0;
         double[] weights = {16, 9, 3, 3};
         for (int i = 0; i < 4; i++) {
@@ -347,6 +366,15 @@ public final class DayPlanner {
             double error = (s.totals[i] - goal) / Math.max(i == 0 ? 300 : 20, r.targets[i]);
             value += weights[i] * error * error;
         }
+        double remainingEnergy = Math.max(0, r.targets[0] - r.consumed[0]);
+        if (remainingEnergy > 0)
+            for (int meal = 0; meal < 4; meal++)
+                if (s.mealCalories[meal] > 0) {
+                    double error =
+                            (s.mealCalories[meal] - remainingEnergy * shares[meal])
+                                    / Math.max(300, r.targets[0]);
+                    value += 4 * error * error;
+                }
         if (Double.isFinite(s.totals[4]) && r.targets[4] > 0)
             value += Math.pow(Math.max(0, r.targets[4] * progress - s.totals[4]) / r.targets[4], 2);
         for (int i = 5; i < 8; i++)
@@ -368,6 +396,11 @@ public final class DayPlanner {
 
     private static void validate(Request r) {
         r.profile.validate();
+        if (r.consumedByMeal.length != 4)
+            throw new IllegalArgumentException("Invalid logged meal totals");
+        for (double calories : r.consumedByMeal)
+            if (!Double.isFinite(calories) || calories < 0)
+                throw new IllegalArgumentException("Invalid logged meal calories");
         for (Map<String, Double> quantities : Arrays.asList(r.pantryGrams, r.readyServings))
             for (double quantity : quantities.values())
                 if (!Double.isFinite(quantity) || quantity < 0 || quantity > 100000)

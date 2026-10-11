@@ -195,4 +195,69 @@ public class ExtendedPlannerTest {
         } catch (java.util.concurrent.CancellationException expected) {
         }
     }
+
+    @Test
+    public void partiallyEatenMealUsesOnlyItsRemainingRoutineShare() {
+        DayPlanner.Request r = request();
+        r.profile.largestMeal = -1;
+        r.targets[0] = 2000;
+        r.consumed[0] = 700;
+        r.consumedByMeal[1] = 700;
+        double[] shares = DayPlanner.shares(r);
+        assertEquals(0, shares[1], 0);
+        assertTrue(shares[0] > shares[2]);
+        double sum = 0;
+        for (double share : shares) sum += share;
+        assertEquals(1, sum, 0.000001);
+    }
+
+    @Test
+    public void finalPlanUsesTheExplicitLargestMealPreference() {
+        PlannerFood base =
+                new PlannerFood(
+                        "base",
+                        "Base",
+                        "ready",
+                        new double[] {500, 25, 62.5, 12.5, 5, 0, 0, 0},
+                        new HashSet<>(Arrays.asList("grain")),
+                        true,
+                        10);
+        MealRecipe recipe =
+                new MealRecipe(
+                        "balanced",
+                        "Balanced",
+                        15,
+                        0,
+                        false,
+                        "Any",
+                        "Ready",
+                        100,
+                        Arrays.asList(new MealRecipe.Ingredient(base, 100)));
+        DayPlanner.Request r = new DayPlanner.Request();
+        r.targets = new double[] {2000, 100, 250, 50, 20, 2000, 50, 0};
+        r.profile.largestMeal = 0;
+        DayPlanner.Result breakfast = new DayPlanner().plan(Arrays.asList(recipe), r);
+        r.profile.largestMeal = 3;
+        DayPlanner.Result dinner = new DayPlanner().plan(Arrays.asList(recipe), r);
+        assertTrue(breakfast.choices.get(0).scale > breakfast.choices.get(3).scale);
+        assertTrue(dinner.choices.get(3).scale > dinner.choices.get(0).scale);
+        assertTrue(breakfast.targetClose);
+        assertTrue(dinner.targetClose);
+    }
+
+    @Test
+    public void explicitlySelectingNoRemainingMealsShowsDiaryTotalsWithoutInventingConsumption() {
+        DayPlanner.Request r = request();
+        Arrays.fill(r.remaining, false);
+        r.consumed[0] = 1000;
+        r.consumed[1] = 35;
+        r.consumed[2] = 150;
+        r.consumed[3] = 25;
+        DayPlanner.Result result = new DayPlanner().plan(Arrays.asList(meal("a")), r);
+        assertTrue(result.choices.isEmpty());
+        assertArrayEquals(r.consumed, result.totals, 0);
+        assertTrue(
+                result.notes.stream()
+                        .anyMatch(note -> note.contains("No remaining meals selected")));
+    }
 }

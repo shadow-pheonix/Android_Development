@@ -109,7 +109,7 @@ public final class PlannerActivity extends Activity {
                                                 e instanceof IllegalArgumentException
                                                         ? e.getMessage()
                                                         : "Unable to complete this planner action."
-                                                              + " Export diagnostics or retry.");
+                                                                + " Export diagnostics or retry.");
                                         if (ready) render();
                                         else {
                                             page.removeAllViews();
@@ -222,7 +222,7 @@ public final class PlannerActivity extends Activity {
             text(
                     page,
                     "Set your food choices and local prices, then generate a plan. Plans stay"
-                        + " separate from your diary until you confirm a meal.",
+                            + " separate from your diary until you confirm a meal.",
                     15,
                     false);
             return;
@@ -234,7 +234,7 @@ public final class PlannerActivity extends Activity {
                 String.format(
                         Locale.getDefault(),
                         "%.0f / %.0f kcal\n"
-                            + "Protein %.0f / %.0f g · Carbs %.0f / %.0f g · Fat %.0f / %.0f g",
+                                + "Protein %.0f / %.0f g · Carbs %.0f / %.0f g · Fat %.0f / %.0f g",
                         result.totals[0],
                         request.targets[0],
                         result.totals[1],
@@ -265,8 +265,8 @@ public final class PlannerActivity extends Activity {
         text(
                 page,
                 "Amounts use the listed raw/cooked state. Check product labels and preparation for"
-                    + " allergies and cross-contact. These are general meal suggestions, not a"
-                    + " medical diet.",
+                        + " allergies and cross-contact. These are general meal suggestions, not a"
+                        + " medical diet.",
                 12,
                 false);
     }
@@ -405,7 +405,7 @@ public final class PlannerActivity extends Activity {
                     text(
                             form,
                             "Logged food will count toward today's totals. Select each meal you"
-                                + " still want suggestions for, including partially eaten meals.",
+                                    + " still want suggestions for, including partially eaten meals.",
                             14,
                             false);
                     CheckBox[] options = new CheckBox[4];
@@ -425,14 +425,8 @@ public final class PlannerActivity extends Activity {
                             form,
                             () -> {
                                 boolean[] selected = new boolean[4];
-                                boolean any = false;
                                 for (int m = 0; m < 4; m++) {
                                     selected[m] = options[m].isChecked();
-                                    any |= selected[m];
-                                }
-                                if (!any) {
-                                    message("Choose at least one remaining meal");
-                                    return false;
                                 }
                                 runPlan(selected, costWeight, effortWeight);
                                 return true;
@@ -510,7 +504,7 @@ public final class PlannerActivity extends Activity {
         if (s.effectiveAge(LocalDate.now()) < 18)
             throw new IllegalArgumentException(
                     "Personalized meal planning currently supports adults. Keep using the food"
-                        + " diary and professional guidance for younger users.");
+                            + " diary and professional guidance for younger users.");
         DayPlanner.Request r = new DayPlanner.Request();
         r.profile = profile;
         r.targets =
@@ -526,8 +520,13 @@ public final class PlannerActivity extends Activity {
                 };
         entries = diary.getPlannerDayEntries(day);
         Arrays.fill(r.consumed, 0);
-        double[] diaryTotals = diary.getTotalsForDate(day);
-        System.arraycopy(diaryTotals, 0, r.consumed, 0, 4);
+        for (FoodEntry e : entries) {
+            r.consumed[0] += e.calories;
+            r.consumed[1] += e.protein;
+            r.consumed[2] += e.carbs;
+            r.consumed[3] += e.fat;
+            r.consumedByMeal[mealIndex(e.mealType)] += e.calories;
+        }
         if (!entries.isEmpty()) {
             for (int i = 4; i < 8; i++) r.consumed[i] = Double.NaN;
         }
@@ -567,6 +566,8 @@ public final class PlannerActivity extends Activity {
                 + Arrays.toString(r.targets)
                 + "|"
                 + Arrays.toString(r.consumed)
+                + "|"
+                + Arrays.toString(r.consumedByMeal)
                 + "|"
                 + store.profileIdentity()
                 + "|"
@@ -747,7 +748,7 @@ public final class PlannerActivity extends Activity {
         text(
                 body,
                 "Your choices outrank learned habits. Avoid and Never are left out of automatic"
-                    + " plans.",
+                        + " plans.",
                 14,
                 false);
         button(body, "Find a food to rate", () -> searchFood(false));
@@ -781,7 +782,7 @@ public final class PlannerActivity extends Activity {
                     store.resetLearning();
                     message(
                             "Feedback reset. Explicit preferences are kept. Turn off diary learning"
-                                + " in Eating preferences if desired.");
+                                    + " in Eating preferences if desired.");
                 });
         dialog("Foods I like or avoid", body, null);
     }
@@ -886,7 +887,7 @@ public final class PlannerActivity extends Activity {
         text(
                 body,
                 "Enter ₹ per 100 g in the displayed state. Starter prices are illustrative"
-                    + " estimates; blank keeps the estimate.",
+                        + " estimates; blank keeps the estimate.",
                 14,
                 false);
         Map<String, EditText> fields = new LinkedHashMap<>();
@@ -976,8 +977,8 @@ public final class PlannerActivity extends Activity {
         text(
                 body,
                 "Inventory updates follow today's confirmed consumption. Editing or deleting a"
-                    + " diary entry does not adjust inventory; edit inventory if you need a"
-                    + " correction.",
+                        + " diary entry does not adjust inventory; edit inventory if you need a"
+                        + " correction.",
                 13,
                 false);
         dialog(
@@ -1014,8 +1015,8 @@ public final class PlannerActivity extends Activity {
                                                             .isBefore(day))
                                                 throw new IllegalArgumentException(
                                                         "Prepared portions are no longer available."
-                                                            + " Update them or confirm the amount"
-                                                            + " freshly prepared.");
+                                                                + " Update them or confirm the amount"
+                                                                + " freshly prepared.");
                                         }
                                         Map<String, Double> used = new HashMap<>();
                                         for (MealRecipe.Ingredient i : c.recipe.ingredients)
@@ -1078,7 +1079,7 @@ public final class PlannerActivity extends Activity {
                                             recorded
                                                     ? "Meal recorded in your diary"
                                                     : "This meal is already recorded; no second"
-                                                          + " stock deduction");
+                                                            + " stock deduction");
                                     result = null;
                                     week = null;
                                     locks.clear();
@@ -1162,12 +1163,12 @@ public final class PlannerActivity extends Activity {
                         if (!saved.optString("identity").equals(identity) || !saved.has("start"))
                             throw new IllegalArgumentException(
                                     "Saved week is unavailable or your preferences/stock changed."
-                                        + " Generate a new week.");
+                                            + " Generate a new week.");
                         first = LocalDate.parse(saved.getString("start"));
                         if (!first.isAfter(LocalDate.now()))
                             throw new IllegalArgumentException(
                                     "The saved week has started. Generate a fresh week or plan each"
-                                        + " remaining day.");
+                                            + " remaining day.");
                     }
                     List<DayPlanner.Request> requests = new ArrayList<>();
                     for (int d = 0; d < 7; d++) {
@@ -1288,8 +1289,8 @@ public final class PlannerActivity extends Activity {
                     text(
                             body,
                             "Pantry is deducted once from the combined ingredients. Prepared"
-                                + " portions are excluded. Match each raw/cooked state when"
-                                + " weighing or buying.",
+                                    + " portions are excluded. Match each raw/cooked state when"
+                                    + " weighing or buying.",
                             13,
                             false);
                     for (ShoppingPlanner.Row row : list.rows) {
@@ -1297,7 +1298,7 @@ public final class PlannerActivity extends Activity {
                                 String.format(
                                         Locale.getDefault(),
                                         "%s (%s)\n"
-                                            + "Needed %.0f g · on hand %.0f g · buy %.0f g%s · %s",
+                                                + "Needed %.0f g · on hand %.0f g · buy %.0f g%s · %s",
                                         row.food.name,
                                         row.food.state,
                                         row.needed,
@@ -1335,8 +1336,8 @@ public final class PlannerActivity extends Activity {
             text(
                     form,
                     "Stock in the exact weighed state shown. Plans do not change stock. Confirmed"
-                        + " consumption deducts ingredients if you choose to update inventory. Pack"
-                        + " prices affect shopping cash; per-100 g prices affect meal cost.",
+                            + " consumption deducts ingredients if you choose to update inventory. Pack"
+                            + " prices affect shopping cash; per-100 g prices affect meal cost.",
                     14,
                     false);
             Map<String, EditText[]> fields = new LinkedHashMap<>();
@@ -1383,7 +1384,7 @@ public final class PlannerActivity extends Activity {
                                     if (pack.isEmpty() || price.isEmpty())
                                         throw new IllegalArgumentException(
                                                 "Enter both pack size and pack price, or leave both"
-                                                    + " blank");
+                                                        + " blank");
                                     ShoppingPlanner.Pack checked =
                                             new ShoppingPlanner.Pack(
                                                     number(e.getValue()[1]),
@@ -1415,8 +1416,8 @@ public final class PlannerActivity extends Activity {
         text(
                 body,
                 "Only add food that is already prepared and suitable to eat. You choose its"
-                    + " usable-through date. Planning reserves it within a menu; confirmed"
-                    + " consumption updates the available portions.",
+                        + " usable-through date. Planning reserves it within a menu; confirmed"
+                        + " consumption updates the available portions.",
                 14,
                 false);
         button(
@@ -1479,8 +1480,8 @@ public final class PlannerActivity extends Activity {
                                                                                                             i))
                                                                                     .setText(
                                                                                             "Usable"
-                                                                                                + " through:"
-                                                                                                + " "
+                                                                                                    + " through:"
+                                                                                                    + " "
                                                                                                     + through[
                                                                                                             0]);
                                                                 }));
@@ -1490,7 +1491,7 @@ public final class PlannerActivity extends Activity {
                             check(
                                     form,
                                     "I checked storage/product guidance and this food is suitable"
-                                        + " through that date",
+                                            + " through that date",
                                     false);
                     dialog(
                             "Prepared portions",
@@ -1632,9 +1633,9 @@ public final class PlannerActivity extends Activity {
                                                     render();
                                                     message(
                                                             "Food link saved. Linked taste choices"
-                                                                + " and exclusions apply together;"
-                                                                + " recipe weights keep their own"
-                                                                + " raw/cooked state.");
+                                                                    + " and exclusions apply together;"
+                                                                    + " recipe weights keep their own"
+                                                                    + " raw/cooked state.");
                                                 } catch (Exception e) {
                                                     message(e.getMessage());
                                                 }
@@ -1678,8 +1679,8 @@ public final class PlannerActivity extends Activity {
                                 render();
                                 message(
                                         "Selected unrated favorites marked Love; existing choices"
-                                            + " kept. Link unfamiliar entries to planning foods if"
-                                            + " needed.");
+                                                + " kept. Link unfamiliar entries to planning foods if"
+                                                + " needed.");
                             } catch (Exception e) {
                                 message("Unable to import favorites");
                             }
@@ -1692,8 +1693,8 @@ public final class PlannerActivity extends Activity {
         text(
                 body,
                 "Build one base serving from weighed ingredients. Its nutrition comes from your"
-                    + " offline catalogue; the planner adjusts servings. Plain ingredients and"
-                    + " complete composition work best.",
+                        + " offline catalogue; the planner adjusts servings. Plain ingredients and"
+                        + " complete composition work best.",
                 14,
                 false);
         button(body, "Add ingredient from food catalogue", () -> searchFood(true));
@@ -1764,7 +1765,7 @@ public final class PlannerActivity extends Activity {
                                                     .equals(slug))
                                                 throw new IllegalArgumentException(
                                                         "Remove this ingredient from your recipes"
-                                                            + " first");
+                                                                + " first");
                                     }
                                     JSONObject updated = store.extraFoods();
                                     updated.remove(slug);
@@ -1790,7 +1791,7 @@ public final class PlannerActivity extends Activity {
         if (!food.hasCompleteCoreMacros()) {
             message(
                     "This food has incomplete calorie/macro data. Choose a complete catalogue"
-                        + " record for a planning ingredient.");
+                            + " record for a planning ingredient.");
             return;
         }
         JSONObject previous;
@@ -1811,8 +1812,8 @@ public final class PlannerActivity extends Activity {
         text(
                 form,
                 "Use the weighed state matching this catalogue record. Check the actual ingredient"
-                    + " list and allergens; unverified composition is excluded when restrictions"
-                    + " are present.",
+                        + " list and allergens; unverified composition is excluded when restrictions"
+                        + " are present.",
                 14,
                 false);
         Spinner state =
