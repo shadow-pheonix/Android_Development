@@ -1,0 +1,65 @@
+name: Keep three APK builds per app
+
+on:
+  push:
+    branches: [main, feature/android-artifact-retention]
+    paths:
+      - .github/artifact-retention.json
+      - .github/scripts/**
+      - .github/workflows/artifact-storage.yml
+      - .github/workflows/android.yml
+      - .github/workflows/build-dietlog.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/artifact-retention.json
+      - .github/scripts/**
+      - .github/workflows/artifact-storage.yml
+  workflow_run:
+    workflows: [Build DietLog APK, Build Legacy Test APK, Nova APK]
+    types: [completed]
+  schedule:
+    - cron: '43 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apk-storage-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - run: python3 -m unittest discover -s .github/scripts/tests -v
+  cleanup:
+    needs: verify
+    if: >-
+      github.ref == 'refs/heads/main' && github.event_name != 'pull_request' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Prune older build artifacts independently for each app
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/prune-artifacts.py --apply

@@ -73,3 +73,20 @@ CI should be routed to the affected app only whenever practical.
 - Documentation-only changes should not trigger Android builds by default.
 - Shared changes should validate only the apps they actually affect.
 - APK artifact names should identify the app and build type.
+
+### APK artifact retention
+
+The [storage workflow](.github/workflows/artifact-storage.yml) keeps the newest
+three completed APK build runs **per app**, across branches and APK variants.
+It runs after successful app builds, daily, and after retention-policy changes.
+DietLog, Nova and the legacy test app have separate budgets. Older APK artifacts
+and their old associated Nova source bundles are removed; unfinished builds,
+unknown artifact names, release downloads, workflow logs and caches are preserved.
+New main-branch APK uploads expire after seven days, so the retained count is an
+upper limit rather than a guarantee that three artifacts remain indefinitely.
+
+Register each new app's exact APK and optional related-artifact names in
+[artifact-retention.json](.github/artifact-retention.json) and its workflow name
+in the storage workflow's `workflow_run` list. Source-only bundles are pruned
+only once that app has three newer completed APK builds. Three large APKs per
+app can still exceed the account's shared free storage allowance.

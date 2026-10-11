@@ -1,0 +1,21 @@
+{
+  "keep_builds": 3,
+  "apps": {
+    "DietLog": {
+      "apk_names": ["dietlog-debug"],
+      "related_names": []
+    },
+    "Nova": {
+      "apk_names": [
+        "nova-pip-diagnostics-subtitles-hdr2sdr",
+        "nova-pip-diagnostics-latest-upstream",
+        "nova-pip-latest-upstream"
+      ],
+      "related_names": ["nova-pip-current-deps-source", "nova-pip-current-video-source"]
+    },
+    "LegacyTest": {
+      "apk_names": ["legacy-test-app-debug", "github-test-app-debug"],
+      "related_names": []
+    }
+  }
+}
