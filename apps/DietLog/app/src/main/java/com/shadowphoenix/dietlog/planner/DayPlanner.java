@@ -4,7 +4,7 @@ import java.util.*;
 
 /** Deterministic bounded whole-day beam search; exclusions are applied before scoring. */
 public final class DayPlanner {
-    public static final int BEAM_WIDTH = 192, MAX_OPTIONS = 600;
+    public static final int BEAM_WIDTH = 192, MAX_OPTIONS = 800;
 
     public static final class Choice {
         public final int meal;
@@ -41,6 +41,9 @@ public final class DayPlanner {
         public boolean[] remaining = {true, true, true, true};
         public final Map<Integer, Choice> locked = new HashMap<>();
         public final Map<Integer, Set<String>> rejected = new HashMap<>();
+        public final Map<Integer, Set<String>> rejectedFamilies = new HashMap<>();
+        public boolean preferMealVariety;
+        public boolean preferCuisine;
         public final Map<String, Map<IntentModel.Feedback, Integer>> feedback = new HashMap<>();
         public final Map<String, Integer> recentRecipes = new HashMap<>();
         public IntentModel intent = new IntentModel(Collections.emptyList(), 0);
@@ -103,6 +106,56 @@ public final class DayPlanner {
     }
 
     public Result plan(List<MealRecipe> recipes, Request r) {
+        Result preferred = plan(recipes, r, r.preferCuisine, r.preferMealVariety);
+        double budget = r.profile.effectiveDailyBudget();
+        if ((!r.preferCuisine && !r.preferMealVariety)
+                || budget <= 0
+                || preferred.cost <= budget + 0.01) return preferred;
+        Result broad = r.preferCuisine ? plan(recipes, r, false, r.preferMealVariety) : preferred;
+        boolean relaxedVariety = false;
+        if (r.preferMealVariety && broad.cost > budget + 0.01) {
+            Result relaxed = plan(recipes, r, false, false);
+            if (relaxed.choices.size() >= broad.choices.size()
+                    && (relaxed.budgetMet || relaxed.cost < broad.cost - 0.01)) {
+                broad = relaxed;
+                relaxedVariety = true;
+            }
+        }
+        if (broad.choices.size() < preferred.choices.size()
+                || (!broad.budgetMet && broad.cost >= preferred.cost - 0.01)) return preferred;
+        List<String> notes = new ArrayList<>(broad.notes);
+        if (r.preferCuisine
+                && !"Any".equals(r.profile.cuisine)
+                && broad.choices.stream()
+                        .anyMatch(c -> !matchesCuisine(r.profile.cuisine, c.recipe.cuisine)))
+            notes.add(
+                    0,
+                    "Other cuisines are included while searching for a lower-cost plan. Your"
+                            + " targets and restrictions are unchanged.");
+        if (relaxedVariety && pairedFamiliesRepeat(broad.choices))
+            notes.add(
+                    0,
+                    "Some meal families repeat in this lower-cost plan. A varied combination within"
+                            + " your budget was not found within the search limits.");
+        return new Result(
+                broad.choices,
+                broad.totals,
+                broad.cost,
+                broad.pricesEntered,
+                broad.budgetMet,
+                broad.targetClose,
+                notes);
+    }
+
+    private static boolean pairedFamiliesRepeat(List<Choice> choices) {
+        for (Choice a : choices)
+            for (Choice b : choices)
+                if (b.meal == a.meal + 2 && a.recipe.family.equals(b.recipe.family)) return true;
+        return false;
+    }
+
+    private Result plan(
+            List<MealRecipe> recipes, Request r, boolean preferCuisine, boolean preferMealVariety) {
         validate(r);
         if (recipes.size() > 200) throw new IllegalArgumentException("Too many planning recipes");
         List<String> notes = new ArrayList<>();
@@ -123,6 +176,7 @@ public final class DayPlanner {
         beam.add(initial);
         double[] shares = shares(r);
         double processed = 0;
+        boolean incomplete = false;
         for (int meal = 0; meal < 4; meal++) {
             if (r.cancelled.getAsBoolean()) throw new java.util.concurrent.CancellationException();
             if (!r.remaining[meal] || !r.profile.meals[meal]) continue;
@@ -133,19 +187,22 @@ public final class DayPlanner {
                         r.profile,
                         meal,
                         r.readyServings.getOrDefault(lock.recipe.id, 0.0) >= lock.scale))
-                    return unavailable(
-                            initial,
-                            notes,
-                            "A kept meal conflicts with your current preferences or restrictions."
+                    notes.add(
+                            "A kept "
+                                    + mealName(meal)
+                                    + " conflicts with your current preferences or restrictions."
                                     + " Unlock or edit it.");
-                options.add(lock);
+                else options.add(lock);
             } else {
-                for (MealRecipe recipe : recipes) {
+                for (MealRecipe recipe : candidateRecipes(recipes, r, meal, preferCuisine)) {
                     if (options.size() >= MAX_OPTIONS) break;
                     if (!recipe.allowed(r.profile, meal, true)
                             || r.rejected
                                     .getOrDefault(meal, Collections.emptySet())
-                                    .contains(recipe.id)) continue;
+                                    .contains(recipe.id)
+                            || r.rejectedFamilies
+                                    .getOrDefault(meal, Collections.emptySet())
+                                    .contains(recipe.family)) continue;
                     double max = r.targets[0] > 2600 ? 2 : 1.5;
                     for (double scale : new double[] {0.5, 1, 1.5, 2})
                         if (scale <= max
@@ -156,16 +213,12 @@ public final class DayPlanner {
                             options.add(new Choice(meal, recipe, scale));
                 }
             }
-            if (options.isEmpty())
-                return unavailable(
-                        initial,
-                        notes,
-                        "No suitable "
-                                + mealName(meal)
-                                + " option matches the selected foods, restrictions and cooking"
-                                + " access. Change an explicit preference or add a suitable"
-                                + " recipe.");
             processed += shares[meal];
+            if (options.isEmpty()) {
+                incomplete = true;
+                notes.add(unavailableMeal(meal));
+                continue;
+            }
             final double progress = processed;
             Comparator<State> objective =
                     Comparator.comparingDouble((State s) -> s.objective)
@@ -177,10 +230,33 @@ public final class DayPlanner {
             Map<Choice, Evaluation> evaluated = new IdentityHashMap<>();
             for (Choice c : options) evaluated.put(c, new Evaluation(c, r));
             long order = 0;
-            for (State state : beam)
+            for (State state : beam) {
+                String pairedFamily = null;
+                if (preferMealVariety && lock == null) {
+                    for (Choice prior : state.choices)
+                        if (prior.meal == (meal + 2) % 4) pairedFamily = prior.recipe.family;
+                    Choice pairedLock = r.locked.get((meal + 2) % 4);
+                    if (pairedFamily == null
+                            && pairedLock != null
+                            && pairedLock.recipe.allowed(
+                                    r.profile,
+                                    pairedLock.meal,
+                                    r.readyServings.getOrDefault(pairedLock.recipe.id, 0.0)
+                                            >= pairedLock.scale))
+                        pairedFamily = pairedLock.recipe.family;
+                }
+                boolean distinctAvailable = false;
+                if (pairedFamily != null)
+                    for (Choice option : options)
+                        if (!pairedFamily.equals(option.recipe.family)
+                                && cookingAvailable(state, option, r)) {
+                            distinctAvailable = true;
+                            break;
+                        }
                 for (Choice option : options) {
                     if (order % 256 == 0 && r.cancelled.getAsBoolean())
                         throw new java.util.concurrent.CancellationException();
+                    if (distinctAvailable && pairedFamily.equals(option.recipe.family)) continue;
                     State s = state.copy();
                     if (!add(s, option, r, evaluated.get(option))) continue;
                     s.order = order++;
@@ -188,12 +264,15 @@ public final class DayPlanner {
                     retain(leaders, s, BEAM_WIDTH * 3 / 4, objective);
                     retain(cheap, s, BEAM_WIDTH, cheapest);
                 }
-            if (leaders.isEmpty())
-                return unavailable(
-                        initial,
-                        notes,
-                        "Prepared portions are insufficient for the selected meals. Add cooking"
-                                + " access or change the plan.");
+            }
+            if (leaders.isEmpty()) {
+                incomplete = true;
+                notes.add(
+                        "Prepared portions are insufficient for "
+                                + mealName(meal)
+                                + ". Add cooking access or change this meal.");
+                continue;
+            }
             List<State> keep = new ArrayList<>(leaders);
             keep.sort(objective);
             List<State> economical = new ArrayList<>(cheap);
@@ -214,13 +293,19 @@ public final class DayPlanner {
         State best = eligible.get(0);
         boolean met = budget <= 0 || best.cost <= budget + 0.01;
         boolean close =
-                Math.abs(best.totals[0] - r.targets[0]) <= Math.max(100, r.targets[0] * 0.1)
+                !incomplete
+                        && Math.abs(best.totals[0] - r.targets[0])
+                                <= Math.max(100, r.targets[0] * 0.1)
                         && Math.abs(best.totals[1] - r.targets[1])
                                 <= Math.max(10, r.targets[1] * 0.15);
         if (!met)
             notes.add(
                     "No budget-feasible combination was found within the available meals and search"
                             + " limits. This estimate exceeds your daily allocation.");
+        if (incomplete)
+            notes.add(
+                    "The plan is incomplete. Totals and cost cover only the available meals and"
+                            + " logged food.");
         if (!best.entered)
             notes.add(
                     "Cost uses illustrative prices or unknown logged-food cost. Enter local prices;"
@@ -239,13 +324,55 @@ public final class DayPlanner {
             notes.add(
                     "Logged calories already exceed your target. Remaining meals are still offered;"
                             + " there is no compensatory meal-skipping instruction.");
-        return new Result(best.choices, best.totals, best.cost, best.entered, met, close, notes);
+        return new Result(
+                best.choices,
+                best.totals,
+                best.cost,
+                best.entered,
+                met && !incomplete,
+                close,
+                notes);
     }
 
-    private static Result unavailable(State s, List<String> notes, String reason) {
-        notes.add(reason);
-        return new Result(
-                Collections.emptyList(), s.totals, s.cost, s.entered, false, false, notes);
+    public static String unavailableMeal(int meal) {
+        return "No suitable "
+                + mealName(meal)
+                + " option matches the selected foods, restrictions and cooking access. Change an"
+                + " explicit preference or add a suitable recipe.";
+    }
+
+    static List<MealRecipe> candidateRecipes(
+            List<MealRecipe> recipes, Request r, int meal, boolean preferCuisine) {
+        if (!preferCuisine || "Any".equals(r.profile.cuisine)) return recipes;
+        Set<String> regionalFamilies = new HashSet<>();
+        List<MealRecipe> preferred = new ArrayList<>();
+        for (MealRecipe recipe : recipes) {
+            if (!recipe.allowed(
+                    r.profile, meal, r.readyServings.getOrDefault(recipe.id, 0.0) >= 0.5)) continue;
+            boolean regional = matchesCuisine(r.profile.cuisine, recipe.cuisine);
+            if (regional) regionalFamilies.add(recipe.family);
+            if (regional || r.profile.rating(recipe.id) == FoodPreference.LOVE)
+                preferred.add(recipe);
+        }
+        // Evaluate coverage before carousel rejections so successive alternatives do not
+        // drift away from the requested cuisine as earlier families are excluded.
+        return regionalFamilies.size() >= StandardPlan.ALTERNATIVES ? preferred : recipes;
+    }
+
+    private static boolean matchesCuisine(String preferred, String cuisine) {
+        return preferred.equals(cuisine)
+                || ("Indian".equals(preferred) && "Andhra".equals(cuisine));
+    }
+
+    private static boolean cookingAvailable(State s, Choice c, Request r) {
+        double prepared =
+                Math.max(
+                        0,
+                        r.readyServings.getOrDefault(c.recipe.id, 0.0)
+                                - s.usedReady.getOrDefault(c.recipe.id, 0.0));
+        return prepared >= c.scale
+                || (c.recipe.prepMinutes <= r.profile.maxPrepMinutes
+                        && (!c.recipe.requiresCooking || r.profile.canCook));
     }
 
     static double[] shares(Request r) {
@@ -293,11 +420,16 @@ public final class DayPlanner {
             nutrition = c.recipe.nutrition(c.scale);
             cost = PriceModel.consumed(c.recipe, c.scale, r.profile);
             double taste = r.intent.score(c.recipe.id, c.meal, r.profile), ingredients = 0;
-            for (MealRecipe.Ingredient i : c.recipe.ingredients)
-                ingredients += r.intent.score(i.food.id, c.meal, r.profile);
+            for (MealRecipe.Ingredient i : c.recipe.ingredients) {
+                FoodPreference explicit = i.food.rating(r.profile);
+                ingredients +=
+                        explicit != FoodPreference.UNSET
+                                ? explicit.score
+                                : r.intent.score(i.food.id, c.meal, r.profile);
+            }
             taste += ingredients / c.recipe.ingredients.size();
-            if (!"Any".equals(r.profile.cuisine) && r.profile.cuisine.equals(c.recipe.cuisine))
-                taste += 0.5;
+            if (!"Any".equals(r.profile.cuisine)
+                    && matchesCuisine(r.profile.cuisine, c.recipe.cuisine)) taste += 0.5;
             preference =
                     taste
                             - IntentModel.feedbackPenalty(
@@ -353,7 +485,10 @@ public final class DayPlanner {
         }
         s.preference += 0.35 * coverage / c.recipe.ingredients.size();
         s.repeat += r.recentRecipes.getOrDefault(c.recipe.id, 0) * 0.6;
-        for (Choice prior : s.choices) if (prior.recipe.id.equals(c.recipe.id)) s.repeat += 3;
+        for (Choice prior : s.choices) {
+            if (prior.recipe.id.equals(c.recipe.id)) s.repeat += 3;
+            else if (prior.recipe.family.equals(c.recipe.family)) s.repeat += 3;
+        }
         s.choices.add(c);
         return true;
     }

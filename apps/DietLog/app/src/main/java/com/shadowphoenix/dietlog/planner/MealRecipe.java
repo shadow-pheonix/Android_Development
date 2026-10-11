@@ -124,7 +124,8 @@ public final class MealRecipe {
             if (!i.food.ingredientsKnown
                     && (!p.allergies.isEmpty()
                             || !p.excludedIngredients.isEmpty()
-                            || p.diet != PlannerProfile.Diet.ANY)) return false;
+                            || p.diet != PlannerProfile.Diet.ANY
+                            || p.hasExcludedFoods())) return false;
             if (p.diet != PlannerProfile.Diet.ANY
                     && (tags.contains("meat")
                             || tags.contains("fish")

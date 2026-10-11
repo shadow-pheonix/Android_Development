@@ -1,13 +1,15 @@
 package com.shadowphoenix.dietlog.planner;
 
-import java.util.*;
 import org.json.*;
+
+import java.util.*;
 
 /** Reusable selections, independent of any day's consumption or finite prepared stock. */
 public final class StandardPlan {
     public static final int ALTERNATIVES = 4;
     public final Map<Integer, DayPlanner.Choice> selected = new LinkedHashMap<>();
     public final Map<Integer, List<DayPlanner.Choice>> alternatives = new LinkedHashMap<>();
+    public final Map<Integer, String> unavailable = new LinkedHashMap<>();
     public DayPlanner.Result result;
 
     public static DayPlanner.Request templateRequest(DayPlanner.Request original) {
@@ -20,6 +22,8 @@ public final class StandardPlan {
         r.cancelled = original.cancelled;
         r.costWeight = original.costWeight;
         r.effortWeight = original.effortWeight;
+        r.preferMealVariety = true;
+        r.preferCuisine = true;
         return r;
     }
 
@@ -30,6 +34,7 @@ public final class StandardPlan {
         for (DayPlanner.Choice choice : plan.result.choices) plan.selected.put(choice.meal, choice);
         for (int meal = 0; meal < 4; meal++)
             if (request.profile.meals[meal]) plan.refreshMeal(meal, recipes, request);
+        plan.updateUnavailable(request.profile);
         return plan;
     }
 
@@ -38,6 +43,18 @@ public final class StandardPlan {
         DayPlanner.Request r = templateRequest(source);
         if (meal < 0 || meal > 3 || !r.profile.meals[meal])
             throw new IllegalArgumentException("This meal is disabled in your preferences");
+        List<DayPlanner.Choice> seed = new ArrayList<>();
+        DayPlanner.Choice current = selected.get(meal);
+        if (suitable(current, meal, r.profile)) seed.add(current);
+        alternatives.put(meal, fillAlternatives(meal, recipes, r, seed));
+        updateUnavailable(r.profile);
+    }
+
+    private List<DayPlanner.Choice> fillAlternatives(
+            int meal,
+            List<MealRecipe> recipes,
+            DayPlanner.Request r,
+            List<DayPlanner.Choice> seed) {
         Arrays.fill(r.remaining, false);
         r.remaining[meal] = true;
         for (DayPlanner.Choice choice : selected.values())
@@ -45,24 +62,60 @@ public final class StandardPlan {
                 r.remaining[choice.meal] = true;
                 r.locked.put(choice.meal, choice);
             }
-        List<DayPlanner.Choice> options = new ArrayList<>();
+        List<DayPlanner.Choice> options = new ArrayList<>(seed);
         Set<String> excluded = new HashSet<>();
+        Set<String> families = new HashSet<>();
         r.rejected.put(meal, excluded);
-        DayPlanner.Choice current = selected.get(meal);
-        if (suitable(current, meal, r.profile)) {
-            options.add(current);
-            excluded.add(current.recipe.id);
+        r.rejectedFamilies.put(meal, families);
+        for (DayPlanner.Choice option : options) {
+            excluded.add(option.recipe.id);
+            families.add(option.recipe.family);
         }
+        avoidPairedFamily(meal, recipes, r, families, ALTERNATIVES - options.size());
         while (options.size() < ALTERNATIVES) {
             if (r.cancelled.getAsBoolean()) throw new java.util.concurrent.CancellationException();
             DayPlanner.Result candidate = new DayPlanner().plan(recipes, r);
             DayPlanner.Choice option = null;
             for (DayPlanner.Choice choice : candidate.choices)
                 if (choice.meal == meal) option = choice;
-            if (option == null || !excluded.add(option.recipe.id)) break;
+            if (option == null
+                    || !excluded.add(option.recipe.id)
+                    || !families.add(option.recipe.family)) break;
             options.add(option);
         }
-        alternatives.put(meal, options);
+        return options;
+    }
+
+    private void avoidPairedFamily(
+            int meal,
+            List<MealRecipe> recipes,
+            DayPlanner.Request request,
+            Set<String> excluded,
+            int minimumDistinct) {
+        DayPlanner.Choice paired = selected.get((meal + 2) % 4);
+        if (paired == null || !suitable(paired, paired.meal, request.profile)) return;
+        Set<String> availableFamilies = new HashSet<>();
+        for (MealRecipe recipe :
+                DayPlanner.candidateRecipes(recipes, request, meal, request.preferCuisine))
+            if (recipe.allowed(request.profile, meal)
+                    && !excluded.contains(recipe.family)
+                    && !paired.recipe.family.equals(recipe.family))
+                availableFamilies.add(recipe.family);
+        if (availableFamilies.size() >= Math.max(1, minimumDistinct))
+            excluded.add(paired.recipe.family);
+    }
+
+    private void updateUnavailable(PlannerProfile profile) {
+        unavailable.clear();
+        for (int meal = 0; meal < 4; meal++)
+            if (profile.meals[meal] && !suitable(selected.get(meal), meal, profile))
+                unavailable.put(
+                        meal,
+                        alternatives.getOrDefault(meal, Collections.emptyList()).isEmpty()
+                                ? DayPlanner.unavailableMeal(meal)
+                                : "Choose a suitable "
+                                        + DayPlanner.mealName(meal)
+                                        + " alternative.");
     }
 
     public void choose(
@@ -105,51 +158,59 @@ public final class StandardPlan {
         selected.putAll(other.selected);
         alternatives.clear();
         alternatives.putAll(other.alternatives);
+        unavailable.clear();
+        unavailable.putAll(other.unavailable);
         result = other.result;
     }
 
     public void evaluate(List<MealRecipe> recipes, DayPlanner.Request source) {
         DayPlanner.Request request = templateRequest(source);
-        Arrays.fill(request.remaining, false);
         StandardPlan evaluated = new StandardPlan();
-        List<String> missing = new ArrayList<>();
         for (int meal = 0; meal < 4; meal++) {
             if (!request.profile.meals[meal]) continue;
             DayPlanner.Choice choice = selected.get(meal);
             if (suitable(choice, meal, request.profile)) {
                 evaluated.selected.put(meal, choice);
-                request.remaining[meal] = true;
                 request.locked.put(meal, choice);
-            } else missing.add(DayPlanner.mealName(meal));
+            }
             List<DayPlanner.Choice> options = alternatives.get(meal);
             List<DayPlanner.Choice> valid = new ArrayList<>();
             Set<String> seen = new HashSet<>();
             if (options != null)
                 for (DayPlanner.Choice option : options)
-                    if (suitable(option, meal, request.profile) && seen.add(option.recipe.id)) {
+                    if (suitable(option, meal, request.profile)
+                            && (!suitable(choice, meal, request.profile)
+                                    || !choice.recipe.family.equals(option.recipe.family)
+                                    || choice.recipe.id.equals(option.recipe.id))
+                            && seen.add(option.recipe.family)) {
                         valid.add(option);
                         if (valid.size() == ALTERNATIVES) break;
                     }
             evaluated.alternatives.put(meal, valid);
         }
         evaluated.result = new DayPlanner().plan(recipes, request);
-        if (!missing.isEmpty()) {
-            List<String> notes = new ArrayList<>(evaluated.result.notes);
-            notes.removeIf(note -> note.startsWith("No remaining meals selected"));
-            notes.add(
-                    "Choose or edit "
-                            + String.join(", ", missing)
-                            + ". The standard plan is incomplete.");
-            evaluated.result =
-                    new DayPlanner.Result(
-                            evaluated.result.choices,
-                            evaluated.result.totals,
-                            evaluated.result.cost,
-                            evaluated.result.pricesEntered,
-                            evaluated.result.budgetMet,
-                            false,
-                            notes);
-        }
+        for (DayPlanner.Choice choice : evaluated.result.choices)
+            evaluated.selected.putIfAbsent(choice.meal, choice);
+        for (int meal = 0; meal < 4; meal++)
+            if (request.profile.meals[meal]) {
+                List<DayPlanner.Choice> options = evaluated.alternatives.get(meal);
+                DayPlanner.Choice current = evaluated.selected.get(meal);
+                boolean included = false;
+                if (current != null)
+                    for (DayPlanner.Choice option : options)
+                        included |= option.recipe.id.equals(current.recipe.id);
+                if (current != null && !included) {
+                    options.removeIf(option -> option.recipe.family.equals(current.recipe.family));
+                    options.add(0, current);
+                    if (options.size() > ALTERNATIVES) options.remove(options.size() - 1);
+                }
+                if (options.size() < ALTERNATIVES)
+                    evaluated.alternatives.put(
+                            meal,
+                            evaluated.fillAlternatives(
+                                    meal, recipes, templateRequest(source), options));
+            }
+        evaluated.updateUnavailable(request.profile);
         replaceWith(evaluated);
     }
 

@@ -1,8 +1,10 @@
 package com.shadowphoenix.dietlog.planner;
 
-import org.junit.Test;
-import java.util.*;
 import static org.junit.Assert.*;
+
+import org.junit.Test;
+
+import java.util.*;
 
 public class ExtendedPlannerTest {
     private PlannerFood food() {
@@ -97,7 +99,15 @@ public class ExtendedPlannerTest {
         }
         assertTrue(used <= 2);
         r.readyServings.put("a", 0.5);
-        assertTrue(new DayPlanner().plan(Arrays.asList(meal("a")), r).choices.isEmpty());
+        DayPlanner.Result partial = new DayPlanner().plan(Arrays.asList(meal("a")), r);
+        assertEquals(1, partial.choices.size());
+        assertEquals(0, partial.choices.get(0).meal);
+        assertEquals(0.5, partial.choices.get(0).scale, 0);
+        assertEquals(0.5, partial.choices.get(0).preparedScale, 0);
+        assertEquals(175, partial.totals[0], 0);
+        assertTrue(partial.notes.stream().anyMatch(n -> n.contains("Lunch")));
+        assertFalse(partial.targetClose);
+        assertFalse(partial.budgetMet);
         r.readyServings.put("a", 2.0);
         r.profile.ratings.put("rice", FoodPreference.NEVER);
         assertTrue(new DayPlanner().plan(Arrays.asList(meal("a")), r).choices.isEmpty());

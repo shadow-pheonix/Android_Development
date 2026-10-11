@@ -53,6 +53,17 @@ public final class PlannerProfile {
         return best;
     }
 
+    /** An unknown compound dish cannot establish compliance with ingredient taste exclusions. */
+    public boolean hasExcludedFoods() {
+        for (Map.Entry<String, FoodPreference> entry : ratings.entrySet()) {
+            String id = canonicalId(entry.getKey());
+            if (entry.getValue().excludes()
+                    && !id.startsWith("meal:")
+                    && !id.startsWith("personal:")) return true;
+        }
+        return false;
+    }
+
     public PlannerProfile copy() {
         PlannerProfile p = new PlannerProfile();
         p.diet = diet;
