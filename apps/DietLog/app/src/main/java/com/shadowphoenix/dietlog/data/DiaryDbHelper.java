@@ -136,6 +136,10 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         return result;
     }
 
+    public boolean hasPlannerConsumption(String token) {
+        try(Cursor c=getReadableDatabase().query("food_entries",new String[]{"id"},"source_serving_id = ?",new String[]{token},null,null,null,"1")){return c.moveToFirst();}
+    }
+
     /** Stable consumption token prevents duplicate taps/recreation from logging a planned meal twice. */
     public long insertPlannerMealOnce(FoodEntry entry) {
         if (entry.sourceServingId == null || !entry.sourceServingId.startsWith("plan:"))
