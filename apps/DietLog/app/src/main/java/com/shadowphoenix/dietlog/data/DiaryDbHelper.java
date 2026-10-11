@@ -114,6 +114,49 @@ public final class DiaryDbHelper extends SQLiteOpenHelper {
         return id;
     }
 
+    /** Bounded history for preference learning; no food-name matching or profile inference. */
+    public List<FoodEntry> getPlannerHistory() {
+        List<FoodEntry> result = new ArrayList<>();
+        long cutoff = LocalDate.now().minusDays(42).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        try (Cursor c = getReadableDatabase().query("food_entries", null, "logged_at >= ?",
+                new String[]{Long.toString(cutoff)}, null, null, "logged_at DESC, id DESC", "2000")) {
+            while (c.moveToNext()) result.add(fromCursor(c));
+        }
+        return result;
+    }
+
+    public List<FoodEntry> getPlannerDayEntries(LocalDate day) {
+        long[] bounds = dateBounds(day);
+        List<FoodEntry> result = new ArrayList<>();
+        try (Cursor c = getReadableDatabase().query("food_entries", null, "logged_at >= ? AND logged_at < ?",
+                new String[]{Long.toString(bounds[0]), Long.toString(bounds[1])}, null, null, "logged_at DESC", "2001")) {
+            while (c.moveToNext()) result.add(fromCursor(c));
+        }
+        if (result.size() > 2000) throw new IllegalStateException("Too many diary entries to plan this day safely");
+        return result;
+    }
+
+    public boolean hasPlannerConsumption(String token) {
+        try(Cursor c=getReadableDatabase().query("food_entries",new String[]{"id"},"source_serving_id = ?",new String[]{token},null,null,null,"1")){return c.moveToFirst();}
+    }
+
+    /** Stable consumption token prevents duplicate taps/recreation from logging a planned meal twice. */
+    public long insertPlannerMealOnce(FoodEntry entry) {
+        if (entry.sourceServingId == null || !entry.sourceServingId.startsWith("plan:"))
+            throw new IllegalArgumentException("Missing meal consumption token");
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            try (Cursor c = db.query("food_entries", new String[]{"id"}, "source_serving_id = ?",
+                    new String[]{entry.sourceServingId}, null, null, null, "1")) {
+                if (c.moveToFirst()) { db.setTransactionSuccessful(); return c.getLong(0); }
+            }
+            long id = insert(entry);
+            db.setTransactionSuccessful();
+            return id;
+        } finally { db.endTransaction(); }
+    }
+
     public List<FoodEntry> getTodayEntries() {
         return getEntriesForDate(LocalDate.now(ZoneId.systemDefault()));
     }

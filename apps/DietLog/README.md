@@ -28,6 +28,7 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 - Optional Google Drive sign-in or Continue without login after the launch animation, before first-run profile setup. The choice is remembered on this device and Drive can be connected later from Profile.
 - Body recomposition goal with maintenance-calorie estimates, no planned weekly scale-weight change and higher recommended protein; actual activity level remains a separate calorie multiplier.
 - A brief animated FuelNote launch screen, followed by guided profile setup for users without completed personal details. Setup covers age/DOB, sex, measurements, goal and activity, then previews calculated calorie and macro targets before saving.
+- Personalized daily and seven-day meal plans, explicit food preferences, bounded diary/selection learning, local budgets/prices, recipes, pantry/leftovers and consolidated shopping. [Planner behaviour and limits](DIET_PLANNER.md).
 - Today's calories, protein, carbs and fat.
 - Illustrated Breakfast, Lunch, Snacks and Dinner headers with gentle offline vector animation; motion pauses when Home is hidden and respects disabled animations and battery saver.
 - Tap the Home nutrition progress card for the selected day's vitamins and minerals, with profile-adjusted Indian targets and explicit source-data coverage.

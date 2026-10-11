@@ -122,6 +122,7 @@ jobs:
             --indb .dataset-cache/indb.xlsx \
             --output app/src/main/assets/offline_foods.db
           python tools/validate_food_db.py app/src/main/assets/offline_foods.db --min-foods 26000
+          python -m unittest tools.test_planner_catalog -v
           python tools/validate_food_photos.py --food-db app/src/main/assets/offline_foods.db --assets app/src/main/assets
           ls -lh app/src/main/assets/offline_foods.db
       - name: Lint, unit test, and build debug APK

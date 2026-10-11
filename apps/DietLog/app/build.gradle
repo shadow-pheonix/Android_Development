@@ -20,13 +20,14 @@ if (signingConfigPath) {
 android {
     namespace 'com.shadowphoenix.dietlog'
     compileSdk 35
+    buildToolsVersion "35.0.0"
 
     defaultConfig {
         applicationId 'com.shadowphoenix.dietlog'
         minSdk 29
         targetSdk 35
-        versionCode 54
-        versionName '0.7.35'
+        versionCode 55
+        versionName '0.8.0'
         buildConfigField 'String', 'SOURCE_COMMIT', '"' + (System.getenv('GITHUB_SHA') ?: 'local') + '"'
         buildConfigField 'String', 'CI_RUN_ID', '"' + (System.getenv('GITHUB_RUN_ID') ?: 'local') + '"'
         buildConfigField 'String', 'SUPABASE_URL', '"' + (System.getenv('DIETLOG_SUPABASE_URL') ?: '') + '"'
@@ -69,4 +70,5 @@ dependencies {
     implementation 'com.google.android.gms:play-services-auth:21.6.0'
     implementation 'androidx.work:work-runtime:2.12.0'
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
 }
