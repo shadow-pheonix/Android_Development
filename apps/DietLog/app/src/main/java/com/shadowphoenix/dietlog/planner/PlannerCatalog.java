@@ -1,9 +1,12 @@
 package com.shadowphoenix.dietlog.planner;
 
 import android.content.Context;
+
 import com.shadowphoenix.dietlog.food.CatalogFood;
 import com.shadowphoenix.dietlog.food.FoodCatalogDb;
+
 import org.json.*;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -40,6 +43,12 @@ public final class PlannerCatalog {
             Set<String> tags = new LinkedHashSet<>();
             JSONArray a = def.getJSONArray("tags");
             for (int i = 0; i < a.length(); i++) tags.add(a.getString(i));
+            Set<String> preferenceIds = new LinkedHashSet<>();
+            preferenceIds.add(code);
+            JSONArray identities = def.optJSONArray("preference_ids");
+            if (identities != null)
+                for (int i = 0; i < identities.length(); i++)
+                    preferenceIds.add(identities.getString(i));
             PlannerFood food =
                     new PlannerFood(
                             code,
@@ -57,7 +66,8 @@ public final class PlannerCatalog {
                             },
                             tags,
                             def.getBoolean("ingredients_known"),
-                            def.getDouble("reference_price_per_100g"));
+                            def.getDouble("reference_price_per_100g"),
+                            preferenceIds);
             foods.put(key, food);
             sourceFoods.put(code, f);
         }
@@ -88,7 +98,9 @@ public final class PlannerCatalog {
                 obj.optString("cuisine", "Indian"),
                 obj.getString("instructions"),
                 obj.getDouble("yield_grams"),
-                ingredients);
+                ingredients,
+                obj.optString("family", null),
+                obj.optInt("primary_meal", Integer.numberOfTrailingZeros(obj.getInt("meal_mask"))));
     }
 
     public MealRecipe find(String id) {

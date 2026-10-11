@@ -15,8 +15,8 @@ public final class MealRecipe {
         }
     }
 
-    public final String id, name, instructions, cuisine;
-    public final int mealMask, prepMinutes;
+    public final String id, name, instructions, cuisine, family;
+    public final int mealMask, prepMinutes, primaryMeal;
     public final boolean requiresCooking;
     public final List<Ingredient> ingredients;
     public final double yieldGrams;
@@ -31,6 +31,32 @@ public final class MealRecipe {
             String instructions,
             double yieldGrams,
             List<Ingredient> ingredients) {
+        this(
+                id,
+                name,
+                mealMask,
+                prepMinutes,
+                requiresCooking,
+                cuisine,
+                instructions,
+                yieldGrams,
+                ingredients,
+                null,
+                Integer.numberOfTrailingZeros(mealMask));
+    }
+
+    public MealRecipe(
+            String id,
+            String name,
+            int mealMask,
+            int prepMinutes,
+            boolean requiresCooking,
+            String cuisine,
+            String instructions,
+            double yieldGrams,
+            List<Ingredient> ingredients,
+            String family,
+            int primaryMeal) {
         if (id == null
                 || id.isEmpty()
                 || name == null
@@ -39,6 +65,9 @@ public final class MealRecipe {
                 || ingredients.size() > 20
                 || mealMask <= 0
                 || mealMask > 15
+                || primaryMeal < 0
+                || primaryMeal > 3
+                || (mealMask & (1 << primaryMeal)) == 0
                 || prepMinutes < 0
                 || prepMinutes > 240
                 || !Double.isFinite(yieldGrams)
@@ -53,6 +82,15 @@ public final class MealRecipe {
         this.instructions = instructions;
         this.yieldGrams = yieldGrams;
         this.ingredients = Collections.unmodifiableList(new ArrayList<>(ingredients));
+        this.primaryMeal = primaryMeal;
+        // Old and personal recipes have no family metadata. Identical ingredient sets still
+        // count as one dish, independently of recipe IDs or edited quantities.
+        Set<String> identities = new TreeSet<>();
+        for (Ingredient ingredient : ingredients) identities.add(ingredient.food.id);
+        this.family =
+                family == null || family.trim().isEmpty()
+                        ? "ingredients:" + String.join("|", identities)
+                        : family.trim();
     }
 
     public double[] nutrition(double scale) {
@@ -77,7 +115,7 @@ public final class MealRecipe {
                         && (prepMinutes > p.maxPrepMinutes || (requiresCooking && !p.canCook)))
                 || p.rating(id).excludes()) return false;
         for (Ingredient i : ingredients) {
-            if (p.rating(i.food.id).excludes()) return false;
+            if (i.food.rating(p).excludes()) return false;
             Set<String> tags = i.food.tags;
             if (!Collections.disjoint(tags, p.excludedIngredients)
                     || !Collections.disjoint(tags, p.allergies)) return false;
