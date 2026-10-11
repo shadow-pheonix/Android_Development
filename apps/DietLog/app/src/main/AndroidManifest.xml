@@ -10,6 +10,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".planner.PreferenceSetupActivity" android:exported="false" android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity android:name=".planner.PlannerActivity" android:exported="false" />
         <activity android:name=".BarcodeScannerActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="true" android:theme="@style/LauncherTheme"

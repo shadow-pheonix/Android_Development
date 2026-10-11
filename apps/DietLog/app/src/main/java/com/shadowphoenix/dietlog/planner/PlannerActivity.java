@@ -1,6 +1,7 @@
 package com.shadowphoenix.dietlog.planner;
 
 import android.app.*;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.text.*;
@@ -37,7 +38,7 @@ public final class PlannerActivity extends Activity {
     private final Map<Integer, Set<String>> rejected = new LinkedHashMap<>();
     private List<FoodEntry> history = Collections.emptyList(), entries = Collections.emptyList();
     private final Map<String, String> suggestions = new LinkedHashMap<>();
-    private boolean ready, busy, foreground;
+    private boolean ready, busy, foreground, setupOpened;
     private List<FoodHistory.Item> favorites = Collections.emptyList();
     private String signature;
     private WeekPlanner.Result week;
@@ -49,6 +50,7 @@ public final class PlannerActivity extends Activity {
         AppLogger.init(this);
         CrashHandler.install(this);
         store = new PlannerStore(this);
+        setupOpened = state != null && state.getBoolean("setupOpened", false);
         if (state != null) date = LocalDate.parse(state.getString("day", date.toString()));
         else if (getIntent().hasExtra("day"))
             date = LocalDate.parse(getIntent().getStringExtra("day"));
@@ -155,6 +157,12 @@ public final class PlannerActivity extends Activity {
                             suggestions.putIfAbsent(
                                     foodIdentity(item.entry), item.entry.name + " · favorite");
                     render();
+                    try {
+                        if (!setupOpened && !store.setup().completed) {
+                            setupOpened = true;
+                            openSetup(false);
+                        }
+                    } catch (JSONException e) { message("Unable to restore preference setup"); }
                 });
     }
 
@@ -185,8 +193,8 @@ public final class PlannerActivity extends Activity {
                     picker.show();
                 });
         LinearLayout controls = card(page);
-        button(controls, "Eating preferences", this::preferences);
-        button(controls, "Foods I like or avoid", this::ratings);
+        button(controls, "Guided eating preferences", () -> openSetup(false));
+        button(controls, "Rate recipes & foods", () -> openSetup(true));
         button(controls, "My local food prices", this::prices);
         text(
                 controls,
@@ -613,6 +621,12 @@ public final class PlannerActivity extends Activity {
         } catch (Exception e) {
             message("Unable to save the meal lock");
         }
+    }
+
+    private void openSetup(boolean rate) {
+        Intent intent = new Intent(this, PreferenceSetupActivity.class);
+        intent.putExtra("mode", rate ? "rate" : "preferences");
+        startActivity(intent);
     }
 
     private void preferences() {
@@ -2237,6 +2251,7 @@ public final class PlannerActivity extends Activity {
     @Override
     protected void onSaveInstanceState(Bundle out) {
         out.putString("day", date.toString());
+        out.putBoolean("setupOpened", setupOpened);
         super.onSaveInstanceState(out);
     }
 

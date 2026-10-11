@@ -11,3 +11,5 @@ Sequential checkpoints:
 4. Integrate horizontal meal alternatives, single-meal editing and simplified planner navigation. Validate cumulative unit tests, lint and APK; verify branch CI before merge and signed main build before delivery.
 
 Progress: checkpoint 1 passed all 39 planner regression cases, including atomic-save failure recovery, stable recipe-first queues and continuously refreshed secondary diary signals.
+
+Checkpoint 2: guided preference screens compile against SDK 35/min 29. All 39 planner tests and Android lint passed. Back/Next and persistent drafts replace the preference menus, with immediate explicit recipe/ingredient ratings, frozen batches and a final review. Physical-device navigation/appearance is not yet verified.
