@@ -106,6 +106,14 @@ public final class PlannerStore {
         put("setup", setup.toJson().toString());
     }
 
+    public JSONObject standardPlan() throws JSONException {
+        return new JSONObject(prefs.getString("standardPlan", "{}"));
+    }
+
+    public void saveStandardPlan(StandardPlan plan) throws JSONException {
+        put("standardPlan", plan.toJson().toString());
+    }
+
     public String learningIdentity() {
         return prefs.getString("feedback", "{}");
     }
