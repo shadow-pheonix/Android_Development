@@ -62,6 +62,28 @@ public final class MealAlternativesView extends HorizontalScrollView {
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int pageWidth =
+                Math.max(
+                        0,
+                        View.MeasureSpec.getSize(widthMeasureSpec)
+                                - getPaddingLeft()
+                                - getPaddingRight());
+        if (getChildCount() > 0 && pageWidth > 0) {
+            LinearLayout strip = (LinearLayout) getChildAt(0);
+            for (int i = 0; i < strip.getChildCount(); i++) {
+                View child = strip.getChildAt(i);
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) child.getLayoutParams();
+                if (lp.width != pageWidth) {
+                    lp.width = pageWidth;
+                    child.setLayoutParams(lp);
+                }
+            }
+        }
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         width = w;

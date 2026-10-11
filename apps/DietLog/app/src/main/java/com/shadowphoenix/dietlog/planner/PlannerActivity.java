@@ -155,6 +155,7 @@ public final class PlannerActivity extends Activity {
                         standard =
                                 StandardPlan.fromJson(
                                         store.standardPlan(), catalog.recipes, request);
+                        if (standard != null) store.saveStandardPlan(standard);
                         result = standard == null ? null : standard.result;
                     } else {
                         standard = null;
@@ -263,6 +264,15 @@ public final class PlannerActivity extends Activity {
                 "Reusable across days. Totals describe the selected meals; your diary tracks what you actually eat.",
                 13,
                 false);
+        int enabled = 0;
+        for (boolean mealEnabled : profile.meals) if (mealEnabled) enabled++;
+        text(total, "Recommended meals · " + standard.selected.size() + " of " + enabled, 15, true);
+        if (standard.selected.size() < enabled)
+            text(
+                    total,
+                    "Plan incomplete: review the missing meals below. Your restrictions are still applied.",
+                    15,
+                    true);
         for (String note : result.notes) text(total, note, 13, false);
         for (int meal : new int[] {0, 1, 3, 2}) if (profile.meals[meal]) renderAlternatives(meal);
         text(
@@ -284,13 +294,22 @@ public final class PlannerActivity extends Activity {
                 false);
         List<DayPlanner.Choice> options =
                 standard.alternatives.getOrDefault(meal, Collections.emptyList());
-        if (options.isEmpty())
+        if (options.isEmpty()) {
             text(
                     section,
-                    "No suitable alternative is available yet. Edit this meal or add your own recipe.",
+                    "No "
+                            + DayPlanner.mealName(meal)
+                            + " recipes fit your saved choices. "
+                            + (profile.canCook
+                                    ? "Active preparation limit: "
+                                            + profile.maxPrepMinutes
+                                            + " minutes. "
+                                    : "Only already-prepared or ready-to-eat meals are allowed. ")
+                            + "Your eating pattern, allergies and Avoid/Never ratings still apply.",
                     14,
                     false);
-        else {
+            button(section, "Review eating preferences", () -> openSetup(false));
+        } else {
             MealAlternativesView carousel = new MealAlternativesView(this);
             LinearLayout strip = new LinearLayout(this);
             strip.setOrientation(LinearLayout.HORIZONTAL);
@@ -306,6 +325,7 @@ public final class PlannerActivity extends Activity {
                 if (chosen) selectedIndex = i;
                 text(frame, chosen ? "✓ Selected" : "Alternative " + (i + 1), 13, true);
                 text(frame, choice.recipe.name, 21, true);
+                text(frame, choice.recipe.cuisine + " · " + DayPlanner.mealName(meal), 13, false);
                 double[] n = choice.recipe.nutrition(choice.scale);
                 text(
                         frame,
@@ -667,6 +687,8 @@ public final class PlannerActivity extends Activity {
                 .put("prep_minutes", recipe.prepMinutes)
                 .put("requires_cooking", recipe.requiresCooking)
                 .put("cuisine", recipe.cuisine)
+                .put("family", recipe.family)
+                .put("primary_meal", meal)
                 .put("yield_grams", recipe.yieldGrams)
                 .put("ingredients", parts);
     }
@@ -1780,7 +1802,9 @@ public final class PlannerActivity extends Activity {
             "shellfish",
             "sesame",
             "meat",
-            "honey"
+            "honey",
+            "mustard",
+            "coconut"
         };
         boolean[] checked = new boolean[tags.length];
         for (int i = 0; i < tags.length; i++) checked[i] = selected.contains(tags[i]);
@@ -1945,6 +1969,9 @@ public final class PlannerActivity extends Activity {
                                             .put("cuisine", cuisine.getSelectedItem().toString())
                                             .put("yield_grams", number(yield))
                                             .put("ingredients", parts);
+                            if (existing != null && existing.has("family"))
+                                recipe.put("family", existing.getString("family"));
+                            if (forMeal >= 0) recipe.put("primary_meal", forMeal);
                             MealRecipe created = catalog.readRecipe(recipe);
                             if (forMeal >= 0 && !created.allowed(store.profile(), forMeal))
                                 throw new IllegalArgumentException(
