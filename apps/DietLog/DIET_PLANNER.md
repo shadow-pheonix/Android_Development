@@ -1,5 +1,7 @@
 # Personalized diet planner
 
+Current UI: one saved standard plan with swipeable meal alternatives and guided preferences. The original daily/weekly implementation history below is retained. [Current implementation and verification](GUIDED_PLANNER.md).
+
 Base snapshot: `b2e5cc18ed30e7d30ec01db943dce6cee78d62fe`, verified against GitHub main and every tracked blob on 11 October 2026.
 Work branch: `feature/personalized-diet-planner`.
 
@@ -19,7 +21,7 @@ Work branch: `feature/personalized-diet-planner`.
 - Food IDs carry identity. Unknown manual entries do not acquire fabricated catalogue matches.
 - Recipe nutrition uses source data and amounts; missing nutrients remain unknown. No generated medical diets, diagnosis or hidden target changes.
 - Costs are editable estimates unless all required prices have been supplied. Consumed food cost differs from cash needed to buy packs. Pantry has explicit units and never automatically changes when a plan is merely viewed.
-- Plans do not enter the diary until consumption is confirmed. Logged food remains the source of truth during replanning.
+- Plans do not enter the diary until consumption is confirmed. Logged food remains the source of truth for actual consumption; the reusable template has separate totals.
 - Worker computation is bounded, results are tied to the initiating request, and diagnostics contain counts/timing only.
 
 ## Progress and verification
@@ -42,21 +44,22 @@ Final review correction: final candidate scoring now includes the selected/learn
 
 ## How to use it
 
-Open **My daily diet plan** from Home or **My diet plan and eating preferences** from Profile. Complete the existing personal profile first; planning currently supports adults.
+Open **My standard diet plan** from Home or **My diet plan and eating preferences** from Profile. Complete the existing personal profile first; planning currently supports adults.
 
-1. Set eating pattern, allergens/discomfort exclusions, meal routine, cooking access, preparation time, and daily/weekly rupee budgets. Zero budget means unspecified. Choose automatic portion balance or an explicit largest meal.
-2. Mark foods/recipes Love, Okay, Avoid or Never. Avoid and Never both exclude automatic recommendations. Explicitly link equivalent diary foods where identities differ; links affect preferences/habits, not nutrition weights. Favorite import requires selection and preserves existing ratings.
-3. Enter local per-100 g prices in the ingredient's listed raw/cooked state. Add pantry amounts and optional pack sizes/prices. Reference prices remain illustrative; consumed-food cost and cash needed to buy packs are different estimates.
-4. Generate a day, selecting meals still wanted; all logged calories/macros count. Keep or swap meals, request cheaper/quicker choices, and give specific feedback. Confirm only actual consumption and review the portion/stock update before saving.
-5. Add personal recipes using complete-macro catalogue ingredients. Declare the weighed state and applicable food/allergen tags; unknown composition is rejected whenever restrictions or a dietary pattern need it. Ingredient metadata can be edited, and unused custom ingredients removed.
-6. Add already prepared servings only after checking suitability and a usable-through date. Only available, unexpired portions enter a plan; they cannot be reused twice inside a day/week or bypass exclusions. The ingredient list describes original composition; prepare only the fresh portion.
-7. Generate the next seven days (or a chosen future starting date). A day already containing logs must be planned individually. Open individual days, inspect target/budget warnings, and share the consolidated shopping list. Saved weeks are re-evaluated against current targets when opened.
+1. Follow Back/Next through eating pattern, allergies, unsuitable ingredients, meal routine, budget and cooking access. Recipes appear first in meal-specific lists of up to four, followed by ingredients. Every card has Love, Okay, Avoid and Never recommend underneath. Ratings save immediately; unfinished fields and progress can be resumed. Leaving a card unrated does not assign Okay.
+2. Save the review to open your plan. Explicit choices are primary. Recent diary evidence refreshes whenever the standard plan is generated, loaded or changed; it remains secondary and never writes taste ratings. New logs do not silently replace selected meals. Diary learning can be disabled in the cooking step.
+3. Generate one standard plan. Each enabled meal category offers up to four distinct suitable recipe alternatives. Swipe horizontally or use Previous/Next; **Choose this** saves the selection. Browsing does not select or log food. The summary describes the selected combination; swaps can move it outside saved targets/budget. Read the displayed fit warnings.
+4. **Edit Breakfast/Lunch/Dinner/Snacks only** allows another recipe, an adjusted portion, refreshed alternatives or a custom recipe. A customized copy has a new identity, so ingredients do not rewrite other meals. Recipe and selected meal save together. Restrictions still apply; other valid selections stay unchanged.
+5. **Plan tools & local prices** contains recipe/ingredient management, prices, pantry/pack prices, prepared-food records and shopping. Shopping represents one full set of selected meals; pantry is deducted once. Reference costs are illustrative unless all prices are entered. The reusable plan does not assume today's finite pantry/prepared stock stays available on future days.
+6. Confirm only food actually eaten: choose its diary date, review actual servings and any prepared portion, then log. Optional inventory updates apply only to today's confirmed consumption and retain interrupted-write recovery. Plan edits do not change existing diary entries.
+
+Existing preferences and personal recipes are preserved on upgrade. Preference changes revalidate saved selections; an incompatible meal is removed with a prompt to choose/edit it. Whole-plan regeneration asks before replacing all selections.
 
 ## Practical limits
 
 - A bounded, approximate search over 31 initial meals plus up to 100 personal recipes; up to 200 added catalogue ingredients and 200 explicit identity links. It reports the closest available fit and search/candidate limits rather than silently changing targets or exclusions.
-- Familiarity uses at most 2,000 recent diary records, distinct food/meal days within 42 days and a 14-day recency half-life. It does not infer medical suitability or equate arbitrary dish names. Routine learning requires multiple broadly logged days and makes only modest adjustments. History/selection learning can be disabled; feedback can be reset independently of explicit preferences.
-- Full-day calories/protein/carbs/fat are evaluated. Fibre/sugar/sodium are used only where known. Logged-food micronutrient coverage and some cost data may be unknown; those limits/spending cannot be guaranteed. Meal micronutrients are logged only when every ingredient supplies that nutrient. There is no additional saturated-fat target invented outside the user's saved profile.
+- Continuous secondary familiarity uses at most 2,000 recent diary records, distinct food/meal days within 42 days and a 14-day recency half-life. It does not infer medical suitability or equate arbitrary dish names. The inferred taste score is capped below an explicit Okay. Routine learning requires multiple broadly logged days and makes only modest adjustments. History/selection learning can be disabled; feedback can be reset independently of explicit preferences.
+- Calories/protein/carbs/fat for the selected standard combination are evaluated separately from diary consumption. Fibre/sugar/sodium are used only where known. Logged-food micronutrient coverage and some cost data may be unknown; those limits/spending cannot be guaranteed. Meal micronutrients are logged only when every ingredient supplies that nutrient. There is no additional saturated-fat target invented outside the user's saved profile.
 - Planner settings/recipes/plans are not part of the existing DietLog Drive/Supabase snapshot formats. They persist in app-private preferences and follow the app's existing Android OS backup policy. No planner network request or external AI service is required.
 - General adult meal suggestions, not clinical diets. Cross-contact, actual food labels, preparation losses/yields and prepared-food storage suitability require user verification.
 - Physical-device interaction, accessibility and appearance checks remain unverified in this environment. Automated compilation, tests and lint do not replace those checks.

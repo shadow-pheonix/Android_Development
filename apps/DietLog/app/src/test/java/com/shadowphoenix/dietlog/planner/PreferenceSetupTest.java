@@ -100,6 +100,70 @@ public class PreferenceSetupTest {
     }
 
     @Test
+    public void copiedRawDraftsRemainIndependent() throws Exception {
+        PreferenceSetup saved = new PreferenceSetup();
+        saved.page = 4;
+        saved.draft.put("4", new JSONObject().put("daily", "12."));
+        PreferenceSetup pending = saved.copy();
+        pending.draft.getJSONObject("4").put("daily", "37.");
+        assertEquals("12.", saved.draft.getJSONObject("4").getString("daily"));
+        assertEquals("37.", pending.draft.getJSONObject("4").getString("daily"));
+    }
+
+    @Test
+    public void interruptedFailedSaveKeepsRawDraftButSuccessfulNextKeepsNewPage() throws Exception {
+        PreferenceSetup saved = new PreferenceSetup();
+        saved.page = 4;
+        String baseline = saved.toJson().toString();
+        PreferenceSetup visible = saved.copy();
+        visible.draft.put("4", new JSONObject().put("daily", "12."));
+        PreferenceSetup recovered = saved.copy().resumeDraft(visible, baseline);
+        assertEquals(4, recovered.page);
+        assertEquals("12.", recovered.draft.getJSONObject("4").getString("daily"));
+
+        PreferenceSetup committed = visible.copy();
+        committed.page = 5;
+        recovered = committed.resumeDraft(visible, baseline);
+        assertEquals(5, recovered.page);
+        assertEquals("12.", recovered.draft.getJSONObject("4").getString("daily"));
+    }
+
+    @Test
+    public void interruptedCompletionCannotBeReplacedByOlderVisibleDraft() throws Exception {
+        PreferenceSetup visible = new PreferenceSetup();
+        visible.page = visible.reviewPage();
+        String baseline = visible.toJson().toString();
+        PreferenceSetup committed = visible.copy();
+        committed.completed = true;
+        assertTrue(committed.resumeDraft(visible, baseline).completed);
+    }
+
+    @Test
+    public void emptyCatalogAndDisabledMealSlotsDoNotInventRatings() throws Exception {
+        PlannerProfile p = new PlannerProfile();
+        p.meals[0] = false;
+        PlannerFood rice = food("rice");
+        PreferenceSetup setup = new PreferenceSetup();
+        setup.buildBatches(
+                Collections.singletonList(recipe("dish", 15, rice)),
+                Collections.singletonList(rice),
+                p,
+                new IntentModel(Collections.emptyList(), 100),
+                0.05);
+        assertEquals(1, setup.batches.get(0).meal);
+        assertTrue(p.ratings.isEmpty());
+        setup.buildBatches(
+                Collections.emptyList(),
+                Collections.emptyList(),
+                p,
+                new IntentModel(Collections.emptyList(), 100),
+                0.05);
+        assertTrue(setup.batches.isEmpty());
+        assertEquals(PreferenceSetup.BASICS, setup.reviewPage());
+        assertTrue(p.ratings.isEmpty());
+    }
+
+    @Test
     public void diaryContinuouslyUpdatesButAlwaysStaysBelowAnExplicitOkay() {
         PlannerProfile p = new PlannerProfile();
         List<IntentModel.Observation> logs = new ArrayList<>();

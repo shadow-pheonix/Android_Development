@@ -21,7 +21,8 @@ import org.json.*;
 
 /** One category at a time, with persistent drafts and explicit ratings on every card. */
 public final class PreferenceSetupActivity extends Activity {
-    private final ExecutorService worker = Executors.newSingleThreadExecutor();
+    // Serial across recreated activities: a resumed load must follow the previous instance's save.
+    private static final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final Map<String, View> fields = new LinkedHashMap<>();
     private final Map<String, RadioGroup> ratings = new LinkedHashMap<>();
     private PlannerStore store;
@@ -37,6 +38,7 @@ public final class PreferenceSetupActivity extends Activity {
     private ProgressBar progress;
     private Button back, next;
     private boolean busy, foreground, closed, loaded;
+    private boolean completing;
     private long generation;
     private Bundle restored;
 
@@ -47,6 +49,7 @@ public final class PreferenceSetupActivity extends Activity {
         CrashHandler.install(this);
         store = new PlannerStore(this);
         restored = saved;
+        completing = saved != null && saved.getBoolean("completing");
         getWindow().setStatusBarColor(getColor(R.color.background));
         getWindow().setNavigationBarColor(getColor(R.color.background));
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
@@ -124,6 +127,7 @@ public final class PreferenceSetupActivity extends Activity {
                         runOnUiThread(
                                 () -> {
                                     if (!closed && foreground && token == generation) {
+                                        completing = false;
                                         // Restore the visible choice when an atomic save fails.
                                         for (Map.Entry<String, RadioGroup> row :
                                                 ratings.entrySet()) {
@@ -150,12 +154,17 @@ public final class PreferenceSetupActivity extends Activity {
     }
 
     private void load() {
+        loaded = false;
+        fields.clear();
+        ratings.clear();
+        error = null;
         body.removeAllViews();
         text(body, "Loading your preferences…", 22, true);
         work(
                 () -> {
                     PlannerProfile p = store.profile();
                     PreferenceSetup s = store.setup();
+                    if (s.completed && completing) return new Object[] {p, s, null, null, 0.0};
                     if (db == null) db = new FoodCatalogDb(this);
                     PlannerCatalog c =
                             new PlannerCatalog(
@@ -204,14 +213,22 @@ public final class PreferenceSetupActivity extends Activity {
                 value -> {
                     profile = (PlannerProfile) value[0];
                     setup = (PreferenceSetup) value[1];
+                    if (setup.completed && completing) {
+                        setResult(RESULT_OK);
+                        finish();
+                        return;
+                    }
+                    completing = false;
                     catalog = (PlannerCatalog) value[2];
                     intent = (IntentModel) value[3];
                     proteinRatio = (Double) value[4];
                     if (restored != null && restored.containsKey("draft")) {
                         try {
                             setup =
-                                    PreferenceSetup.fromJson(
-                                            new JSONObject(restored.getString("draft")));
+                                    setup.resumeDraft(
+                                            PreferenceSetup.fromJson(
+                                                    new JSONObject(restored.getString("draft"))),
+                                            restored.getString("persistedBefore"));
                         } catch (JSONException ignored) {
                         }
                         restored = null;
@@ -415,7 +432,7 @@ public final class PreferenceSetupActivity extends Activity {
         if (shown == 0)
             text(
                     body,
-                    "These recipes are no longer available. Continue to the next list.",
+                    "These foods are no longer available. Continue to the next list.",
                     15,
                     false);
         text(
@@ -537,13 +554,13 @@ public final class PreferenceSetupActivity extends Activity {
             try {
                 readFields(p);
                 p.validate();
-                state.draft.remove(String.valueOf(setup.page));
             } catch (IllegalArgumentException e) {
                 if (direction > 0) throw e;
                 p = profile.copy();
             }
             if (setup.page == setup.reviewPage() && direction > 0) {
                 state.completed = true;
+                completing = true;
                 save(
                         p,
                         state,
@@ -722,7 +739,6 @@ public final class PreferenceSetupActivity extends Activity {
             try {
                 readFields(p);
                 p.validate();
-                s.draft.remove(String.valueOf(setup.page));
             } catch (IllegalArgumentException ignored) {
                 p = profile.copy();
             }
@@ -739,14 +755,24 @@ public final class PreferenceSetupActivity extends Activity {
 
     @Override
     protected void onSaveInstanceState(Bundle out) {
-        if (loaded && !busy)
+        rememberVisibleDraft(out);
+        out.putBoolean("completing", completing);
+        super.onSaveInstanceState(out);
+    }
+
+    private void rememberVisibleDraft(Bundle out) {
+        if (loaded) {
             try {
                 PreferenceSetup s = setup.copy();
                 captureFields(s);
                 out.putString("draft", s.toJson().toString());
+                out.putString("persistedBefore", setup.toJson().toString());
             } catch (JSONException ignored) {
             }
-        super.onSaveInstanceState(out);
+        } else if (restored != null && restored.containsKey("draft")) {
+            out.putString("draft", restored.getString("draft"));
+            out.putString("persistedBefore", restored.getString("persistedBefore"));
+        }
     }
 
     @Override
@@ -759,6 +785,10 @@ public final class PreferenceSetupActivity extends Activity {
 
     @Override
     protected void onPause() {
+        if (loaded) {
+            restored = new Bundle();
+            rememberVisibleDraft(restored);
+        }
         if (loaded && !busy)
             try {
                 PreferenceSetup s = setup.copy();
@@ -785,7 +815,6 @@ public final class PreferenceSetupActivity extends Activity {
                 () -> {
                     if (db != null) db.close();
                 });
-        worker.shutdown();
         super.onDestroy();
     }
 

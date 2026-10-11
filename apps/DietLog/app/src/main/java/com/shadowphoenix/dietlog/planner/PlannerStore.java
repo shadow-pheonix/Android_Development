@@ -95,11 +95,10 @@ public final class PlannerStore {
 
     /** A rating and its progress checkpoint either both persist or neither does. */
     public void saveSetup(PlannerProfile profile, PreferenceSetup setup) throws JSONException {
-        if (!prefs.edit()
-                .putString("profile", profileJson(profile).toString())
-                .putString("setup", setup.toJson().toString())
-                .commit())
-            throw new IllegalStateException("Unable to save your preferences. Please retry.");
+        Map<String, String> changes = new LinkedHashMap<>();
+        changes.put("profile", profileJson(profile).toString());
+        changes.put("setup", setup.toJson().toString());
+        commitStrings(changes);
     }
 
     public void saveSetupDraft(PreferenceSetup setup) throws JSONException {
@@ -112,6 +111,16 @@ public final class PlannerStore {
 
     public void saveStandardPlan(StandardPlan plan) throws JSONException {
         put("standardPlan", plan.toJson().toString());
+    }
+
+    public void saveRecipesAndStandardPlan(JSONArray recipes, StandardPlan plan)
+            throws JSONException {
+        if (recipes.length() > 100)
+            throw new IllegalArgumentException("Keep at most 100 personal recipes");
+        Map<String, String> changes = new LinkedHashMap<>();
+        changes.put("recipes", recipes.toString());
+        changes.put("standardPlan", plan.toJson().toString());
+        commitStrings(changes);
     }
 
     public String learningIdentity() {
@@ -315,8 +324,29 @@ public final class PlannerStore {
     }
 
     private void put(String key, String value) {
-        if (!prefs.edit().putString(key, value).commit())
-            throw new IllegalStateException("Unable to save planner settings");
+        commitStrings(Collections.singletonMap(key, value));
+    }
+
+    private void commitStrings(Map<String, String> changes) {
+        synchronized (prefs) {
+            Map<String, String> before = new LinkedHashMap<>();
+            SharedPreferences.Editor edit = prefs.edit();
+            for (Map.Entry<String, String> change : changes.entrySet()) {
+                before.put(change.getKey(), prefs.getString(change.getKey(), null));
+                edit.putString(change.getKey(), change.getValue());
+            }
+            if (edit.commit()) return;
+            // Android can update memory before commit reports a disk failure. Restore the
+            // previous visible checkpoint too, so resuming cannot mistake a failed save for
+            // success.
+            SharedPreferences.Editor rollback = prefs.edit();
+            for (Map.Entry<String, String> old : before.entrySet()) {
+                if (old.getValue() == null) rollback.remove(old.getKey());
+                else rollback.putString(old.getKey(), old.getValue());
+            }
+            rollback.commit();
+            throw new IllegalStateException("Unable to save planner settings. Please retry.");
+        }
     }
 
     private static void readSet(JSONArray a, Set<String> out) throws JSONException {

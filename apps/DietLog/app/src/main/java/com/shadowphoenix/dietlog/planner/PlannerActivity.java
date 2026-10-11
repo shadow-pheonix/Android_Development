@@ -22,10 +22,15 @@ import java.util.concurrent.*;
 
 /** Private offline planning workspace; saved plans never imply consumption. */
 public final class PlannerActivity extends Activity {
-    private final ExecutorService worker = Executors.newSingleThreadExecutor();
+    private static final ExecutorService worker = Executors.newSingleThreadExecutor();
     private volatile boolean closed;
     private long generation;
     private LinearLayout page;
+    private ScrollView mainScroll;
+    private StandardPlan standard;
+    private Integer editingMeal;
+    private boolean generateAfterSetup;
+    private static final int SETUP_REQUEST = 411;
     private PlannerStore store;
     private FoodCatalogDb db;
     private DiaryDbHelper diary;
@@ -34,15 +39,10 @@ public final class PlannerActivity extends Activity {
     private LocalDate date = LocalDate.now();
     private DayPlanner.Result result;
     private DayPlanner.Request request;
-    private final Map<Integer, DayPlanner.Choice> locks = new LinkedHashMap<>();
-    private final Map<Integer, Set<String>> rejected = new LinkedHashMap<>();
     private List<FoodEntry> history = Collections.emptyList(), entries = Collections.emptyList();
     private final Map<String, String> suggestions = new LinkedHashMap<>();
     private boolean ready, busy, foreground, setupOpened;
     private List<FoodHistory.Item> favorites = Collections.emptyList();
-    private String signature;
-    private WeekPlanner.Result week;
-    private LocalDate weekStart;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -51,12 +51,16 @@ public final class PlannerActivity extends Activity {
         CrashHandler.install(this);
         store = new PlannerStore(this);
         setupOpened = state != null && state.getBoolean("setupOpened", false);
+        generateAfterSetup = state != null && state.getBoolean("generateAfterSetup", false);
+        if (state != null && state.containsKey("editingMeal"))
+            editingMeal = state.getInt("editingMeal");
         if (state != null) date = LocalDate.parse(state.getString("day", date.toString()));
         else if (getIntent().hasExtra("day"))
             date = LocalDate.parse(getIntent().getStringExtra("day"));
         getWindow().setStatusBarColor(getColor(R.color.background));
         getWindow().setNavigationBarColor(getColor(R.color.background));
         ScrollView scroll = new ScrollView(this);
+        mainScroll = scroll;
         scroll.setFillViewport(true);
         scroll.setBackgroundResource(R.drawable.bg_frosted_scene);
         page = column();
@@ -89,6 +93,7 @@ public final class PlannerActivity extends Activity {
     private <T> void async(Work<T> work, java.util.function.Consumer<T> done) {
         long token = ++generation;
         busy = true;
+        setPlannerEnabled(page, false);
         worker.execute(
                 () -> {
                     try {
@@ -97,6 +102,7 @@ public final class PlannerActivity extends Activity {
                                 () -> {
                                     if (!closed && foreground && token == generation) {
                                         busy = false;
+                                        setPlannerEnabled(page, true);
                                         done.accept(value);
                                     }
                                 });
@@ -107,6 +113,7 @@ public final class PlannerActivity extends Activity {
                                 () -> {
                                     if (!closed && foreground && token == generation) {
                                         busy = false;
+                                        setPlannerEnabled(page, true);
                                         message(
                                                 e instanceof IllegalArgumentException
                                                         ? e.getMessage()
@@ -141,6 +148,18 @@ public final class PlannerActivity extends Activity {
                                     this, db, store.personalRecipes(), store.extraFoods());
                     history = diary.getPlannerHistory();
                     favorites = diary.getFavoriteFoods(100);
+                    ProfilePreferences pp = new ProfilePreferences(this);
+                    if (pp.hasCompletedPersonalProfile()
+                            && pp.load().effectiveAge(LocalDate.now()) >= 18) {
+                        request = buildStandardRequest();
+                        standard =
+                                StandardPlan.fromJson(
+                                        store.standardPlan(), catalog.recipes, request);
+                        result = standard == null ? null : standard.result;
+                    } else {
+                        standard = null;
+                        result = null;
+                    }
                     return true;
                 },
                 v -> {
@@ -161,88 +180,67 @@ public final class PlannerActivity extends Activity {
                         if (!setupOpened && !store.setup().completed) {
                             setupOpened = true;
                             openSetup(false);
+                        } else if (generateAfterSetup) {
+                            generateAfterSetup = false;
+                            if (standard == null) generateStandard(1, 1, false);
                         }
-                    } catch (JSONException e) { message("Unable to restore preference setup"); }
+                    } catch (JSONException e) {
+                        message("Unable to restore preference setup");
+                    }
                 });
     }
 
     private void render() {
         if (closed || !ready) return;
+        int position = mainScroll.getScrollY();
         page.removeAllViews();
+        if (editingMeal != null) {
+            renderMealEditor(editingMeal);
+            return;
+        }
         button(page, "‹ Back", this::finish);
-        text(page, "My diet plan", 26, true);
-        text(page, "Food you enjoy. Portions for your targets. A budget you control.", 14, false);
-        button(
+        text(page, "My standard diet plan", 26, true).setAccessibilityHeading(true);
+        text(
                 page,
-                date.toString() + " · Choose day",
-                () -> {
-                    DatePickerDialog picker =
-                            new DatePickerDialog(
-                                    this,
-                                    (v, y, m, d) -> {
-                                        date = LocalDate.of(y, m + 1, d);
-                                        result = null;
-                                        week = null;
-                                        locks.clear();
-                                        rejected.clear();
-                                        render();
-                                    },
-                                    date.getYear(),
-                                    date.getMonthValue() - 1,
-                                    date.getDayOfMonth());
-                    picker.show();
-                });
+                "Your usual meals, with choices for every category. Swipe to explore; choose what you enjoy.",
+                14,
+                false);
         LinearLayout controls = card(page);
-        button(controls, "Guided eating preferences", () -> openSetup(false));
-        button(controls, "Rate recipes & foods", () -> openSetup(true));
-        button(controls, "My local food prices", this::prices);
+        button(controls, "My eating preferences · guided setup", () -> openSetup(false));
+        button(controls, "Rate more recipes & foods", () -> openSetup(true));
         text(
                 controls,
-                new String[] {"All foods", "Vegetarian · no eggs", "Vegetarian + eggs", "Vegan"}
-                                [profile.diet.ordinal()]
-                        + " · "
-                        + profile.ratings.size()
-                        + " food choices · "
+                profile.ratings.size()
+                        + " saved food choices · "
                         + (profile.effectiveDailyBudget() > 0
                                 ? money(profile.effectiveDailyBudget()) + " / day"
                                 : "Budget not set"),
                 14,
                 false);
-        if (!profile.allergies.isEmpty())
-            text(
-                    controls,
-                    "Allergies excluded: " + String.join(", ", profile.allergies).replace('_', ' '),
-                    14,
-                    true);
-        if (!profile.excludedIngredients.isEmpty())
-            text(
-                    controls,
-                    "Does not suit me: "
-                            + String.join(", ", profile.excludedIngredients).replace('_', ' '),
-                    14,
-                    false);
-        button(page, busy ? "Working…" : "Plan this day", () -> generate(false, 1, 1));
-        button(page, "Plan remaining meals", () -> generate(true, 1, 1));
-        button(page, "Use cheaper meals", () -> generate(true, 3, 1));
-        button(page, "Use quicker meals", () -> generate(true, 1, 3));
-        extendedControls(page);
-        if (result == null) {
+        button(
+                page,
+                busy
+                        ? "Working…"
+                        : standard == null
+                                ? "Generate my standard plan"
+                                : "Regenerate my standard plan",
+                () -> generateStandard(1, 1, true));
+        button(page, "Plan tools & local prices", this::planTools);
+        if (standard == null || result == null) {
             text(
                     page,
-                    "Set your food choices and local prices, then generate a plan. Plans stay"
-                            + " separate from your diary until you confirm a meal.",
+                    "Your saved targets and explicit preferences guide the plan. Choosing a recipe does not log it in your diary.",
                     15,
                     false);
             return;
         }
         LinearLayout total = card(page);
-        text(total, "Day totals · including logged food", 18, true);
+        text(total, "Your selected combination", 18, true);
         text(
                 total,
                 String.format(
                         Locale.getDefault(),
-                        "%.0f / %.0f kcal\n"
-                                + "Protein %.0f / %.0f g · Carbs %.0f / %.0f g · Fat %.0f / %.0f g",
+                        "%.0f / %.0f kcal\nProtein %.0f / %.0f g · Carbs %.0f / %.0f g · Fat %.0f / %.0f g",
                         result.totals[0],
                         request.targets[0],
                         result.totals[1],
@@ -257,100 +255,447 @@ public final class PlannerActivity extends Activity {
                 total,
                 "Estimated food cost: "
                         + money(result.cost)
-                        + (result.pricesEntered ? " · your prices" : " · estimate / incomplete"),
+                        + (result.pricesEntered ? " · your prices" : " · some illustrative prices"),
                 15,
                 true);
-        if (profile.largestMeal < 0
-                && profile.learnFromHistory
-                && request.intent.hasLearnedRoutine())
-            text(
-                    total,
-                    "Meal portion balance reflects repeated broadly logged days in your diary.",
-                    13,
-                    false);
-        for (String note : result.notes) text(total, note, 13, false);
-        for (DayPlanner.Choice c : result.choices) renderMeal(c);
         text(
-                page,
-                "Amounts use the listed raw/cooked state. Check product labels and preparation for"
-                        + " allergies and cross-contact. These are general meal suggestions, not a"
-                        + " medical diet.",
-                12,
-                false);
-    }
-
-    private void renderMeal(DayPlanner.Choice c) {
-        LinearLayout box = card(page);
-        text(
-                box,
-                DayPlanner.mealName(c.meal) + (locks.containsKey(c.meal) ? " · kept" : ""),
-                15,
-                true);
-        text(box, c.recipe.name, 20, true);
-        double[] n = c.recipe.nutrition(c.scale);
-        text(
-                box,
-                String.format(
-                        Locale.getDefault(),
-                        "%.1f × base serving · %.0f kcal · P %.0f g / C %.0f g / F %.0f g · %s",
-                        c.scale,
-                        n[0],
-                        n[1],
-                        n[2],
-                        n[3],
-                        money(PriceModel.consumed(c.recipe, c.scale, profile).amount)),
-                14,
-                false);
-        StringBuilder amounts = new StringBuilder();
-        for (MealRecipe.Ingredient i : c.recipe.ingredients)
-            amounts.append(
-                    String.format(
-                            Locale.getDefault(),
-                            "• %s · %.0f g (%s)\n",
-                            i.food.name,
-                            i.grams * c.scale,
-                            i.food.state));
-        text(box, amounts.toString().trim(), 14, false);
-        text(
-                box,
-                c.preparedScale > 0
-                        ? "Already prepared: "
-                                + c.preparedScale
-                                + " servings. Ingredient amounts show the original composition;"
-                                + " prepare only the new portion. Use prepared food only while it"
-                                + " remains suitable to eat.\n"
-                                + c.recipe.instructions
-                        : c.recipe.instructions,
+                total,
+                "Reusable across days. Totals describe the selected meals; your diary tracks what you actually eat.",
                 13,
                 false);
-        text(box, explanation(c), 13, false);
+        for (String note : result.notes) text(total, note, 13, false);
+        for (int meal : new int[] {0, 1, 3, 2}) if (profile.meals[meal]) renderAlternatives(meal);
+        text(
+                page,
+                "Changing a meal updates the selected totals. Alternatives are checked for your restrictions; different combinations may need target or budget adjustments.",
+                12,
+                false);
+        mainScroll.post(() -> mainScroll.scrollTo(0, position));
+    }
+
+    private void renderAlternatives(int meal) {
+        LinearLayout section = card(page);
+        text(section, DayPlanner.mealName(meal), 20, true).setAccessibilityHeading(true);
+        DayPlanner.Choice selected = standard.selected.get(meal);
+        text(
+                section,
+                selected == null ? "Choose a meal below" : "Selected: " + selected.recipe.name,
+                14,
+                false);
+        List<DayPlanner.Choice> options =
+                standard.alternatives.getOrDefault(meal, Collections.emptyList());
+        if (options.isEmpty())
+            text(
+                    section,
+                    "No suitable alternative is available yet. Edit this meal or add your own recipe.",
+                    14,
+                    false);
+        else {
+            MealAlternativesView carousel = new MealAlternativesView(this);
+            LinearLayout strip = new LinearLayout(this);
+            strip.setOrientation(LinearLayout.HORIZONTAL);
+            carousel.addView(strip);
+            section.addView(carousel, new LinearLayout.LayoutParams(-1, -2));
+            int selectedIndex = 0;
+            for (int i = 0; i < options.size(); i++) {
+                DayPlanner.Choice choice = options.get(i);
+                LinearLayout frame = column();
+                frame.setPadding(dp(4), dp(8), dp(4), dp(8));
+                strip.addView(frame, new LinearLayout.LayoutParams(dp(280), -2));
+                boolean chosen = selected != null && selected.recipe.id.equals(choice.recipe.id);
+                if (chosen) selectedIndex = i;
+                text(frame, chosen ? "✓ Selected" : "Alternative " + (i + 1), 13, true);
+                text(frame, choice.recipe.name, 21, true);
+                double[] n = choice.recipe.nutrition(choice.scale);
+                text(
+                        frame,
+                        String.format(
+                                Locale.getDefault(),
+                                "%.1f × base serving · %.0f kcal\nProtein %.0f g · Carbs %.0f g · Fat %.0f g\n%d min prep · %s estimated",
+                                choice.scale,
+                                n[0],
+                                n[1],
+                                n[2],
+                                n[3],
+                                choice.recipe.prepMinutes,
+                                money(
+                                        PriceModel.consumed(choice.recipe, choice.scale, profile)
+                                                .amount)),
+                        14,
+                        false);
+                StringJoiner ingredients = new StringJoiner(", ");
+                for (MealRecipe.Ingredient part : choice.recipe.ingredients)
+                    ingredients.add(part.food.name);
+                text(frame, ingredients.toString(), 13, false);
+                button(
+                        frame,
+                        chosen
+                                ? "Selected for " + DayPlanner.mealName(meal)
+                                : "Choose this for " + DayPlanner.mealName(meal),
+                        () -> selectStandard(choice));
+                appendRatings(frame, choice.recipe);
+                button(frame, "Recipe & amounts", () -> recipeDetails(choice));
+            }
+            TextView indicator = text(section, "Swipe for alternatives", 13, false);
+            carousel.setOnPageChanged(
+                    index ->
+                            indicator.setText(
+                                    "Alternative "
+                                            + (index + 1)
+                                            + " of "
+                                            + options.size()
+                                            + " · swipe left or right"));
+            LinearLayout nav = new LinearLayout(this);
+            nav.setOrientation(LinearLayout.HORIZONTAL);
+            Button previous = button(nav, "‹ Previous", () -> carousel.move(-1));
+            Button next = button(nav, "Next ›", () -> carousel.move(1));
+            previous.setContentDescription(
+                    "Previous " + DayPlanner.mealName(meal) + " alternative");
+            next.setContentDescription("Next " + DayPlanner.mealName(meal) + " alternative");
+            previous.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
+            next.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
+            section.addView(nav);
+            carousel.showPage(selectedIndex);
+        }
         button(
-                box,
-                locks.containsKey(c.meal) ? "Unlock meal" : "Keep this meal",
+                section,
+                "Edit " + DayPlanner.mealName(meal) + " only",
                 () -> {
-                    if (locks.containsKey(c.meal)) locks.remove(c.meal);
-                    else {
-                        locks.put(c.meal, c);
-                        selection(c, IntentModel.Feedback.SELECTED);
-                    }
-                    persist();
+                    editingMeal = meal;
+                    render();
+                    mainScroll.scrollTo(0, 0);
+                });
+        if (selected != null)
+            button(section, "I ate the selected meal · confirm", () -> chooseLogDate(selected));
+    }
+
+    private void appendRatings(LinearLayout parent, MealRecipe recipe) {
+        text(parent, "How does this recipe suit your taste?", 13, false);
+        RadioGroup group = new RadioGroup(this);
+        for (FoodPreference preference :
+                new FoodPreference[] {
+                    FoodPreference.LOVE,
+                    FoodPreference.OKAY,
+                    FoodPreference.AVOID,
+                    FoodPreference.NEVER
+                }) {
+            RadioButton choice = new RadioButton(this);
+            choice.setEnabled(!busy);
+            choice.setId(View.generateViewId());
+            choice.setTag(preference);
+            choice.setText(
+                    preference == FoodPreference.NEVER
+                            ? "Never recommend"
+                            : preference == FoodPreference.OKAY
+                                    ? "Okay · manageable"
+                                    : preference.label);
+            choice.setContentDescription(recipe.name + " · " + choice.getText());
+            choice.setTextColor(getColor(R.color.text_primary));
+            choice.setButtonTintList(ColorStateList.valueOf(getColor(R.color.accent)));
+            choice.setMinHeight(dp(48));
+            group.addView(choice);
+            if (profile.rating(recipe.id) == preference) group.check(choice.getId());
+        }
+        parent.addView(group);
+        group.setOnCheckedChangeListener(
+                (g, id) -> {
+                    if (busy || id == -1) return;
+                    FoodPreference preference = (FoodPreference) g.findViewById(id).getTag();
+                    async(
+                            () -> {
+                                PlannerProfile p = store.profile();
+                                p.ratings.put(recipe.id, preference);
+                                p.ratingNames.put(recipe.id, recipe.name);
+                                store.saveProfile(p);
+                                DayPlanner.Request r = buildStandardRequest();
+                                StandardPlan saved =
+                                        StandardPlan.fromJson(
+                                                store.standardPlan(), catalog.recipes, r);
+                                if (saved != null) store.saveStandardPlan(saved);
+                                return new Object[] {saved, r};
+                            },
+                            value -> {
+                                acceptStandard(value);
+                                message("Taste choice saved");
+                            });
+                });
+    }
+
+    private void recipeDetails(DayPlanner.Choice choice) {
+        LinearLayout body = column();
+        text(body, choice.recipe.name, 22, true);
+        for (MealRecipe.Ingredient i : choice.recipe.ingredients)
+            text(
+                    body,
+                    String.format(
+                            Locale.getDefault(),
+                            "%s · %.0f g (%s)",
+                            i.food.name,
+                            i.grams * choice.scale,
+                            i.food.state),
+                    14,
+                    false);
+        text(body, choice.recipe.instructions, 15, false);
+        text(body, explanation(choice), 13, false);
+        button(body, "Give feedback", () -> feedback(choice));
+        dialog("Recipe & amounts", body, null);
+    }
+
+    private void chooseLogDate(DayPlanner.Choice choice) {
+        DatePickerDialog picker =
+                new DatePickerDialog(
+                        this,
+                        (v, y, m, d) -> {
+                            date = LocalDate.of(y, m + 1, d);
+                            if (date.isAfter(LocalDate.now())) {
+                                message("Confirm only food actually eaten");
+                                return;
+                            }
+                            confirmConsumption(choice);
+                        },
+                        date.getYear(),
+                        date.getMonthValue() - 1,
+                        date.getDayOfMonth());
+        picker.setTitle("Date you ate this meal");
+        picker.getDatePicker().setMaxDate(System.currentTimeMillis());
+        picker.show();
+    }
+
+    private void generateStandard(double costWeight, double effortWeight, boolean confirm) {
+        if (busy || !ready) return;
+        if (confirm && standard != null) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Regenerate the whole standard plan?")
+                    .setMessage(
+                            "This replaces the selected meals and alternatives. To change one category, use Edit this meal.")
+                    .setNegativeButton("Keep my selections", null)
+                    .setPositiveButton(
+                            "Regenerate",
+                            (d, n) -> generateStandard(costWeight, effortWeight, false))
+                    .show();
+            return;
+        }
+        async(
+                () -> {
+                    DayPlanner.Request r = buildStandardRequest();
+                    r.costWeight = costWeight;
+                    r.effortWeight = effortWeight;
+                    StandardPlan generated = StandardPlan.generate(catalog.recipes, r);
+                    store.saveStandardPlan(generated);
+                    AppLogger.i("Standard plan generated meal_count=" + generated.selected.size());
+                    return new Object[] {generated, r};
+                },
+                this::acceptStandard);
+        render();
+    }
+
+    private void selectStandard(DayPlanner.Choice choice) {
+        if (busy) return;
+        try {
+            JSONObject snapshot = standard == null ? new JSONObject() : standard.toJson();
+            async(
+                    () -> {
+                        DayPlanner.Request r = buildStandardRequest();
+                        StandardPlan changed = StandardPlan.fromJson(snapshot, catalog.recipes, r);
+                        if (changed == null) changed = new StandardPlan();
+                        changed.choose(choice, catalog.recipes, r);
+                        store.saveStandardPlan(changed);
+                        return new Object[] {changed, r};
+                    },
+                    value -> {
+                        editingMeal = null;
+                        acceptStandard(value);
+                        selection(choice, IntentModel.Feedback.SELECTED);
+                    });
+        } catch (JSONException e) {
+            message("Unable to save this meal choice");
+        }
+    }
+
+    private void acceptStandard(Object[] value) {
+        standard = (StandardPlan) value[0];
+        request = (DayPlanner.Request) value[1];
+        result = standard == null ? null : standard.result;
+        render();
+    }
+
+    private void renderMealEditor(int meal) {
+        button(
+                page,
+                "‹ Back to my plan",
+                () -> {
+                    editingMeal = null;
                     render();
                 });
+        text(page, "Edit " + DayPlanner.mealName(meal), 26, true).setAccessibilityHeading(true);
+        text(page, "Only this meal changes. Other selected meals stay as they are.", 14, false);
+        DayPlanner.Choice current = standard == null ? null : standard.selected.get(meal);
+        if (current != null) {
+            LinearLayout portion = card(page);
+            text(portion, current.recipe.name, 18, true);
+            EditText scale = input(portion, "Servings for this meal · 0.5–2", current.scale, true);
+            button(
+                    portion,
+                    "Save portion only",
+                    () -> {
+                        try {
+                            selectStandard(
+                                    new DayPlanner.Choice(meal, current.recipe, number(scale)));
+                        } catch (IllegalArgumentException e) {
+                            message("Enter a serving amount from 0.5–2");
+                        }
+                    });
+            button(
+                    portion,
+                    "Customize this recipe for this meal",
+                    () -> {
+                        try {
+                            editRecipe(recipeCopy(current.recipe, meal), meal);
+                        } catch (JSONException e) {
+                            message("Unable to open this recipe");
+                        }
+                    });
+        }
         button(
-                box,
-                "Swap meal",
+                page,
+                "Build my own " + DayPlanner.mealName(meal) + " recipe",
+                () -> editRecipe(null, meal));
+        button(
+                page,
+                "Suggest fresh alternatives for this meal only",
+                () -> refreshStandardMeal(meal));
+        text(page, "Choose another suitable recipe", 18, true);
+        EditText search = input(page, "Find a recipe by name or ingredient", null, false);
+        LinearLayout rows = column();
+        page.addView(rows);
+        Runnable show =
                 () -> {
-                    selection(c, IntentModel.Feedback.SWAPPED);
-                    locks.remove(c.meal);
-                    rejected.computeIfAbsent(c.meal, k -> new HashSet<>()).add(c.recipe.id);
-                    for (DayPlanner.Choice other : result.choices)
-                        if (other.meal != c.meal) locks.put(other.meal, other);
-                    generate(true, 1, 1);
+                    rows.removeAllViews();
+                    String query = search.getText().toString().trim().toLowerCase(Locale.ROOT);
+                    int count = 0;
+                    for (MealRecipe recipe : catalog.recipes) {
+                        if (!recipe.allowed(profile, meal)) continue;
+                        StringJoiner names = new StringJoiner(" ");
+                        names.add(recipe.name);
+                        for (MealRecipe.Ingredient ingredient : recipe.ingredients)
+                            names.add(ingredient.food.name);
+                        if (!query.isEmpty()
+                                && !names.toString().toLowerCase(Locale.ROOT).contains(query))
+                            continue;
+                        double serving = bestServing(recipe, meal);
+                        button(
+                                rows,
+                                recipe.name + " · " + serving + " servings",
+                                () -> selectStandard(new DayPlanner.Choice(meal, recipe, serving)));
+                        if (++count == 30) break;
+                    }
+                    if (count == 0)
+                        text(
+                                rows,
+                                "No suitable recipe matches. Build your own recipe or update your explicit preferences.",
+                                14,
+                                false);
+                };
+        search.addTextChangedListener(
+                new TextWatcher() {
+                    public void beforeTextChanged(CharSequence s, int a, int c, int f) {}
+
+                    public void onTextChanged(CharSequence s, int a, int before, int count) {
+                        show.run();
+                    }
+
+                    public void afterTextChanged(Editable e) {}
                 });
-        button(box, "Rate this meal", () -> rate(c.recipe.id, c.recipe.name));
-        button(box, "Give feedback", () -> feedback(c));
-        if (!date.isAfter(LocalDate.now()))
-            button(box, "I ate this · confirm portions", () -> confirmConsumption(c));
+        show.run();
+    }
+
+    private double bestServing(MealRecipe recipe, int meal) {
+        double target =
+                request == null
+                        ? 500
+                        : request.targets[0] * new double[] {0.25, 0.30, 0.15, 0.30}[meal];
+        double best = 1, distance = Double.POSITIVE_INFINITY;
+        for (double serving : new double[] {0.5, 1, 1.5, 2}) {
+            double difference = Math.abs(recipe.nutrition(serving)[0] - target);
+            if (difference < distance) {
+                distance = difference;
+                best = serving;
+            }
+        }
+        return best;
+    }
+
+    private void refreshStandardMeal(int meal) {
+        try {
+            JSONObject snapshot = standard == null ? new JSONObject() : standard.toJson();
+            async(
+                    () -> {
+                        DayPlanner.Request r = buildStandardRequest();
+                        StandardPlan changed = StandardPlan.fromJson(snapshot, catalog.recipes, r);
+                        if (changed == null) changed = new StandardPlan();
+                        changed.refreshMeal(meal, catalog.recipes, r);
+                        changed.evaluate(catalog.recipes, r);
+                        store.saveStandardPlan(changed);
+                        return new Object[] {changed, r};
+                    },
+                    value -> {
+                        editingMeal = null;
+                        acceptStandard(value);
+                    });
+        } catch (JSONException e) {
+            message("Unable to refresh this meal");
+        }
+    }
+
+    private JSONObject recipeCopy(MealRecipe recipe, int meal) throws JSONException {
+        JSONArray parts = new JSONArray();
+        for (MealRecipe.Ingredient part : recipe.ingredients) {
+            String slug = null;
+            for (Map.Entry<String, PlannerFood> e : catalog.foods.entrySet())
+                if (e.getValue().id.equals(part.food.id)) {
+                    slug = e.getKey();
+                    break;
+                }
+            if (slug == null) throw new JSONException("Ingredient no longer available");
+            parts.put(new JSONObject().put("food", slug).put("grams", part.grams));
+        }
+        return new JSONObject()
+                .put("id", "personal:" + UUID.randomUUID())
+                .put("name", recipe.name + " · my version")
+                .put("instructions", recipe.instructions)
+                .put("meal_mask", 1 << meal)
+                .put("prep_minutes", recipe.prepMinutes)
+                .put("requires_cooking", recipe.requiresCooking)
+                .put("cuisine", recipe.cuisine)
+                .put("yield_grams", recipe.yieldGrams)
+                .put("ingredients", parts);
+    }
+
+    private void planTools() {
+        LinearLayout tools = column();
+        button(tools, "My recipes & ingredients", this::personalRecipes);
+        button(tools, "Local ingredient prices", this::prices);
+        button(tools, "Pantry & pack prices", this::pantry);
+        button(tools, "Already prepared food · for logging", this::leftovers);
+        button(tools, "Shopping list · selected standard meals", this::shopping);
+        button(tools, "Regenerate using cheaper meals", () -> generateStandard(3, 1, true));
+        button(tools, "Regenerate using quicker meals", () -> generateStandard(1, 3, true));
+        button(tools, "Link familiar diary foods", this::linkFoods);
+        button(tools, "Find another food to rate", () -> searchFood(false));
+        button(tools, "Choose diary favorites to mark Love", this::importFavorites);
+        button(
+                tools,
+                "Reset recipe feedback",
+                () -> {
+                    try {
+                        store.resetLearning();
+                        load();
+                        message("Recipe feedback reset. Your food ratings and diary are kept.");
+                    } catch (Exception e) {
+                        message("Unable to reset feedback");
+                    }
+                });
+        dialog("Plan tools", tools, null);
     }
 
     private void selection(DayPlanner.Choice choice, IntentModel.Feedback signal) {
@@ -370,7 +715,7 @@ public final class PlannerActivity extends Activity {
             if (profile.rating(i.food.id) == FoodPreference.LOVE)
                 reasons.add("Includes " + i.food.name + ", which you love");
         int days = request.intent.distinctDays(c.recipe.id, c.meal);
-        if (days > 0)
+        if (days > 0 && profile.learnFromHistory)
             reasons.add(
                     "You logged this at "
                             + DayPlanner.mealName(c.meal).toLowerCase(Locale.ROOT)
@@ -383,8 +728,7 @@ public final class PlannerActivity extends Activity {
                         > 0
                 && profile.learnFromHistory)
             reasons.add("You previously kept this meal in this meal slot");
-        if (reasons.isEmpty())
-            reasons.add("Chosen with the other meals to balance your saved targets");
+        if (reasons.isEmpty()) reasons.add("A meal option checked against your saved preferences");
         reasons.add(
                 (c.preparedScale >= c.scale ? 0 : c.recipe.prepMinutes)
                         + " minutes active preparation");
@@ -397,112 +741,16 @@ public final class PlannerActivity extends Activity {
         return String.join(". ", reasons) + ".";
     }
 
-    private void generate(boolean rest, double costWeight, double effortWeight) {
-        if (busy || !ready) return;
-        if (rest && result != null) {
-            boolean[] chosen = new boolean[4];
-            for (DayPlanner.Choice c : result.choices) chosen[c.meal] = true;
-            runPlan(chosen, costWeight, effortWeight);
-            return;
-        }
-        final LocalDate day = date;
-        async(
-                () -> diary.getPlannerDayEntries(day),
-                logged -> {
-                    LinearLayout form = column();
-                    text(
-                            form,
-                            "Logged food will count toward today's totals. Select each meal you"
-                                    + " still want suggestions for, including partially eaten meals.",
-                            14,
-                            false);
-                    CheckBox[] options = new CheckBox[4];
-                    Set<Integer> eaten = new HashSet<>();
-                    for (FoodEntry e : logged) eaten.add(mealIndex(e.mealType));
-                    for (int m = 0; m < 4; m++) {
-                        options[m] =
-                                check(
-                                        form,
-                                        DayPlanner.mealName(m)
-                                                + (eaten.contains(m) ? " · has diary entries" : ""),
-                                        profile.meals[m] && (!rest || !eaten.contains(m)));
-                        options[m].setEnabled(profile.meals[m]);
-                    }
-                    dialog(
-                            "Which meals should I plan?",
-                            form,
-                            () -> {
-                                boolean[] selected = new boolean[4];
-                                for (int m = 0; m < 4; m++) {
-                                    selected[m] = options[m].isChecked();
-                                }
-                                runPlan(selected, costWeight, effortWeight);
-                                return true;
-                            });
-                    render();
-                });
-        render();
-    }
-
-    private void runPlan(boolean[] selected, double costWeight, double effortWeight) {
-        if (busy || !ready) return;
-        week = null;
-        final LocalDate day = date;
-        Map<Integer, DayPlanner.Choice> kept = new HashMap<>(locks);
-        Map<Integer, Set<String>> omitted = new HashMap<>();
-        for (Map.Entry<Integer, Set<String>> e : rejected.entrySet())
-            omitted.put(e.getKey(), new HashSet<>(e.getValue()));
-        async(
-                () -> {
-                    DayPlanner.Request r = buildRequest(day, selected);
-                    r.locked.putAll(kept);
-                    r.rejected.putAll(omitted);
-                    r.costWeight = costWeight;
-                    r.effortWeight = effortWeight;
-                    request = r;
-                    signature = planSignature(day, r);
-                    JSONObject saved = store.savedPlan(day);
-                    if (result == null
-                            && saved.optString("signature").equals(signature)
-                            && costWeight == 1
-                            && effortWeight == 1) {
-                        JSONArray list = saved.optJSONArray("choices");
-                        if (list != null)
-                            for (int i = 0; i < list.length(); i++) {
-                                JSONObject item = list.getJSONObject(i);
-                                MealRecipe recipe = catalog.find(item.getString("recipe"));
-                                int m = item.getInt("meal");
-                                if (recipe != null && r.remaining[m]) {
-                                    DayPlanner.Choice c =
-                                            new DayPlanner.Choice(
-                                                    m, recipe, item.getDouble("scale"));
-                                    r.locked.put(m, c);
-                                    if (item.optBoolean("locked")) {
-                                        kept.put(m, c);
-                                    }
-                                }
-                            }
-                    }
-                    long start = System.nanoTime();
-                    DayPlanner.Result plan = new DayPlanner().plan(catalog.recipes, r);
-                    AppLogger.i(
-                            "Planner generated meals="
-                                    + plan.choices.size()
-                                    + " ms="
-                                    + (System.nanoTime() - start) / 1000000);
-                    store.savePlan(day, plan, signature, kept.keySet());
-                    return plan;
-                },
-                plan -> {
-                    locks.clear();
-                    locks.putAll(kept);
-                    result = plan;
-                    render();
-                });
-        render();
+    private DayPlanner.Request buildStandardRequest() throws Exception {
+        return buildRequest(LocalDate.now(), store.profile().meals.clone(), true);
     }
 
     private DayPlanner.Request buildRequest(LocalDate day, boolean[] selected) throws Exception {
+        return buildRequest(day, selected, false);
+    }
+
+    private DayPlanner.Request buildRequest(LocalDate day, boolean[] selected, boolean standardMode)
+            throws Exception {
         profile = store.profile();
         ProfilePreferences pp = new ProfilePreferences(this);
         if (!pp.hasCompletedPersonalProfile())
@@ -526,7 +774,7 @@ public final class PlannerActivity extends Activity {
                     s.sugarLimitG,
                     0
                 };
-        entries = diary.getPlannerDayEntries(day);
+        entries = standardMode ? Collections.emptyList() : diary.getPlannerDayEntries(day);
         Arrays.fill(r.consumed, 0);
         for (FoodEntry e : entries) {
             r.consumed[0] += e.calories;
@@ -566,36 +814,8 @@ public final class PlannerActivity extends Activity {
         r.intent = new IntentModel(observations, day.toEpochDay());
         r.feedback.putAll(store.feedback());
         r.cancelled = () -> closed;
-        applyInventory(r, day);
+        if (!standardMode) applyInventory(r, day);
         return r;
-    }
-
-    private String planSignature(LocalDate day, DayPlanner.Request r) throws JSONException {
-        return day
-                + "|"
-                + Arrays.toString(r.targets)
-                + "|"
-                + Arrays.toString(r.consumed)
-                + "|"
-                + Arrays.toString(r.consumedByMeal)
-                + "|"
-                + store.profileIdentity()
-                + "|"
-                + r.intent.identity()
-                + "|"
-                + store.learningIdentity()
-                + "|"
-                + Arrays.toString(r.remaining)
-                + "|"
-                + store.personalRecipes()
-                + "|"
-                + store.extraFoods()
-                + "|"
-                + store.inventoryIdentity()
-                + "|"
-                + r.consumedCost
-                + "|"
-                + r.consumedCostKnown;
     }
 
     private void applyInventory(DayPlanner.Request r, LocalDate day) throws JSONException {
@@ -615,192 +835,11 @@ public final class PlannerActivity extends Activity {
         }
     }
 
-    private void persist() {
-        try {
-            if (result != null) store.savePlan(date, result, signature, locks.keySet());
-        } catch (Exception e) {
-            message("Unable to save the meal lock");
-        }
-    }
-
     private void openSetup(boolean rate) {
         Intent intent = new Intent(this, PreferenceSetupActivity.class);
         intent.putExtra("mode", rate ? "rate" : "preferences");
-        startActivity(intent);
-    }
-
-    private void preferences() {
-        LinearLayout form = column();
-        text(form, "Choose what fits your life", 19, true);
-        PlannerProfile draft;
-        try {
-            draft = store.profile();
-        } catch (Exception e) {
-            message("Unable to read preferences");
-            return;
-        }
-        Spinner diet =
-                spinner(
-                        form,
-                        "Eating pattern",
-                        new String[] {
-                            "All foods", "Vegetarian · no eggs", "Vegetarian + eggs", "Vegan"
-                        },
-                        draft.diet.ordinal());
-        EditText daily = input(form, "Daily budget ₹ (0 = not set)", draft.dailyBudget, true);
-        EditText weekly = input(form, "Weekly budget ₹ (0 = not set)", draft.weeklyBudget, true);
-        EditText prep =
-                input(form, "Maximum active preparation minutes", draft.maxPrepMinutes, true);
-        CheckBox cook = check(form, "I can cook meals", draft.canCook);
-        CheckBox learn =
-                check(
-                        form,
-                        "Learn gently from my diary and kept/swapped meals",
-                        draft.learnFromHistory);
-        button(form, "Allergies", () -> chooseTags(draft.allergies));
-        button(
-                form,
-                "Ingredients that do not suit me",
-                () -> chooseTags(draft.excludedIngredients));
-        text(form, "Choose meals to include", 15, true);
-        CheckBox[] meals = new CheckBox[4];
-        for (int m = 0; m < 4; m++) meals[m] = check(form, DayPlanner.mealName(m), draft.meals[m]);
-        Spinner largest =
-                spinner(
-                        form,
-                        "Preferred largest meal",
-                        new String[] {
-                            "Breakfast", "Lunch", "Snacks", "Dinner", "Let my diary guide portions"
-                        },
-                        draft.largestMeal < 0 ? 4 : draft.largestMeal);
-        Spinner cuisine =
-                spinner(
-                        form,
-                        "Preferred cuisine",
-                        new String[] {"Any", "Indian", "Andhra"},
-                        Math.max(
-                                0,
-                                Arrays.asList("Any", "Indian", "Andhra").indexOf(draft.cuisine)));
-
-        dialog(
-                "Eating preferences",
-                form,
-                () -> {
-                    try {
-                        draft.diet = PlannerProfile.Diet.values()[diet.getSelectedItemPosition()];
-                        draft.largestMeal =
-                                largest.getSelectedItemPosition() == 4
-                                        ? -1
-                                        : largest.getSelectedItemPosition();
-                        draft.cuisine = cuisine.getSelectedItem().toString();
-                        draft.dailyBudget = number(daily);
-                        draft.weeklyBudget = number(weekly);
-                        double minutes = number(prep);
-                        if (minutes != Math.rint(minutes))
-                            throw new IllegalArgumentException("Use whole preparation minutes");
-                        draft.maxPrepMinutes = (int) minutes;
-                        draft.canCook = cook.isChecked();
-                        draft.learnFromHistory = learn.isChecked();
-                        for (int m = 0; m < 4; m++) draft.meals[m] = meals[m].isChecked();
-                        store.saveProfile(draft);
-                        profile = draft;
-                        result = null;
-                        week = null;
-                        locks.clear();
-                        rejected.clear();
-                        render();
-                        return true;
-                    } catch (Exception e) {
-                        message(e.getMessage());
-                        return false;
-                    }
-                });
-    }
-
-    private void chooseTags(Set<String> selection) {
-        String[] tags = {
-            "dairy",
-            "egg",
-            "peanut",
-            "tree_nut",
-            "gluten",
-            "soy",
-            "fish",
-            "shellfish",
-            "sesame",
-            "meat",
-            "honey"
-        };
-        String[] labels = {
-            "Milk / dairy",
-            "Eggs",
-            "Peanuts",
-            "Tree nuts",
-            "Wheat / gluten (including uncertified oats)",
-            "Soy",
-            "Fish",
-            "Shellfish",
-            "Sesame",
-            "Meat / fish",
-            "Honey"
-        };
-        boolean[] checked = new boolean[tags.length];
-        for (int i = 0; i < tags.length; i++) checked[i] = selection.contains(tags[i]);
-        new AlertDialog.Builder(this)
-                .setTitle("Always exclude these ingredients")
-                .setMultiChoiceItems(
-                        labels,
-                        checked,
-                        (d, n, on) -> {
-                            if (on) selection.add(tags[n]);
-                            else selection.remove(tags[n]);
-                        })
-                .setPositiveButton("Done", null)
-                .show();
-    }
-
-    private void ratings() {
-        LinearLayout body = column();
-        text(
-                body,
-                "Your choices outrank learned habits. Avoid and Never are left out of automatic"
-                        + " plans.",
-                14,
-                false);
-        button(body, "Find a food to rate", () -> searchFood(false));
-        button(body, "Link familiar diary foods", this::linkFoods);
-        button(body, "Choose diary favorites to mark Love", this::importFavorites);
-        button(
-                body,
-                "Choose from my foods and meals",
-                () -> {
-                    List<String> ids = new ArrayList<>(suggestions.keySet());
-                    String[] names = ids.stream().map(suggestions::get).toArray(String[]::new);
-                    new AlertDialog.Builder(this)
-                            .setTitle("Foods and familiar meals")
-                            .setItems(names, (d, n) -> rate(ids.get(n), names[n]))
-                            .show();
-                });
-        for (Map.Entry<String, FoodPreference> e : profile.ratings.entrySet())
-            button(
-                    body,
-                    profile.ratingNames.getOrDefault(e.getKey(), e.getKey())
-                            + " · "
-                            + e.getValue().label,
-                    () ->
-                            rate(
-                                    e.getKey(),
-                                    profile.ratingNames.getOrDefault(e.getKey(), e.getKey())));
-        button(
-                body,
-                "Reset feedback learning",
-                () -> {
-                    store.resetLearning();
-                    message(
-                            "Feedback reset. Explicit preferences are kept. Turn off diary learning"
-                                    + " in Eating preferences if desired.");
-                });
-        dialog("Foods I like or avoid", body, null);
+        setupOpened = true;
+        startActivityForResult(intent, SETUP_REQUEST);
     }
 
     private void rate(String id, String name) {
@@ -823,12 +862,8 @@ public final class PlannerActivity extends Activity {
                                 }
                                 store.saveProfile(p);
                                 profile = p;
-                                result = null;
-                                week = null;
-                                locks.clear();
-                                rejected.clear();
                                 d.dismiss();
-                                render();
+                                load();
                             } catch (Exception e) {
                                 message("Unable to save this food choice");
                             }
@@ -929,11 +964,7 @@ public final class PlannerActivity extends Activity {
                         }
                         store.saveProfile(p);
                         profile = p;
-                        result = null;
-                        week = null;
-                        locks.clear();
-                        rejected.clear();
-                        render();
+                        load();
                         return true;
                     } catch (Exception e) {
                         message("Use valid non-negative prices");
@@ -967,11 +998,7 @@ public final class PlannerActivity extends Activity {
                                     profile = p;
                                 }
                                 message("Feedback saved");
-                                result = null;
-                                week = null;
-                                locks.clear();
-                                rejected.clear();
-                                render();
+                                load();
                             } catch (Exception e) {
                                 message("Unable to save feedback");
                             }
@@ -998,7 +1025,7 @@ public final class PlannerActivity extends Activity {
                 13,
                 false);
         dialog(
-                "Confirm " + c.recipe.name,
+                "Confirm " + c.recipe.name + " · " + date,
                 body,
                 () -> {
                     try {
@@ -1097,9 +1124,6 @@ public final class PlannerActivity extends Activity {
                                                     : "This meal is already recorded; no second"
                                                             + " stock deduction");
                                     result = null;
-                                    week = null;
-                                    locks.clear();
-                                    rejected.clear();
                                     load();
                                 });
                         return true;
@@ -1108,144 +1132,6 @@ public final class PlannerActivity extends Activity {
                         return false;
                     }
                 });
-    }
-
-    private void extendedControls(LinearLayout parent) {
-        LinearLayout actions = card(parent);
-        text(actions, "Plan ahead and use what you have", 18, true);
-        button(actions, "My recipes and ingredients", this::personalRecipes);
-        button(actions, "Pantry and pack prices", this::pantry);
-        button(actions, "Already prepared food", this::leftovers);
-        button(actions, "Generate seven-day menu", () -> generateWeek(false));
-        button(actions, "Open saved seven-day menu", () -> generateWeek(true));
-        button(actions, "Shopping list for the displayed plan", this::shopping);
-        if (week != null) {
-            text(actions, "Seven days · " + weekStart + " to " + weekStart.plusDays(6), 17, true);
-            text(
-                    actions,
-                    "Food consumed: "
-                            + money(week.consumedCost)
-                            + " · "
-                            + (week.budgetMet
-                                    ? "within estimated allocation"
-                                    : "estimated allocation exceeded")
-                            + (week.complete ? "" : " · some meals unavailable"),
-                    14,
-                    false);
-            for (int d = 0; d < 7; d++) {
-                final int index = d;
-                DayPlanner.Result daily = week.days.get(d);
-                button(
-                        actions,
-                        weekStart.plusDays(d)
-                                + " · "
-                                + Math.round(daily.totals[0])
-                                + " kcal · "
-                                + money(daily.cost),
-                        () -> {
-                            date = weekStart.plusDays(index);
-                            result = week.days.get(index);
-                            request = week.requests.get(index);
-                            locks.clear();
-                            rejected.clear();
-                            try {
-                                signature = planSignature(date, request);
-                            } catch (Exception e) {
-                                signature = "";
-                            }
-                            render();
-                        });
-            }
-        }
-    }
-
-    private String weekIdentity() throws JSONException {
-        return store.profileIdentity()
-                + store.learningIdentity()
-                + store.personalRecipes()
-                + store.extraFoods()
-                + store.inventoryIdentity();
-    }
-
-    private void generateWeek(boolean reuse) {
-        if (busy || !ready) return;
-        final LocalDate start = date.isAfter(LocalDate.now()) ? date : LocalDate.now().plusDays(1);
-        async(
-                () -> {
-                    JSONObject saved = store.week();
-                    LocalDate first = start;
-                    String identity = weekIdentity();
-                    if (reuse) {
-                        if (!saved.optString("identity").equals(identity) || !saved.has("start"))
-                            throw new IllegalArgumentException(
-                                    "Saved week is unavailable or your preferences/stock changed."
-                                            + " Generate a new week.");
-                        first = LocalDate.parse(saved.getString("start"));
-                        if (!first.isAfter(LocalDate.now()))
-                            throw new IllegalArgumentException(
-                                    "The saved week has started. Generate a fresh week or plan each"
-                                            + " remaining day.");
-                    }
-                    List<DayPlanner.Request> requests = new ArrayList<>();
-                    for (int d = 0; d < 7; d++) {
-                        LocalDate day = first.plusDays(d);
-                        DayPlanner.Request r = buildRequest(day, store.profile().meals.clone());
-                        if (!entries.isEmpty())
-                            throw new IllegalArgumentException(
-                                    day
-                                            + " already has diary entries. Plan it individually or"
-                                            + " choose another future starting day.");
-                        if (reuse) {
-                            JSONArray choices = saved.getJSONArray("days").getJSONArray(d);
-                            for (int i = 0; i < choices.length(); i++) {
-                                JSONObject c = choices.getJSONObject(i);
-                                MealRecipe recipe = catalog.find(c.getString("recipe"));
-                                if (recipe == null)
-                                    throw new IllegalArgumentException(
-                                            "A saved recipe is unavailable; generate a new week");
-                                int meal = c.getInt("meal");
-                                r.locked.put(
-                                        meal,
-                                        new DayPlanner.Choice(meal, recipe, c.getDouble("scale")));
-                            }
-                        }
-                        requests.add(r);
-                    }
-                    WeekPlanner.Result planned = new WeekPlanner().plan(catalog.recipes, requests);
-                    JSONArray days = new JSONArray();
-                    for (int d = 0; d < 7; d++) {
-                        JSONArray choices = new JSONArray();
-                        for (DayPlanner.Choice c : planned.days.get(d).choices)
-                            choices.put(
-                                    new JSONObject()
-                                            .put("recipe", c.recipe.id)
-                                            .put("meal", c.meal)
-                                            .put("scale", c.scale));
-                        days.put(choices);
-                        store.savePlan(
-                                first.plusDays(d),
-                                planned.days.get(d),
-                                planSignature(first.plusDays(d), requests.get(d)),
-                                Collections.emptySet());
-                    }
-                    store.saveWeek(
-                            new JSONObject()
-                                    .put("start", first.toString())
-                                    .put("identity", identity)
-                                    .put("days", days));
-                    AppLogger.i("Planner generated weekly meals=" + planned.meals().size());
-                    return new AbstractMap.SimpleImmutableEntry<>(first, planned);
-                },
-                planned -> {
-                    weekStart = planned.getKey();
-                    week = planned.getValue();
-                    result = null;
-                    week = null;
-                    locks.clear();
-                    rejected.clear();
-                    render();
-                });
-        render();
     }
 
     private Map<String, Double> pantryAmounts(JSONObject stock) throws JSONException {
@@ -1259,16 +1145,14 @@ public final class PlannerActivity extends Activity {
 
     private void shopping() {
         List<DayPlanner.Choice> chosen =
-                week != null
-                        ? week.meals()
-                        : result == null
-                                ? Collections.emptyList()
-                                : new ArrayList<>(result.choices);
+                standard == null
+                        ? Collections.emptyList()
+                        : new ArrayList<>(standard.selected.values());
         if (chosen.isEmpty()) {
-            message("Generate a daily or seven-day plan first");
+            message("Choose meals in your standard plan first");
             return;
         }
-        final String range = week != null ? "Seven days from " + weekStart : date.toString();
+        final String range = "One full set of your selected standard meals";
         async(
                 () -> {
                     JSONObject stock = store.pantry();
@@ -1411,11 +1295,7 @@ public final class PlannerActivity extends Activity {
                                 updated.put(e.getKey(), row);
                             }
                             store.savePantry(updated);
-                            result = null;
-                            week = null;
-                            locks.clear();
-                            rejected.clear();
-                            render();
+                            load();
                             return true;
                         } catch (Exception e) {
                             message(e.getMessage());
@@ -1535,11 +1415,7 @@ public final class PlannerActivity extends Activity {
                                                                 "revision",
                                                                 UUID.randomUUID().toString()));
                                     store.saveLeftovers(ready);
-                                    result = null;
-                                    week = null;
-                                    locks.clear();
-                                    rejected.clear();
-                                    render();
+                                    load();
                                     return true;
                                 } catch (Exception e) {
                                     message(e.getMessage());
@@ -1571,10 +1447,7 @@ public final class PlannerActivity extends Activity {
                                     JSONObject now = store.leftovers();
                                     now.remove(id);
                                     store.saveLeftovers(now);
-                                    result = null;
-                                    week = null;
-                                    locks.clear();
-                                    render();
+                                    load();
                                     message("Prepared portions removed");
                                 } catch (Exception e) {
                                     message("Unable to update prepared portions");
@@ -1642,11 +1515,7 @@ public final class PlannerActivity extends Activity {
                                                     else p.aliases.put(source, target);
                                                     store.saveProfile(p);
                                                     profile = p;
-                                                    result = null;
-                                                    week = null;
-                                                    locks.clear();
-                                                    rejected.clear();
-                                                    render();
+                                                    load();
                                                     message(
                                                             "Food link saved. Linked taste choices"
                                                                     + " and exclusions apply together;"
@@ -1688,11 +1557,7 @@ public final class PlannerActivity extends Activity {
                                     }
                                 store.saveProfile(p);
                                 profile = p;
-                                result = null;
-                                week = null;
-                                locks.clear();
-                                rejected.clear();
-                                render();
+                                load();
                                 message(
                                         "Selected unrated favorites marked Love; existing choices"
                                                 + " kept. Link unfamiliar entries to planning foods if"
@@ -1742,9 +1607,6 @@ public final class PlannerActivity extends Activity {
                                                                         current.getJSONObject(j));
                                                         store.saveRecipes(updated);
                                                         result = null;
-                                                        week = null;
-                                                        locks.clear();
-                                                        rejected.clear();
                                                         load();
                                                     } catch (Exception e) {
                                                         message("Unable to delete this recipe");
@@ -1787,9 +1649,6 @@ public final class PlannerActivity extends Activity {
                                     updated.remove(slug);
                                     store.saveExtraFoods(updated);
                                     result = null;
-                                    week = null;
-                                    locks.clear();
-                                    rejected.clear();
                                     load();
                                 } catch (Exception e) {
                                     message(e.getMessage());
@@ -1894,9 +1753,6 @@ public final class PlannerActivity extends Activity {
                         store.saveProfile(p);
                         profile = p;
                         result = null;
-                        week = null;
-                        locks.clear();
-                        rejected.clear();
                         load();
                         return true;
                     } catch (Exception e) {
@@ -1964,6 +1820,10 @@ public final class PlannerActivity extends Activity {
     }
 
     private void editRecipe(JSONObject existing) {
+        editRecipe(existing, -1);
+    }
+
+    private void editRecipe(JSONObject existing, int forMeal) {
         try {
             LinearLayout form = column();
             EditText name =
@@ -2013,7 +1873,9 @@ public final class PlannerActivity extends Activity {
                         check(
                                 form,
                                 DayPlanner.mealName(m),
-                                existing == null || (existing.getInt("meal_mask") & (1 << m)) != 0);
+                                existing == null
+                                        ? (forMeal < 0 || m == forMeal)
+                                        : (existing.getInt("meal_mask") & (1 << m)) != 0);
             List<String> slugs = new ArrayList<>(catalog.foods.keySet());
             List<IngredientRow> rows = new ArrayList<>();
             LinearLayout ingredients = column();
@@ -2083,18 +1945,44 @@ public final class PlannerActivity extends Activity {
                                             .put("cuisine", cuisine.getSelectedItem().toString())
                                             .put("yield_grams", number(yield))
                                             .put("ingredients", parts);
-                            catalog.readRecipe(recipe);
+                            MealRecipe created = catalog.readRecipe(recipe);
+                            if (forMeal >= 0 && !created.allowed(store.profile(), forMeal))
+                                throw new IllegalArgumentException(
+                                        "This recipe conflicts with your eating pattern, restrictions or cooking access. Edit its ingredients or preferences.");
                             JSONArray current = store.personalRecipes(), updated = new JSONArray();
                             for (int i = 0; i < current.length(); i++)
                                 if (!current.getJSONObject(i).getString("id").equals(id))
                                     updated.put(current.getJSONObject(i));
                             updated.put(recipe);
-                            store.saveRecipes(updated);
-                            result = null;
-                            week = null;
-                            locks.clear();
-                            rejected.clear();
-                            load();
+                            if (forMeal >= 0) {
+                                List<MealRecipe> all = new ArrayList<>(catalog.recipes);
+                                all.removeIf(r -> r.id.equals(id));
+                                all.add(created);
+                                async(
+                                        () -> {
+                                            DayPlanner.Request r = buildStandardRequest();
+                                            StandardPlan changed =
+                                                    StandardPlan.fromJson(
+                                                            store.standardPlan(), all, r);
+                                            if (changed == null) changed = new StandardPlan();
+                                            changed.choose(
+                                                    new DayPlanner.Choice(forMeal, created, 1),
+                                                    all,
+                                                    r);
+                                            store.saveRecipesAndStandardPlan(updated, changed);
+                                            return new Object[] {changed, r};
+                                        },
+                                        value -> {
+                                            catalog.recipes.clear();
+                                            catalog.recipes.addAll(all);
+                                            editingMeal = null;
+                                            acceptStandard(value);
+                                            message("This meal saved; other meal selections kept");
+                                        });
+                            } else {
+                                store.saveRecipes(updated);
+                                load();
+                            }
                             return true;
                         } catch (Exception e) {
                             message(e.getMessage());
@@ -2168,6 +2056,7 @@ public final class PlannerActivity extends Activity {
 
     private Button button(LinearLayout parent, String value, Runnable click) {
         Button b = new Button(this);
+        b.setEnabled(!busy);
         b.setText(value);
         b.setAllCaps(false);
         b.setTextColor(getColor(R.color.accent));
@@ -2186,6 +2075,7 @@ public final class PlannerActivity extends Activity {
     private EditText input(LinearLayout parent, String label, Object value, boolean numeric) {
         text(parent, label, 13, false);
         EditText e = new EditText(this);
+        e.setEnabled(!busy);
         e.setTextColor(getColor(R.color.text_primary));
         e.setHintTextColor(getColor(R.color.text_secondary));
         e.setSingleLine(true);
@@ -2203,6 +2093,7 @@ public final class PlannerActivity extends Activity {
 
     private CheckBox check(LinearLayout parent, String label, boolean value) {
         CheckBox c = new CheckBox(this);
+        c.setEnabled(!busy);
         c.setText(label);
         c.setTextColor(getColor(R.color.text_primary));
         c.setButtonTintList(ColorStateList.valueOf(getColor(R.color.accent)));
@@ -2219,6 +2110,15 @@ public final class PlannerActivity extends Activity {
 
     private static String money(double amount) {
         return String.format(Locale.getDefault(), "₹%.0f", amount);
+    }
+
+    private void setPlannerEnabled(View view, boolean enabled) {
+        view.setEnabled(enabled);
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++)
+                setPlannerEnabled(group.getChildAt(i), enabled);
+        }
     }
 
     private int dp(int n) {
@@ -2252,7 +2152,23 @@ public final class PlannerActivity extends Activity {
     protected void onSaveInstanceState(Bundle out) {
         out.putString("day", date.toString());
         out.putBoolean("setupOpened", setupOpened);
+        out.putBoolean("generateAfterSetup", generateAfterSetup);
+        if (editingMeal != null) out.putInt("editingMeal", editingMeal);
         super.onSaveInstanceState(out);
+    }
+
+    @Override
+    protected void onActivityResult(int code, int resultCode, Intent data) {
+        super.onActivityResult(code, resultCode, data);
+        if (code == SETUP_REQUEST && resultCode == RESULT_OK) generateAfterSetup = true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (editingMeal != null && !busy) {
+            editingMeal = null;
+            render();
+        } else if (!busy) super.onBackPressed();
     }
 
     @Override
@@ -2270,9 +2186,6 @@ public final class PlannerActivity extends Activity {
         busy = false;
         ready = false;
         result = null;
-        week = null;
-        locks.clear();
-        rejected.clear();
         super.onPause();
     }
 
@@ -2285,7 +2198,6 @@ public final class PlannerActivity extends Activity {
                     if (db != null) db.close();
                     if (diary != null) diary.close();
                 });
-        worker.shutdown();
         super.onDestroy();
     }
 }

@@ -98,11 +98,10 @@ public class PlannerStoreTest {
                 }
 
                 public boolean commit() {
-                    if (failCommit) return false;
                     if (clear) data.clear();
                     for (String k : removed) data.remove(k);
                     data.putAll(changes);
-                    return true;
+                    return !failCommit;
                 }
 
                 public void apply() {
@@ -120,6 +119,38 @@ public class PlannerStoreTest {
                         return memory;
                     }
                 });
+    }
+
+    @Test
+    public void recipeAndSelectedMealAreOneDurableCheckpoint() throws Exception {
+        Memory m = new Memory();
+        PlannerStore store = store(m);
+        StandardPlan plan = new StandardPlan();
+        JSONArray recipes = new JSONArray().put(new JSONObject().put("id", "personal:a"));
+        store.saveRecipesAndStandardPlan(recipes, plan);
+        assertEquals("personal:a", store(m).personalRecipes().getJSONObject(0).getString("id"));
+        assertEquals(1, store(m).standardPlan().getInt("schema"));
+        m.failCommit = true;
+        try {
+            store.saveRecipesAndStandardPlan(new JSONArray(), new StandardPlan());
+            fail();
+        } catch (IllegalStateException expected) {
+        }
+        assertEquals("personal:a", store(m).personalRecipes().getJSONObject(0).getString("id"));
+    }
+
+    @Test
+    public void failedFirstSaveRestoresMissingKeysEvenWhenAndroidUpdatedMemory() throws Exception {
+        Memory m = new Memory();
+        m.failCommit = true;
+        try {
+            store(m).saveSetup(new PlannerProfile(), new PreferenceSetup());
+            fail();
+        } catch (IllegalStateException expected) {
+        }
+        assertFalse(m.contains("profile"));
+        assertFalse(m.contains("setup"));
+        assertFalse(store(m).setup().completed);
     }
 
     @Test

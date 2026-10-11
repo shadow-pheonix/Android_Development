@@ -30,7 +30,15 @@ public final class PreferenceSetup {
     }
 
     public PreferenceSetup copy() throws JSONException {
-        return fromJson(toJson());
+        return fromJson(new JSONObject(toJson().toString()));
+    }
+
+    /** A completed worker save wins; otherwise preserve the form visible before interruption. */
+    public PreferenceSetup resumeDraft(PreferenceSetup visible, String persistedBefore)
+            throws JSONException {
+        return persistedBefore != null && !toJson().toString().equals(persistedBefore)
+                ? this
+                : visible;
     }
 
     public JSONObject toJson() throws JSONException {
