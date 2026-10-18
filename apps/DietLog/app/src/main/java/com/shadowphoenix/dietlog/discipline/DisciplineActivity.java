@@ -336,7 +336,7 @@ public final class DisciplineActivity extends Activity {
                 body,
                 DisciplineUi.text(
                         this,
-                        "Reminders and completion stay on this device. Marking a food reminder done does not add food to your diary.",
+                        "Reminders and completion are saved locally and shared with FuelNote. Marking a food reminder done does not add food to your diary.",
                         12,
                         DisciplineUi.MUTED,
                         false),
