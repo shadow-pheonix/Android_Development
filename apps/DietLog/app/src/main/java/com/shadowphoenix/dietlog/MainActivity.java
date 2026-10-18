@@ -32,6 +32,8 @@ import com.shadowphoenix.dietlog.data.FoodHistory;
 import com.shadowphoenix.dietlog.diagnostics.AppLogger;
 import com.shadowphoenix.dietlog.diagnostics.CrashHandler;
 import com.shadowphoenix.dietlog.diagnostics.DiagnosticsExporter;
+import com.shadowphoenix.dietlog.discipline.DisciplineActivity;
+import com.shadowphoenix.dietlog.shared.SharedAppData;
 import com.shadowphoenix.dietlog.food.CatalogFood;
 import com.shadowphoenix.dietlog.food.FoodPhotoLoader;
 import com.shadowphoenix.dietlog.food.FoodCatalogDb;
@@ -94,6 +96,20 @@ public final class MainActivity extends Activity {
     private static final double FAT_GOAL = 70.0;
     private static final String SERVING_PREFS = "serving_memory";
     private static final int BARCODE_SCAN_REQUEST = 2001;
+    public static final String EXTRA_DISCIPLINE_MEAL = "discipline_meal";
+    private final ExecutorService moduleExecutor = Executors.newSingleThreadExecutor();
+    private boolean moduleForeground;
+    private long moduleGeneration;
+    private String pendingDisciplineMeal;
+    private com.shadowphoenix.dietlog.discipline.ReminderStore sharedReminderStore;
+    private final Runnable reminderSummaryChanged = () -> refreshDisciplineSummary(false);
+    private final SharedPreferences.OnSharedPreferenceChangeListener reminderDataListener = (prefs, key) ->
+            runOnUiThread(() -> {
+                if (!moduleForeground || isDestroyed() || isFinishing()) return;
+                View summary = findViewById(R.id.homeDisciplineSummary);
+                summary.removeCallbacks(reminderSummaryChanged);
+                summary.postDelayed(reminderSummaryChanged, 150);
+            });
 
     private DiaryDbHelper diary;
     private FoodCatalogDb catalog;
@@ -207,6 +223,15 @@ public final class MainActivity extends Activity {
         configureDriveBackup();
         configureSupabaseBackup();
         configureDiagnostics();
+        sharedReminderStore = new com.shadowphoenix.dietlog.discipline.ReminderStore(this);
+        findViewById(R.id.homeAppSwitcher).setOnClickListener(v -> openAppChooser());
+        findViewById(R.id.profileAppSwitcher).setOnClickListener(v -> openAppChooser());
+        findViewById(R.id.homeOpenDiscipline).setOnClickListener(v -> {
+            startActivity(new Intent(this, DisciplineActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP));
+        });
+        pendingDisciplineMeal = savedInstanceState == null ? null : savedInstanceState.getString("discipline_pending_meal");
+        readDisciplineIntent(getIntent());
         findViewById(R.id.homeDietPlan).setOnClickListener(v -> openDietPlanner());
         findViewById(R.id.profileDietPlan).setOnClickListener(v -> openDietPlanner());
         configureDateNavigation();
@@ -329,12 +354,14 @@ public final class MainActivity extends Activity {
     private void continueStartup(Bundle restoredSetup) {
         if (new ProfilePreferences(this).hasCompletedPersonalProfile()) {
             showScreen(homeScreen, 0);
+            openPendingDisciplineMeal();
         } else {
             onboardingController = new OnboardingController(this, restoredSetup, () -> {
                 onboardingController = null;
                 profileController.reloadFromPreferences();
                 showScreen(homeScreen, 0);
-            }, () -> moveTaskToBack(true));
+                openPendingDisciplineMeal();
+            }, this::openAppChooser);
             findViewById(R.id.setupDiagnostics).setOnClickListener(v -> exportDiagnostics());
             AppLogger.i("First-run profile setup opened");
             showScreen(onboardingScreen, -1);
@@ -2811,6 +2838,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        if (sharedReminderStore != null) sharedReminderStore.registerListener(reminderDataListener);
         if (driveSyncStatusStore != null && driveSyncStatusListener != null) {
             driveSyncStatusStore.registerListener(driveSyncStatusListener);
         }
@@ -2819,6 +2847,8 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        moduleForeground = true;
+        refreshDisciplineSummary(true);
         if (uiMotion != null) uiMotion.setForeground(true);
         if (startupAnimation != null) startupAnimation.resume();
         if (driveAuthorizationPreparing) {
@@ -2833,10 +2863,12 @@ public final class MainActivity extends Activity {
         refreshDriveBackupUi();
         refreshSupabaseBackupUi();
         refreshAccountUi();
+        openPendingDisciplineMeal();
     }
 
     @Override
     protected void onStop() {
+        if (sharedReminderStore != null) sharedReminderStore.unregisterListener(reminderDataListener);
         if (driveSyncStatusStore != null && driveSyncStatusListener != null) {
             driveSyncStatusStore.unregisterListener(driveSyncStatusListener);
         }
@@ -2845,6 +2877,7 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("discipline_pending_meal", pendingDisciplineMeal);
         outState.putString("selected_date", selectedDate.toString());
         outState.putString("active_meal", activeMealType);
         if (onboardingController != null) outState.putBundle("profile_setup", onboardingController.saveState());
@@ -2878,11 +2911,11 @@ public final class MainActivity extends Activity {
     @Override
     public void onBackPressed() {
         if (!startupFinished) {
-            moveTaskToBack(true);
+            openAppChooser();
         } else if (startupChoiceScreen.getVisibility() == View.VISIBLE) {
-            moveTaskToBack(true);
+            openAppChooser();
         } else if (onboardingScreen.getVisibility() == View.VISIBLE) {
-            if (onboardingController == null || !onboardingController.goBack()) moveTaskToBack(true);
+            if (onboardingController == null || !onboardingController.goBack()) openAppChooser();
         } else if (editProfileScreen.getVisibility() == View.VISIBLE) {
             closeEditProfileScreen();
         } else if (accountScreen.getVisibility() == View.VISIBLE) {
@@ -2894,12 +2927,15 @@ public final class MainActivity extends Activity {
         } else if (homeScreen.getVisibility() != View.VISIBLE) {
             showScreen(homeScreen, 0);
         } else {
-            super.onBackPressed();
+            openAppChooser();
         }
     }
 
     @Override
     protected void onPause() {
+        moduleForeground = false;
+        moduleGeneration++;
+        findViewById(R.id.homeDisciplineSummary).removeCallbacks(reminderSummaryChanged);
         cancelLiveSearch();
         if (foodRequests != null && pendingSearchQuery != null) {
             searchNeedsReload = true;
@@ -2912,6 +2948,7 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        moduleExecutor.shutdownNow();
         cancelLiveSearch();
         FoodCatalogDb closingCatalog = catalog;
         if (foodRequests != null) foodRequests.close(() -> {
@@ -2927,5 +2964,60 @@ public final class MainActivity extends Activity {
         supabaseExecutor.shutdownNow();
         diary.close();
         super.onDestroy();
+    }
+
+    private void openAppChooser() {
+        startActivity(new Intent(this, AppHubActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP));
+        finish();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        readDisciplineIntent(intent);
+        openPendingDisciplineMeal();
+    }
+
+    private void readDisciplineIntent(Intent intent) {
+        if (intent == null) return;
+        String meal = intent.getStringExtra(EXTRA_DISCIPLINE_MEAL);
+        if (java.util.Arrays.asList("breakfast", "lunch", "snacks", "dinner").contains(meal))
+            pendingDisciplineMeal = meal;
+        intent.removeExtra(EXTRA_DISCIPLINE_MEAL);
+    }
+
+    private void openPendingDisciplineMeal() {
+        if (pendingDisciplineMeal == null || !startupFinished || startupChoiceController != null
+                || onboardingController != null || !new ProfilePreferences(this).hasCompletedPersonalProfile()) return;
+        String meal = pendingDisciplineMeal;
+        pendingDisciplineMeal = null;
+        selectDate(LocalDate.now());
+        openMealSearch(meal);
+    }
+
+    private void refreshDisciplineSummary(boolean reconcile) {
+        long token = ++moduleGeneration;
+        android.content.Context app = getApplicationContext();
+        moduleExecutor.execute(() -> {
+            String summary;
+            try {
+                if (reconcile) com.shadowphoenix.dietlog.discipline.ReminderScheduler.rescheduleAll(app);
+                SharedAppData.DisciplineSnapshot data = SharedAppData.loadDiscipline(app, LocalDate.now());
+                summary = data.scheduled == 0
+                        ? (data.enabled == 0 ? "Create food, skin, hair and everyday reminders"
+                                : "No routines scheduled today · " + data.enabled + " enabled")
+                        : data.completed + " of " + data.scheduled + " routines completed today";
+            } catch (Exception e) {
+                AppLogger.i("Shared reminder summary unavailable type=" + e.getClass().getSimpleName());
+                summary = "Open Discipline to review your routines";
+            }
+            String text = summary;
+            runOnUiThread(() -> {
+                if (!isDestroyed() && !isFinishing() && moduleForeground && token == moduleGeneration)
+                    ((TextView) findViewById(R.id.homeDisciplineSummary)).setText(text);
+            });
+        });
     }
 }

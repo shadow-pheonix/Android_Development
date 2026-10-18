@@ -22,6 +22,9 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 
 ## Current functionality
 
+- Launch into a choice of FuelNote and Discipline inside the same installed app. FuelNote keeps its green design; Discipline uses blue glass surfaces for food, skin/hair care and custom reminders. Both sections read shared local profile, diary, saved meal-plan and reminder data. [Behavior and delivery limits](DISCIPLINE.md).
+- Ingredient-first planner onboarding remains a [deferred draft](DRAFT_INGREDIENT_PREFERENCES.md); the existing recipe preference flow stays in place.
+
 - Add beside Breakfast, Lunch, Snacks or Dinner opens meal-specific Andhra food suggestions, with a separate background-loaded cache for each meal. Typed search still searches the entire offline catalogue.
 - Refined daily targets with optional measured body fat, lab resting calories, observed stable-weight maintenance intake and training type. [Calculation rules and sources](TARGET_CALCULATIONS.md) explain input priority, macro budgets, automatic/custom targets and age-specific estimates. Optional fields do not trigger setup for returning users.
 - Startup Google Drive sign-in restores existing backups before deciding whether personal-profile setup is needed. A valid saved profile opens Home directly; only missing/incomplete profiles need setup.
