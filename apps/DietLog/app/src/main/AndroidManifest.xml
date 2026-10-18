@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
     <application
         android:allowBackup="true"
@@ -13,8 +16,23 @@
         <activity android:name=".planner.PreferenceSetupActivity" android:exported="false" android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity android:name=".planner.PlannerActivity" android:exported="false" />
         <activity android:name=".BarcodeScannerActivity" android:exported="false" />
-        <activity android:name=".MainActivity" android:exported="true" android:theme="@style/LauncherTheme"
-            android:windowSoftInputMode="adjustResize|stateHidden">
+        <activity android:name=".discipline.DisciplineActivity" android:exported="false"
+            android:theme="@style/DisciplineTheme" android:windowSoftInputMode="adjustResize|stateHidden" />
+        <receiver android:name=".discipline.ReminderReceiver" android:exported="false" />
+        <receiver android:name=".discipline.ReminderActionReceiver" android:exported="false" />
+        <receiver android:name=".discipline.ReminderRescheduleReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+        <activity android:name=".MainActivity" android:exported="false" android:theme="@style/LauncherTheme"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+        <activity android:name=".AppHubActivity" android:exported="true" android:launchMode="singleTask"
+            android:theme="@style/DisciplineTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

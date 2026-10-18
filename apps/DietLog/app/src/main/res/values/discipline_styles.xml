@@ -1,0 +1,19 @@
+<resources>
+    <style name="DisciplineTheme" parent="AppTheme">
+        <item name="android:colorAccent">#79B3FF</item>
+        <item name="android:statusBarColor">#0A1120</item>
+        <item name="android:navigationBarColor">#0A1120</item>
+        <item name="android:windowBackground">@drawable/discipline_background</item>
+        <item name="android:alertDialogTheme">@style/DisciplineDialogTheme</item>
+        <item name="android:timePickerDialogTheme">@style/DisciplineDialogTheme</item>
+    </style>
+    <style name="DisciplineDialogTheme" parent="android:style/Theme.Material.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/discipline_dialog</item>
+        <item name="android:colorBackgroundFloating">#18263E</item>
+        <item name="android:colorAccent">#79B3FF</item>
+        <item name="android:textColorPrimary">#F2F6FF</item>
+        <item name="android:textColorSecondary">#C0CEE4</item>
+        <item name="android:backgroundDimAmount">0.65</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+    </style>
+</resources>

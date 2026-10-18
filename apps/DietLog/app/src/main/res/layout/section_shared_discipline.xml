@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/homeDisciplineCard" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:layout_marginTop="10dp" android:padding="16dp"
+    android:background="@drawable/discipline_dialog">
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Discipline · today"
+        android:textColor="#8ABBFF" android:textSize="18sp" android:textStyle="bold" />
+    <TextView android:id="@+id/homeDisciplineSummary" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="6dp" android:text="Food, skin, hair and everyday routines" android:textColor="@color/text_secondary" android:textSize="14sp" />
+    <TextView android:id="@+id/homeOpenDiscipline" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" android:minHeight="48dp" android:gravity="center_vertical" android:paddingStart="6dp" android:paddingEnd="6dp"
+        android:text="Open Discipline  →" android:textSize="14sp" android:textStyle="bold" android:textColor="#8ABBFF"
+        android:background="?android:attr/selectableItemBackground" android:clickable="true" android:focusable="true" />
+</LinearLayout>
