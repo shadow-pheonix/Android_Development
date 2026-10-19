@@ -19,6 +19,7 @@ public final class ReminderStore {
     static final Object LOCK = new Object();
     static final String KEY = "state";
     private final SharedPreferences prefs;
+    private final Context context;
 
     /** Snapshot of a completed activity; date is its original reminder day. */
     public static final class Completion {
@@ -45,6 +46,7 @@ public final class ReminderStore {
     }
 
     public ReminderStore(Context context) {
+        this.context = context;
         prefs = context.getSharedPreferences("dietlog_discipline", Context.MODE_PRIVATE);
     }
 
@@ -78,7 +80,7 @@ public final class ReminderStore {
 
     public void save(Reminder r) {
         Objects.requireNonNull(r);
-        if (r.id.length() > 80 || r.id.contains("~"))
+        if (r.id.length() > 80 || (r.id.contains("~") || r.id.contains("|")))
             throw new IllegalArgumentException("Invalid reminder ID");
         synchronized (LOCK) {
             JSONObject state = read(), rows = rows(state);
@@ -121,7 +123,9 @@ public final class ReminderStore {
                         put(activeSlots, occurrence.id, previousSlots.optJSONObject(occurrence.id));
             put(row, "slots", activeSlots);
             put(rows, r.id, row);
+            if (state.optJSONObject("deleted") != null) state.optJSONObject("deleted").remove(r.id);
             write(state);
+            changed();
         }
     }
 
@@ -179,6 +183,7 @@ public final class ReminderStore {
                 put(rows, reminder.id, row);
             }
             write(state);
+            changed();
         }
     }
 
@@ -187,7 +192,23 @@ public final class ReminderStore {
             JSONObject state = read();
             archiveMissed(state, id);
             rows(state).remove(id);
+            JSONObject deleted = state.optJSONObject("deleted");
+            if (deleted == null) {
+                deleted = new JSONObject();
+                put(state, "deleted", deleted);
+            }
+            put(deleted, id, System.currentTimeMillis());
+            while (deleted.length() > 2000) {
+                String oldest = null;
+                for (Iterator<String> it = deleted.keys(); it.hasNext(); ) {
+                    String key = it.next();
+                    if (oldest == null || deleted.optLong(key) < deleted.optLong(oldest))
+                        oldest = key;
+                }
+                deleted.remove(oldest);
+            }
             write(state);
+            changed();
         }
     }
 
@@ -249,7 +270,10 @@ public final class ReminderStore {
                         && missedByNow(row, date)
                         && !paused(row, date)) {
                     JSONObject missed = historyEntry(row, date, 0);
-                    put(missed, "outcome", "MISSED");
+                    put(
+                            missed,
+                            "outcome",
+                            done(row, date) ? "DONE" : skipped(row, date) ? "SKIPPED" : "MISSED");
                     result.add(new Completion(missed));
                 }
             }
@@ -306,6 +330,7 @@ public final class ReminderStore {
             if (complete && (skipped(row, date) || paused(row, LocalDate.now()))) return;
             complete(state, row, date, complete);
             write(state);
+            changed();
         }
     }
 
@@ -412,6 +437,7 @@ public final class ReminderStore {
             for (String key : Arrays.asList("pending", "primaryPending", "displayed", "snoozed"))
                 row.remove(key);
             write(state);
+            changed();
         }
     }
 
@@ -432,8 +458,10 @@ public final class ReminderStore {
                 JSONObject entry = historyEntry(row, date, System.currentTimeMillis());
                 put(entry, "outcome", "SKIPPED");
                 state.optJSONArray("history").put(entry);
+                outcomeUpdate(state, id, date, "SKIPPED");
             }
             write(state);
+            changed();
         }
     }
 
@@ -512,6 +540,168 @@ public final class ReminderStore {
         if (value && !found) entries.put(historyEntry(row, date, System.currentTimeMillis()));
         put(state, "history", entries);
         complete(row, date, value);
+        outcomeUpdate(state, row.optString("id"), date, value ? "DONE" : "OPEN");
+    }
+
+    private static void outcomeUpdate(JSONObject state, String id, LocalDate date, String outcome) {
+        JSONObject updates = state.optJSONObject("outcomeUpdates");
+        if (updates == null) {
+            updates = new JSONObject();
+            put(state, "outcomeUpdates", updates);
+        }
+        String key = id + "|" + date;
+        JSONObject previous = updates.optJSONObject(key), next = new JSONObject();
+        put(
+                next,
+                "at",
+                Math.max(
+                        System.currentTimeMillis(),
+                        previous == null ? 0 : previous.optLong("at") + 1));
+        put(next, "outcome", outcome);
+        put(updates, key, next);
+        List<String> keys = new ArrayList<>();
+        for (Iterator<String> it = updates.keys(); it.hasNext(); ) keys.add(it.next());
+        final JSONObject all = updates;
+        keys.sort(Comparator.comparingLong(k -> all.optJSONObject(k).optLong("at")));
+        for (int i = 0; i < Math.max(0, keys.size() - 5000); i++) updates.remove(keys.get(i));
+        for (String updateKey : keys)
+            if (LocalDate.parse(updateKey.substring(updateKey.lastIndexOf('|') + 1))
+                    .isBefore(LocalDate.now().minusDays(364))) updates.remove(updateKey);
+    }
+
+    void changed() {
+        try {
+            com.shadowphoenix.dietlog.sync.SyncCoordinator.markUserDataChanged(
+                    context, "discipline");
+        } catch (RuntimeException error) {
+            // Saving source data succeeded; a backup scheduler failure must not undo it.
+            com.shadowphoenix.dietlog.diagnostics.AppLogger.i(
+                    "Discipline backup scheduling deferred");
+        }
+    }
+
+    public JSONObject exportBackup() {
+        synchronized (LOCK) {
+            return ReminderBackup.source(read());
+        }
+    }
+
+    public boolean hasPendingRestore() {
+        synchronized (LOCK) {
+            return read().optJSONObject("restorePending") != null;
+        }
+    }
+
+    /**
+     * Cloud downloads stage source data; reminders only change after the user reviews the merge.
+     */
+    public void stageRestore(JSONObject remote) {
+        ReminderBackup.validate(remote);
+        synchronized (LOCK) {
+            JSONObject state = read();
+            String hash = ReminderBackup.digest(remote);
+            JSONArray seen = state.optJSONArray("restoreSeen");
+            if (seen == null) seen = new JSONArray();
+            for (int i = 0; i < seen.length(); i++) if (hash.equals(seen.optString(i))) return;
+            JSONObject pending = state.optJSONObject("restorePending");
+            JSONObject combined =
+                    pending == null
+                            ? ReminderBackup.copy(remote)
+                            : ReminderBackup.merge(pending, remote).merged;
+            try {
+                if (ReminderBackup.merge(ReminderBackup.source(state), combined).changed)
+                    put(state, "restorePending", combined);
+            } catch (IllegalArgumentException capacity) {
+                // Keep the downloaded source available for review after the user frees capacity.
+                put(state, "restorePending", combined);
+            }
+            seen.put(hash);
+            JSONArray retained = new JSONArray();
+            for (int i = Math.max(0, seen.length() - 200); i < seen.length(); i++)
+                retained.put(seen.optString(i));
+            put(state, "restoreSeen", retained);
+            write(state);
+        }
+    }
+
+    public static final class RestorePreview {
+        public final String token, description;
+
+        RestorePreview(String token, String description) {
+            this.token = token;
+            this.description = description;
+        }
+    }
+
+    public RestorePreview previewRestore() {
+        synchronized (LOCK) {
+            JSONObject state = read(), pending = state.optJSONObject("restorePending");
+            if (pending == null) return null;
+            JSONObject local = ReminderBackup.source(state);
+            ReminderBackup.Preview preview = ReminderBackup.merge(local, pending);
+            return new RestorePreview(
+                    ReminderBackup.digest(local) + ReminderBackup.digest(pending),
+                    preview.description());
+        }
+    }
+
+    public void applyRestore(String token) {
+        synchronized (LOCK) {
+            JSONObject state = read(), pending = state.optJSONObject("restorePending");
+            if (pending == null)
+                throw new IllegalStateException("There is no pending Discipline restore");
+            JSONObject local = ReminderBackup.source(state);
+            if (!(ReminderBackup.digest(local) + ReminderBackup.digest(pending)).equals(token))
+                throw new IllegalStateException(
+                        "Your data changed. Review the restore preview again");
+            JSONObject merged = ReminderBackup.merge(local, pending).merged;
+            JSONObject previousRows = rows(state),
+                    restoredRows = rows(merged),
+                    installed = new JSONObject();
+            for (Iterator<String> it = restoredRows.keys(); it.hasNext(); ) {
+                String id = it.next();
+                JSONObject source = restoredRows.optJSONObject(id),
+                        live = previousRows.optJSONObject(id);
+                if (live == null) {
+                    live = new JSONObject();
+                    put(live, "revision", UUID.randomUUID().toString());
+                }
+                JSONObject oldSlots = live.optJSONObject("slots");
+                for (Iterator<String> keys = source.keys(); keys.hasNext(); ) {
+                    String key = keys.next();
+                    if (!key.equals("slots")) put(live, key, source.opt(key));
+                }
+                JSONObject sourceSlots = source.optJSONObject("slots"), newSlots = new JSONObject();
+                if (sourceSlots != null)
+                    for (Iterator<String> si = sourceSlots.keys(); si.hasNext(); ) {
+                        String sid = si.next();
+                        JSONObject slot = oldSlots == null ? null : oldSlots.optJSONObject(sid);
+                        if (slot == null) slot = new JSONObject();
+                        JSONObject flags = sourceSlots.optJSONObject(sid);
+                        for (Iterator<String> fi = flags.keys(); fi.hasNext(); ) {
+                            String key = fi.next();
+                            put(slot, key, flags.opt(key));
+                        }
+                        put(newSlots, sid, slot);
+                    }
+                put(live, "slots", newSlots);
+                put(installed, id, live);
+            }
+            put(state, "reminders", installed);
+            for (String key : Arrays.asList("history", "deleted", "outcomeUpdates"))
+                put(state, key, merged.opt(key));
+            state.remove("restorePending");
+            write(state);
+            changed();
+        }
+    }
+
+    public void dismissRestore() {
+        synchronized (LOCK) {
+            JSONObject state = read();
+            state.remove("restorePending");
+            write(state);
+        }
     }
 
     private static JSONObject historyEntry(JSONObject row, LocalDate date, long completedAt) {

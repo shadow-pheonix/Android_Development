@@ -480,6 +480,7 @@ public final class ReminderScheduler {
             else if ("SNOOZE".equals(intent.getAction())) snoozeRow(row, shown, 15);
             else return;
             store.write(state);
+            if ("DONE".equals(intent.getAction())) store.changed();
             cancelNotification(context, intent.getStringExtra("id"));
             reconcile(context);
         }

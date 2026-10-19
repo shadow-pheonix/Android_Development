@@ -43,6 +43,10 @@ public final class BackupMergeEngine {
         }
         changed |= mergeProfilePreferences(appContext, snapshot);
         changed |= mergeServingPreferences(appContext, snapshot);
+        if(snapshot.discipline != null) {
+            try { new com.shadowphoenix.dietlog.discipline.ReminderStore(appContext).stageRestore(snapshot.discipline); }
+            catch(RuntimeException error) { AppLogger.i("Discipline restore staging deferred type="+error.getClass().getSimpleName()); }
+        }
         return changed;
     }
 

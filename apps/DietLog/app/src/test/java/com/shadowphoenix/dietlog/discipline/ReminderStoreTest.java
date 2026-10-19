@@ -927,4 +927,133 @@ public class ReminderStoreTest {
         assertEquals("Before bed", s.history(LocalDate.now()).get(0).routine);
         assertTrue(s.list().isEmpty());
     }
+
+    @Test
+    public void backupRoundTripStagesPreviewAndKeepsIndependentOccurrenceHistory() {
+        ReminderStore source = store(new Memory());
+        ReminderPlan plan =
+                new ReminderPlan(
+                        ReminderPlan.Mode.WEEKDAYS,
+                        null,
+                        null,
+                        1,
+                        List.of(),
+                        List.of(LocalTime.of(22, 0)),
+                        35);
+        source.createRoutine(
+                "Before bed", List.of("Read"), 8, 0, plan, Reminder.Category.CUSTOM, 127);
+        Reminder reminder = source.list().get(0);
+        String extra = reminder.occurrences().get(1).id;
+        LocalDate day = LocalDate.now();
+        source.setCompleted(reminder.id, day, true);
+        source.setSkipped(extra, day, true);
+        JSONObject state = source.read(),
+                row = ReminderStore.rows(state).optJSONObject(reminder.id),
+                pending = new JSONObject();
+        ReminderStore.put(pending, "token", "not-a-backup-token");
+        ReminderStore.put(row, "pending", pending);
+        source.write(state);
+        JSONObject backup = source.exportBackup();
+        assertFalse(backup.toString().contains("not-a-backup-token"));
+        ReminderStore target = store(new Memory());
+        target.stageRestore(backup);
+        assertTrue(target.list().isEmpty());
+        ReminderStore.RestorePreview preview = target.previewRestore();
+        assertNotNull(preview);
+        assertTrue(preview.description.contains("1 reminders to add"));
+        target.applyRestore(preview.token);
+        assertEquals(1, target.list().size());
+        assertEquals("Before bed", target.list().get(0).routine);
+        assertEquals(35, target.find(extra).plan.followupMinutes);
+        assertTrue(target.isCompleted(reminder.id, day));
+        assertTrue(target.isSkipped(extra, day));
+        assertEquals(2, target.history(day).size());
+        assertFalse(target.hasPendingRestore());
+        target.stageRestore(backup);
+        assertFalse(target.hasPendingRestore());
+    }
+
+    @Test
+    public void restoreDeduplicatesEquivalentRemindersAndMapsHistory() {
+        ReminderStore local = store(new Memory()), remote = store(new Memory());
+        LocalDate day = LocalDate.now();
+        local.save(r("local"));
+        remote.save(r("remote"));
+        remote.setCompleted("remote", day, true);
+        local.stageRestore(remote.exportBackup());
+        assertTrue(local.previewRestore().description.contains("1 matches"));
+        local.applyRestore(local.previewRestore().token);
+        assertEquals(1, local.list().size());
+        assertTrue(local.isCompleted("local", day));
+        assertEquals("local", local.history(day).get(0).reminderId);
+    }
+
+    @Test
+    public void staleBackupsCannotResurrectUndoOrDeletedReminders() {
+        ReminderStore local = store(new Memory());
+        LocalDate day = LocalDate.now();
+        local.save(r("a"));
+        local.setCompleted("a", day, true);
+        JSONObject older = local.exportBackup();
+        local.setCompleted("a", day, false);
+        local.stageRestore(older);
+        if (local.hasPendingRestore()) local.applyRestore(local.previewRestore().token);
+        assertFalse(local.isCompleted("a", day));
+        assertTrue(local.history(day).isEmpty());
+        local.delete("a");
+        local.stageRestore(older);
+        if (local.hasPendingRestore()) local.applyRestore(local.previewRestore().token);
+        assertNull(local.find("a"));
+        ReminderStore fresh = store(new Memory());
+        fresh.stageRestore(local.exportBackup());
+        if (fresh.hasPendingRestore()) fresh.applyRestore(fresh.previewRestore().token);
+        fresh.stageRestore(older);
+        if (fresh.hasPendingRestore()) fresh.applyRestore(fresh.previewRestore().token);
+        assertNull(fresh.find("a"));
+    }
+
+    @Test
+    public void restorePreviewDetectsLocalChangesAndFailedApplyKeepsPendingData() {
+        ReminderStore remote = store(new Memory());
+        remote.save(r("a"));
+        Memory memory = new Memory();
+        ReminderStore local = store(memory);
+        local.stageRestore(remote.exportBackup());
+        String stale = local.previewRestore().token;
+        local.save(
+                new Reminder("b", "Different", "", Reminder.Category.CUSTOM, 10, 0, 127, true, ""));
+        try {
+            local.applyRestore(stale);
+            fail();
+        } catch (IllegalStateException expected) {
+        }
+        assertNull(local.find("a"));
+        String token = local.previewRestore().token;
+        String before = memory.getString("state", null);
+        memory.failCommit = true;
+        try {
+            local.applyRestore(token);
+            fail();
+        } catch (IllegalStateException expected) {
+        }
+        assertEquals(before, memory.getString("state", null));
+        assertTrue(local.hasPendingRestore());
+        memory.failCommit = false;
+        local.applyRestore(token);
+        assertEquals(2, local.list().size());
+    }
+
+    @Test
+    public void restoreRetainsPauseDatesAndSkipsWithoutCompletingThem() {
+        ReminderStore source = store(new Memory());
+        source.save(r("a"));
+        source.setSkipped("a", LocalDate.now(), true);
+        source.pauseUntil("a", LocalDate.now().plusDays(5));
+        ReminderStore target = store(new Memory());
+        target.stageRestore(source.exportBackup());
+        target.applyRestore(target.previewRestore().token);
+        assertEquals(LocalDate.now().plusDays(5).toString(), target.pausedUntil("a"));
+        assertTrue(target.isSkipped("a", LocalDate.now()));
+        assertFalse(target.isCompleted("a", LocalDate.now()));
+    }
 }

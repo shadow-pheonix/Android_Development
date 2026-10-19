@@ -68,6 +68,7 @@ public final class DisciplineActivity extends Activity {
         "No meal link", "Breakfast", "Lunch", "Snacks", "Dinner"
     };
     private static final String[] MEAL_KEYS = {"", "breakfast", "lunch", "snacks", "dinner"};
+    private boolean restorePending;
     private boolean calendarView;
     private int calendarDays = 7;
     private final List<ConsistencyDay> calendarEntries = new ArrayList<>();
@@ -273,6 +274,7 @@ public final class DisciplineActivity extends Activity {
                     Map<String, LocalDate> carry = new HashMap<>();
                     List<ReminderStore.Completion> entries = new ArrayList<>();
                     String logError = null;
+                    boolean pendingRestore = false;
                     List<ConsistencyDay> calendar = new ArrayList<>();
                     String calendarFailure = null;
                     SharedAppData.FuelNoteSnapshot shared = null;
@@ -291,6 +293,7 @@ public final class DisciplineActivity extends Activity {
                     try {
                         ReminderStore store = new ReminderStore(app);
                         loaded = store.list();
+                        pendingRestore = store.hasPendingRestore();
                         Map<String, ReminderStore.OccurrenceState> states =
                                 store.statesForDate(date);
                         carry = store.outstandingDates(date);
@@ -331,6 +334,7 @@ public final class DisciplineActivity extends Activity {
                                 Draft.parse(
                                         app.getSharedPreferences(PREFS, MODE_PRIVATE)
                                                 .getString(DRAFT, null));
+                    boolean restoreResult = pendingRestore;
                     List<Reminder> result = loaded;
                     Map<String, Boolean> doneResult = done;
                     Map<String, LocalDate> carryResult = carry;
@@ -348,6 +352,7 @@ public final class DisciplineActivity extends Activity {
                                 if (!valid(token)) return;
                                 today = date;
                                 loading = false;
+                                restorePending = restoreResult;
                                 loadError = failure;
                                 if (reschedule) scheduleError = schedulingFailure;
                                 reminders.clear();
@@ -460,6 +465,7 @@ public final class DisciplineActivity extends Activity {
         renderCounts();
         renderNotificationStatus();
         renderFuelNote();
+        renderBackupStatus();
         TextView add = DisciplineUi.button(this, "+  Add reminder", this::newReminder);
         add.setEnabled(!busy && !loading && loadError == null);
         DisciplineUi.clickable(add, DisciplineUi.BLUE, true);
@@ -1119,6 +1125,66 @@ public final class DisciplineActivity extends Activity {
         DisciplineUi.add(card, DisciplineUi.text(this, detail, 14, DisciplineUi.MUTED, false), 8);
         DisciplineUi.add(
                 card, DisciplineUi.button(this, "Open FuelNote", () -> openFuelNote("")), 12);
+        DisciplineUi.add(body, card, 16);
+    }
+
+    private void renderBackupStatus() {
+        LinearLayout card = DisciplineUi.card(this);
+        DisciplineUi.add(
+                card,
+                DisciplineUi.text(
+                        this,
+                        restorePending
+                                ? "Restored reminders are ready to review"
+                                : "Back up Discipline",
+                        17,
+                        DisciplineUi.TEXT,
+                        true),
+                0);
+        boolean connected =
+                new com.shadowphoenix.dietlog.sync.drive.DriveConnectionStore(this)
+                                .getState()
+                                .connected
+                        || new com.shadowphoenix.dietlog.sync.supabase.SupabaseConnectionStore(this)
+                                .getState()
+                                .connected;
+        DisciplineUi.add(
+                card,
+                DisciplineUi.text(
+                        this,
+                        connected
+                                ? "Reminders, schedules, routines and activity use your connected"
+                                      + " FuelNote backup. Restored reminders wait for your merge"
+                                      + " preview."
+                                : "Connect Google Drive or Supabase in FuelNote → Profile → Manage"
+                                      + " account to back up reminders, schedules and activity.",
+                        13,
+                        DisciplineUi.MUTED,
+                        false),
+                8);
+        TextView review =
+                DisciplineUi.button(
+                        this, "Review restore preview", () -> ReminderRestoreUi.show(this));
+        review.setEnabled(!busy);
+        DisciplineUi.add(card, review, 10);
+        if (connected) {
+            TextView backup =
+                    DisciplineUi.button(
+                            this,
+                            "Back up now",
+                            () ->
+                                    mutate(
+                                            () -> {
+                                                com.shadowphoenix.dietlog.sync.SyncCoordinator
+                                                        .forceDirty(
+                                                                getApplicationContext(),
+                                                                "discipline-manual-backup");
+                                                return "Backup queued. It will run when the network"
+                                                           + " is available.";
+                                            }));
+            backup.setEnabled(!busy);
+            DisciplineUi.add(card, backup, 8);
+        }
         DisciplineUi.add(body, card, 16);
     }
 
