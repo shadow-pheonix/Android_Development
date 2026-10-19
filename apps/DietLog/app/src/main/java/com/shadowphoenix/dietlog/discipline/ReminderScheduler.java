@@ -182,7 +182,8 @@ public final class ReminderScheduler {
         JSONObject old = row.optJSONObject("pending"), shown = row.optJSONObject("displayed");
         if (shown != null
                 && LocalDate.parse(shown.optString("date"))
-                        .isBefore(now.atZone(zone).toLocalDate().minusDays(1))) {
+                        .isBefore(now.atZone(zone).toLocalDate().minusDays(1))
+                && shown.optLong("epoch") < now.toEpochMilli() - CATCHUP) {
             row.remove("displayed");
             shown = null;
         }
@@ -308,9 +309,8 @@ public final class ReminderScheduler {
         JSONObject state = store.read(), rows = ReminderStore.rows(state);
         Instant now = Instant.now();
         ZoneId zone = ZoneId.systemDefault();
-        List<AlarmChange> changes = new ArrayList<>();
         Set<String> validNotifications = new HashSet<>();
-        JSONArray installed = new JSONArray();
+        JSONArray candidates = new JSONArray();
         for (JSONObject row : ReminderStore.allRows(state)) {
             String id = row.optString("id");
             Reminder r = ReminderStore.reminder(row);
@@ -319,14 +319,14 @@ public final class ReminderScheduler {
             if (r.enabled && current(row, shown)) validNotifications.add(TAG_PREFIX + id);
             if (next == null) row.remove("pending");
             else ReminderStore.put(row, "pending", next);
-            changes.add(new AlarmChange(id, next));
             if (next != null) {
                 JSONObject entry = new JSONObject();
                 ReminderStore.put(entry, "id", id);
                 ReminderStore.put(entry, "occurrence", next);
-                installed.put(entry);
+                candidates.put(entry);
             }
         }
+        JSONArray installed = boundedAlarms(candidates);
         AlarmManager alarms = context.getSystemService(AlarmManager.class);
         // Keep cancellation work durable across a crash between the checkpoint and OS calls.
         JSONArray retired = state.optJSONArray("retired");
@@ -348,8 +348,10 @@ public final class ReminderScheduler {
                                     entry.optString("id"),
                                     entry.optJSONObject("occurrence")));
             }
-            for (AlarmChange change : changes)
-                if (change.next != null) install(context, alarms, change.id, change.next);
+            for (int i = 0; i < installed.length(); i++) {
+                JSONObject entry = installed.optJSONObject(i);
+                install(context, alarms, entry.optString("id"), entry.optJSONObject("occurrence"));
+            }
         }
         state.remove("retired");
         store.write(state);
@@ -370,14 +372,17 @@ public final class ReminderScheduler {
                         + notificationsAllowed(context));
     }
 
-    private static final class AlarmChange {
-        final String id;
-        final JSONObject next;
-
-        AlarmChange(String id, JSONObject next) {
-            this.id = id;
-            this.next = next;
-        }
+    /**
+     * Leave headroom below Android's per-UID alarm quota; later occurrences stay durably queued.
+     */
+    static JSONArray boundedAlarms(JSONArray candidates) {
+        List<JSONObject> ordered = new ArrayList<>();
+        for (int i = 0; i < candidates.length(); i++) ordered.add(candidates.optJSONObject(i));
+        ordered.sort(
+                Comparator.comparingLong(
+                                (JSONObject e) -> e.optJSONObject("occurrence").optLong("epoch"))
+                        .thenComparing(e -> e.optString("id")));
+        return new JSONArray(ordered.subList(0, Math.min(400, ordered.size())));
     }
 
     private static void install(

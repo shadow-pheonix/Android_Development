@@ -19,6 +19,7 @@ public final class ReminderPlan {
     public final int intervalDays, followupMinutes;
     public final SortedSet<LocalDate> dates;
     public final SortedSet<LocalTime> extraTimes;
+    public final Map<LocalTime, String> timeIds;
 
     public ReminderPlan(
             Mode mode,
@@ -28,6 +29,26 @@ public final class ReminderPlan {
             Collection<LocalDate> dates,
             Collection<LocalTime> extraTimes,
             int followupMinutes) {
+        this(
+                mode,
+                start,
+                end,
+                intervalDays,
+                dates,
+                extraTimes,
+                followupMinutes,
+                Collections.emptyMap());
+    }
+
+    public ReminderPlan(
+            Mode mode,
+            LocalDate start,
+            LocalDate end,
+            int intervalDays,
+            Collection<LocalDate> dates,
+            Collection<LocalTime> extraTimes,
+            int followupMinutes,
+            Map<LocalTime, String> retainedIds) {
         this.mode = Objects.requireNonNull(mode);
         if (end != null && start != null && end.isBefore(start))
             throw new IllegalArgumentException("End date must be on or after start date");
@@ -56,6 +77,35 @@ public final class ReminderPlan {
         this.followupMinutes = followupMinutes;
         this.dates = Collections.unmodifiableSortedSet(selected);
         this.extraTimes = Collections.unmodifiableSortedSet(times);
+        Map<LocalTime, String> identities = new TreeMap<>();
+        Set<String> used = new HashSet<>();
+        for (LocalTime time : times)
+            if (retainedIds.containsKey(time)) {
+                String id = retainedIds.get(time);
+                if (id == null || !id.matches("[a-z0-9]{1,8}") || !used.add(id))
+                    throw new IllegalArgumentException("Invalid scheduled time identity");
+                identities.put(time, id);
+            }
+        for (LocalTime time : times)
+            if (!identities.containsKey(time)) {
+                String id = String.valueOf(time.getHour() * 60 + time.getMinute());
+                while (used.contains(id)) id = UUID.randomUUID().toString().substring(0, 8);
+                used.add(id);
+                identities.put(time, id);
+            }
+        this.timeIds = Collections.unmodifiableMap(identities);
+    }
+
+    public ReminderPlan moveExtraTime(LocalTime from, LocalTime to) {
+        if (!extraTimes.contains(from) || extraTimes.contains(to))
+            throw new IllegalArgumentException("That time is unavailable");
+        TreeSet<LocalTime> times = new TreeSet<>(extraTimes);
+        times.remove(from);
+        times.add(to);
+        Map<LocalTime, String> ids = new HashMap<>(timeIds);
+        String id = ids.remove(from);
+        ids.put(to, id);
+        return new ReminderPlan(mode, start, end, intervalDays, dates, times, followupMinutes, ids);
     }
 
     public static ReminderPlan daily() {
@@ -88,6 +138,10 @@ public final class ReminderPlan {
         for (LocalTime t : extraTimes) times.put(t.toString());
         ReminderStore.put(j, "dates", selected);
         ReminderStore.put(j, "times", times);
+        JSONObject identities = new JSONObject();
+        for (Map.Entry<LocalTime, String> entry : timeIds.entrySet())
+            ReminderStore.put(identities, entry.getKey().toString(), entry.getValue());
+        ReminderStore.put(j, "timeIds", identities);
         return j;
     }
 
@@ -101,6 +155,19 @@ public final class ReminderPlan {
         if (ts != null)
             for (int i = 0; i < ts.length(); i++) times.add(LocalTime.parse(ts.optString(i)));
         String start = j.optString("start"), end = j.optString("end");
+        Map<LocalTime, String> ids = new HashMap<>();
+        JSONObject encodedIds = j.optJSONObject("timeIds");
+        if (encodedIds != null) {
+            if (encodedIds.length() > 7 || encodedIds.length() != times.size())
+                throw new IllegalArgumentException("Too many scheduled time identities");
+            for (Iterator<String> it = encodedIds.keys(); it.hasNext(); ) {
+                String key = it.next();
+                LocalTime time = LocalTime.parse(key);
+                if (!times.contains(time))
+                    throw new IllegalArgumentException("Invalid scheduled time identity");
+                ids.put(time, encodedIds.optString(key));
+            }
+        }
         return new ReminderPlan(
                 Mode.valueOf(j.optString("mode", "WEEKDAYS")),
                 start.isEmpty() ? null : LocalDate.parse(start),
@@ -108,6 +175,7 @@ public final class ReminderPlan {
                 j.optInt("interval", 1),
                 dates,
                 times,
-                j.optInt("followup", 60));
+                j.optInt("followup", 60),
+                ids);
     }
 }

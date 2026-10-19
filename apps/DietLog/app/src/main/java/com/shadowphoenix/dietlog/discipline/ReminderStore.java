@@ -309,15 +309,17 @@ public final class ReminderStore {
     }
 
     private static LocalDate outstandingDate(JSONObject row, LocalDate today) {
-        LocalDate yesterday = today.minusDays(1);
-        if (row == null
-                || !row.optBoolean("enabled")
-                || settled(row, yesterday)
-                || paused(row, today)) return null;
+        if (row == null || !row.optBoolean("enabled") || paused(row, today)) return null;
         for (String key : Arrays.asList("displayed", "pending", "snoozed")) {
             JSONObject occurrence = row.optJSONObject(key);
-            if (occurrence != null && yesterday.toString().equals(occurrence.optString("date")))
-                return yesterday;
+            if (occurrence == null) continue;
+            LocalDate date = LocalDate.parse(occurrence.optString("date"));
+            if (!date.isBefore(today) || settled(row, date)) continue;
+            if (date.equals(today.minusDays(1))
+                    || (date.equals(today.minusDays(2))
+                            && occurrence.optLong("epoch")
+                                    >= System.currentTimeMillis() - Duration.ofHours(6).toMillis()))
+                return date;
         }
         return null;
     }
@@ -580,6 +582,67 @@ public final class ReminderStore {
         }
     }
 
+    public List<TimingSuggestion> timingSuggestions() {
+        synchronized (LOCK) {
+            return TimingSuggestion.build(read(), Instant.now(), ZoneId.systemDefault());
+        }
+    }
+
+    public void dismissTimingSuggestion(String id) {
+        synchronized (LOCK) {
+            JSONObject state = read(), dismissed = state.optJSONObject("timingDismissed");
+            if (dismissed == null) {
+                dismissed = new JSONObject();
+                put(state, "timingDismissed", dismissed);
+            }
+            put(dismissed, id, System.currentTimeMillis() + Duration.ofDays(30).toMillis());
+            List<String> obsolete = new ArrayList<>();
+            for (Iterator<String> it = dismissed.keys(); it.hasNext(); ) {
+                String key = it.next();
+                if (dismissed.optLong(key) < System.currentTimeMillis()) obsolete.add(key);
+            }
+            for (String key : obsolete) dismissed.remove(key);
+            while (dismissed.length() > 2000) {
+                String first = dismissed.keys().next();
+                dismissed.remove(first);
+            }
+            write(state);
+        }
+    }
+
+    /** Called only by the explicit Change time confirmation. Rechecks evidence and schedule. */
+    public void applyTimingSuggestion(String token) {
+        synchronized (LOCK) {
+            JSONObject state = read();
+            TimingSuggestion chosen = null;
+            for (TimingSuggestion suggestion :
+                    TimingSuggestion.build(state, Instant.now(), ZoneId.systemDefault()))
+                if (suggestion.token.equals(token)) chosen = suggestion;
+            if (chosen == null)
+                throw new IllegalStateException("The suggestion changed. Please review it again");
+            Reminder parent = reminder(rows(state).optJSONObject(chosen.parentId));
+            ReminderPlan plan = parent.plan;
+            int hour = parent.hour, minute = parent.minute;
+            if (chosen.reminderId.equals(parent.id)) {
+                hour = chosen.proposed.getHour();
+                minute = chosen.proposed.getMinute();
+            } else plan = plan.moveExtraTime(chosen.current, chosen.proposed);
+            save(
+                    new Reminder(
+                            parent.id,
+                            parent.title,
+                            parent.notes,
+                            parent.category,
+                            hour,
+                            minute,
+                            parent.daysMask,
+                            parent.enabled,
+                            parent.mealKey,
+                            plan,
+                            parent.routine));
+        }
+    }
+
     public JSONObject exportBackup() {
         synchronized (LOCK) {
             return ReminderBackup.source(read());
@@ -785,6 +848,12 @@ public final class ReminderStore {
             for (Iterator<String> it = rows(state).keys(); it.hasNext(); ) {
                 JSONObject row = rows(state).optJSONObject(it.next());
                 if (!row.has("createdDate")) put(row, "createdDate", LocalDate.now().toString());
+                if (!row.optBoolean("enabled") && row.optJSONArray("pauses") == null) {
+                    JSONObject pause = new JSONObject();
+                    put(pause, "from", row.optString("createdDate"));
+                    put(pause, "until", "9999-12-31");
+                    put(row, "pauses", new JSONArray().put(pause));
+                }
             }
             return state;
         } catch (JSONException e) {
@@ -793,10 +862,15 @@ public final class ReminderStore {
     }
 
     void write(JSONObject state) {
+        boolean backupUpgrade = state.optInt("disciplineBackupVersion") < 3;
+        put(state, "disciplineBackupVersion", 3);
         ensureHistory(state);
         trimHistory(state);
         String before = prefs.getString(KEY, null);
-        if (prefs.edit().putString(KEY, state.toString()).commit()) return;
+        if (prefs.edit().putString(KEY, state.toString()).commit()) {
+            if (backupUpgrade && rows(state).length() > 0) changed();
+            return;
+        }
         SharedPreferences.Editor rollback = prefs.edit();
         if (before == null) rollback.remove(KEY);
         else rollback.putString(KEY, before);

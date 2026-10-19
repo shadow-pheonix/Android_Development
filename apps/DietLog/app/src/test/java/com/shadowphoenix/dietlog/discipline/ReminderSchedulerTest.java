@@ -258,4 +258,26 @@ public class ReminderSchedulerTest {
         assertEquals("PRIMARY", at(rows.get(1), "2026-10-19T08:01:00Z").optString("kind"));
         assertEquals(0, ReminderScheduler.deliveredStages(rows.get(1), MONDAY));
     }
+
+    @Test
+    public void largeMultiTimeSchedulesStayBelowAlarmQuotaAndKeepEarliestOccurrences()
+            throws Exception {
+        JSONArray candidates = new JSONArray();
+        for (int i = 1599; i >= 0; i--)
+            candidates.put(
+                    new JSONObject()
+                            .put("id", "slot" + i)
+                            .put(
+                                    "occurrence",
+                                    new JSONObject()
+                                            .put("epoch", i + 1000L)
+                                            .put("token", "t" + i)));
+        JSONArray installed = ReminderScheduler.boundedAlarms(candidates);
+        assertEquals(400, installed.length());
+        assertEquals("slot0", installed.getJSONObject(0).getString("id"));
+        assertEquals("slot399", installed.getJSONObject(399).getString("id"));
+        assertEquals(1600, candidates.length());
+        assertEquals(
+                "t0", installed.getJSONObject(0).getJSONObject("occurrence").getString("token"));
+    }
 }

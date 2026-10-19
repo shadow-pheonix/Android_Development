@@ -105,7 +105,7 @@ public final class Reminder {
             if (time.equals(LocalTime.of(hour, minute))) continue;
             values.add(
                     new Reminder(
-                            id + "~" + (time.getHour() * 60 + time.getMinute()),
+                            id + "~" + plan.timeIds.get(time),
                             title,
                             notes,
                             category,

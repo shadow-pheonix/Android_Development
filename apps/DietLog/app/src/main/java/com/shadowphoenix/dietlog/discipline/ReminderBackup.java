@@ -41,7 +41,7 @@ public final class ReminderBackup {
         JSONObject out = new JSONObject(), reminders = new JSONObject();
         for (Iterator<String> it = ReminderStore.rows(state).keys(); it.hasNext(); ) {
             String id = it.next();
-            JSONObject row = ReminderStore.rows(state).optJSONObject(id);
+            JSONObject row = copy(ReminderStore.rows(state).optJSONObject(id));
             ReminderStore.occurrenceRows(row);
             ReminderStore.put(reminders, id, cleanRow(row));
         }
@@ -276,6 +276,18 @@ public final class ReminderBackup {
                 details.add("Merge history · " + row.optString("title") + " (keep local schedule)");
             }
             identities.put(id, target);
+            Reminder imported = ReminderStore.reminder(row),
+                    existing = ReminderStore.reminder(rows.optJSONObject(target));
+            List<Reminder> existingTimes = existing.occurrences();
+            for (Reminder occurrence : imported.occurrences()) {
+                boolean sameId = false;
+                for (Reminder time : existingTimes)
+                    if (time.id.equals(occurrence.id)) sameId = true;
+                if (sameId && id.equals(target)) continue;
+                for (Reminder time : existingTimes)
+                    if (time.hour == occurrence.hour && time.minute == occurrence.minute)
+                        identities.put(occurrence.id, time.id);
+            }
         }
         if (deleted.length() > 2000) {
             List<String> keys = sortedKeys(deleted);
@@ -403,6 +415,7 @@ public final class ReminderBackup {
     }
 
     private static String mapId(String id, Map<String, String> ids) {
+        if (ids.containsKey(id)) return ids.get(id);
         int split = id.indexOf('~');
         String parent = split < 0 ? id : id.substring(0, split);
         return ids.getOrDefault(parent, parent) + (split < 0 ? "" : id.substring(split));
@@ -427,6 +440,12 @@ public final class ReminderBackup {
                         "meal",
                         "plan",
                         "routine")) ReminderStore.put(config, key, row.opt(key));
+        JSONObject plan = config.optJSONObject("plan");
+        if (plan != null) {
+            plan = copy(plan);
+            plan.remove("timeIds");
+            ReminderStore.put(config, "plan", plan);
+        }
         ReminderStore.put(config, "title", row.optString("title").trim().toLowerCase(Locale.ROOT));
         ReminderStore.put(config, "routine", Reminder.routineKey(row.optString("routine")));
         return digest(config);
