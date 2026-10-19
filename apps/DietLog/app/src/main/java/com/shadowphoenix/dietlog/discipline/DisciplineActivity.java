@@ -68,6 +68,10 @@ public final class DisciplineActivity extends Activity {
         "No meal link", "Breakfast", "Lunch", "Snacks", "Dinner"
     };
     private static final String[] MEAL_KEYS = {"", "breakfast", "lunch", "snacks", "dinner"};
+    private boolean calendarView;
+    private int calendarDays = 7;
+    private final List<ConsistencyDay> calendarEntries = new ArrayList<>();
+    private String calendarError;
     private String routineView = "";
     private LinearLayout body;
     private final List<Reminder> reminders = new ArrayList<>();
@@ -150,6 +154,8 @@ public final class DisciplineActivity extends Activity {
             filter = state.getInt("filter", -1);
             routineView = state.getString("routineView", "");
             historyView = state.getBoolean("historyView", false);
+            calendarView = state.getBoolean("calendarView", false);
+            calendarDays = state.getInt("calendarDays", 7) == 30 ? 30 : 7;
             historyFollowsToday = state.getBoolean("historyFollowsToday", true);
             try {
                 historyDate =
@@ -167,6 +173,7 @@ public final class DisciplineActivity extends Activity {
         if (getIntent() != null && getIntent().hasExtra("reminder_id")) {
             filter = -1;
             historyView = false;
+            calendarView = false;
         }
         body = DisciplineUi.page(this, R.drawable.discipline_background);
         render();
@@ -224,6 +231,8 @@ public final class DisciplineActivity extends Activity {
         out.putInt("filter", filter);
         out.putString("routineView", routineView);
         out.putBoolean("historyView", historyView);
+        out.putBoolean("calendarView", calendarView);
+        out.putInt("calendarDays", calendarDays);
         out.putBoolean("historyFollowsToday", historyFollowsToday);
         out.putString("historyDate", historyDate.toString());
         out.putBoolean("draftLoaded", !savingEditor && draftLoaded);
@@ -238,6 +247,7 @@ public final class DisciplineActivity extends Activity {
         if (intent != null && intent.hasExtra("reminder_id")) {
             filter = -1;
             historyView = false;
+            calendarView = false;
         }
         if (active) refresh();
     }
@@ -249,6 +259,7 @@ public final class DisciplineActivity extends Activity {
     private void refresh(boolean reschedule) {
         final int token = ++generation;
         final LocalDate date = LocalDate.now();
+        final int days = calendarDays;
         final LocalDate logDate = historyFollowsToday ? date : historyDate;
         historyLoading = true;
         final boolean readDraft = reschedule && !draftLoaded;
@@ -262,6 +273,8 @@ public final class DisciplineActivity extends Activity {
                     Map<String, LocalDate> carry = new HashMap<>();
                     List<ReminderStore.Completion> entries = new ArrayList<>();
                     String logError = null;
+                    List<ConsistencyDay> calendar = new ArrayList<>();
+                    String calendarFailure = null;
                     SharedAppData.FuelNoteSnapshot shared = null;
                     String error = null, sharedError = null, scheduleFailure = null;
                     if (reschedule) {
@@ -303,6 +316,11 @@ public final class DisciplineActivity extends Activity {
                         logError = "Couldn’t load your activity log. Tap Retry.";
                     }
                     try {
+                        calendar = new ReminderStore(app).calendar(days);
+                    } catch (Exception e) {
+                        calendarFailure = "Couldn’t load consistency. Please retry.";
+                    }
+                    try {
                         shared = SharedAppData.loadFuelNote(app, date);
                     } catch (Exception e) {
                         AppLogger.e("Discipline shared nutrition load failed", e);
@@ -318,6 +336,8 @@ public final class DisciplineActivity extends Activity {
                     Map<String, LocalDate> carryResult = carry;
                     List<ReminderStore.Completion> logResult = entries;
                     String logFailure = logError;
+                    List<ConsistencyDay> calendarResult = calendar;
+                    String calendarProblem = calendarFailure;
                     SharedAppData.FuelNoteSnapshot sharedResult = shared;
                     String failure = error,
                             sharedFailure = sharedError,
@@ -348,6 +368,9 @@ public final class DisciplineActivity extends Activity {
                                 skips.putAll(skipped);
                                 carriedDates.clear();
                                 carriedDates.putAll(carryResult);
+                                calendarEntries.clear();
+                                calendarEntries.addAll(calendarResult);
+                                calendarError = calendarProblem;
                                 historyDate = logDate;
                                 historyEntries.clear();
                                 historyEntries.addAll(logResult);
@@ -392,6 +415,10 @@ public final class DisciplineActivity extends Activity {
                         false),
                 6);
         renderViewTabs();
+        if (calendarView) {
+            renderCalendar();
+            return;
+        }
         if (historyView) {
             renderHistory();
             return;
@@ -513,23 +540,205 @@ public final class DisciplineActivity extends Activity {
                         "Routines",
                         () -> {
                             historyView = false;
+                            calendarView = false;
                             render();
                         });
         TextView log =
                 DisciplineUi.button(
                         this,
-                        "Daily activity log",
+                        "Activity",
                         () -> {
                             historyView = true;
+                            calendarView = false;
                             render();
                         });
-        DisciplineUi.clickable(routines, DisciplineUi.BLUE, !historyView);
+        DisciplineUi.clickable(routines, DisciplineUi.BLUE, !historyView && !calendarView);
         DisciplineUi.clickable(log, DisciplineUi.BLUE, historyView);
-        routines.setSelected(!historyView);
+        routines.setSelected(!historyView && !calendarView);
         log.setSelected(historyView);
         DisciplineUi.weighted(tabs, routines, 0);
+        TextView calendar =
+                DisciplineUi.button(
+                        this,
+                        "Consistency",
+                        () -> {
+                            calendarView = true;
+                            historyView = false;
+                            refresh(false);
+                            render();
+                        });
+        DisciplineUi.clickable(calendar, DisciplineUi.BLUE, calendarView);
+        calendar.setSelected(calendarView);
+        DisciplineUi.weighted(tabs, calendar, 8);
         DisciplineUi.weighted(tabs, log, 8);
         DisciplineUi.add(body, tabs, 20);
+    }
+
+    private void renderCalendar() {
+        DisciplineUi.add(
+                body, DisciplineUi.text(this, "Your consistency", 24, DisciplineUi.TEXT, true), 22);
+        LinearLayout range = DisciplineUi.row(this);
+        for (int days : new int[] {7, 30}) {
+            TextView choice =
+                    DisciplineUi.button(
+                            this,
+                            days + " days",
+                            () -> {
+                                calendarDays = days;
+                                refresh(false);
+                                render();
+                            });
+            choice.setEnabled(!busy);
+            DisciplineUi.clickable(choice, DisciplineUi.BLUE, calendarDays == days);
+            DisciplineUi.weighted(range, choice, range.getChildCount() == 0 ? 0 : 8);
+        }
+        DisciplineUi.add(body, range, 12);
+        DisciplineUi.add(
+                body,
+                DisciplineUi.text(
+                        this,
+                        "Done · blue    Skip · amber    Missed · rose\n"
+                            + "Paused days are excluded. Today’s unfinished steps remain open. Tap"
+                            + " a date for activity.",
+                        13,
+                        DisciplineUi.MUTED,
+                        false),
+                12);
+        if (historyLoading) {
+            DisciplineUi.add(
+                    body,
+                    DisciplineUi.text(this, "Loading consistency…", 15, DisciplineUi.MUTED, false),
+                    18);
+            return;
+        }
+        if (calendarError != null) {
+            DisciplineUi.add(
+                    body, DisciplineUi.text(this, calendarError, 15, DisciplineUi.TEXT, false), 18);
+            DisciplineUi.add(body, DisciplineUi.button(this, "Retry", () -> refresh(false)), 8);
+            return;
+        }
+        int complete = 0, skips = 0;
+        for (ConsistencyDay day : calendarEntries) {
+            complete += day.completedRoutines();
+            skips += day.skipped;
+        }
+        DisciplineUi.add(
+                body,
+                DisciplineUi.text(
+                        this,
+                        complete + " routines completed · " + skips + " deliberate skips",
+                        15,
+                        DisciplineUi.BLUE,
+                        true),
+                16);
+        renderCalendarGrid();
+        for (int i = calendarEntries.size() - 1; i >= 0; i--) {
+            ConsistencyDay day = calendarEntries.get(i);
+            LinearLayout card = DisciplineUi.card(this);
+            TextView date =
+                    DisciplineUi.button(
+                            this,
+                            day.date.format(DateTimeFormatter.ofPattern("EEE, d MMM"))
+                                    + " · "
+                                    + calendarMark(day),
+                            calendarColor(day),
+                            () -> selectHistoryDate(day.date));
+            date.setEnabled(!busy);
+            DisciplineUi.add(card, date, 0);
+            if (day.expected == 0)
+                DisciplineUi.add(
+                        card,
+                        DisciplineUi.text(
+                                this,
+                                day.paused > 0 ? "Paused · excluded" : "No scheduled activity",
+                                13,
+                                DisciplineUi.MUTED,
+                                false),
+                        6);
+            for (ConsistencyDay.RoutineProgress routine : day.routines) {
+                String detail =
+                        routine.name + " · " + routine.done + "/" + routine.expected + " done";
+                if (routine.skipped > 0) detail += " · " + routine.skipped + " skipped";
+                if (routine.missed > 0) detail += " · " + routine.missed + " missed";
+                if (routine.open > 0) detail += " · " + routine.open + " open";
+                DisciplineUi.add(
+                        card,
+                        DisciplineUi.text(
+                                this,
+                                detail,
+                                13,
+                                routine.complete() ? DisciplineUi.BLUE : DisciplineUi.MUTED,
+                                false),
+                        8);
+            }
+            DisciplineUi.add(body, card, 12);
+        }
+    }
+
+    private void renderCalendarGrid() {
+        if (calendarEntries.isEmpty()) return;
+        HorizontalScrollView scroll = new HorizontalScrollView(this);
+        scroll.setFillViewport(true);
+        LinearLayout grid = DisciplineUi.column(this);
+        grid.setMinimumWidth(DisciplineUi.dp(this, 7 * 48 + 12));
+        LinearLayout headings = DisciplineUi.row(this);
+        for (String label : new String[] {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"})
+            DisciplineUi.weighted(
+                    headings, DisciplineUi.text(this, label, 11, DisciplineUi.MUTED, true), 0);
+        DisciplineUi.add(grid, headings, 8);
+        int offset = calendarEntries.get(0).date.getDayOfWeek().getValue() - 1;
+        int cells = ((offset + calendarEntries.size() + 6) / 7) * 7;
+        LinearLayout row = null;
+        for (int i = 0; i < cells; i++) {
+            if (i % 7 == 0) {
+                row = DisciplineUi.row(this);
+                DisciplineUi.add(grid, row, 6);
+            }
+            int index = i - offset;
+            if (index < 0 || index >= calendarEntries.size()) {
+                DisciplineUi.weighted(row, new View(this), i % 7 == 0 ? 0 : 2);
+                continue;
+            }
+            ConsistencyDay day = calendarEntries.get(index);
+            TextView cell =
+                    DisciplineUi.button(
+                            this,
+                            day.date.format(DateTimeFormatter.ofPattern("d MMM"))
+                                    + "\n"
+                                    + calendarMark(day),
+                            calendarColor(day),
+                            () -> selectHistoryDate(day.date));
+            cell.setTextSize(10);
+            cell.setMinWidth(DisciplineUi.dp(this, 48));
+            cell.setEnabled(!busy);
+            cell.setPadding(0, DisciplineUi.dp(this, 8), 0, DisciplineUi.dp(this, 8));
+            cell.setContentDescription(
+                    day.date
+                            + ": "
+                            + day.done
+                            + " done, "
+                            + day.skipped
+                            + " skipped, "
+                            + day.missed
+                            + " missed, "
+                            + day.paused
+                            + " paused. Open activity");
+            DisciplineUi.weighted(row, cell, i % 7 == 0 ? 0 : 2);
+        }
+        scroll.addView(grid);
+        DisciplineUi.add(body, scroll, 12);
+    }
+
+    private String calendarMark(ConsistencyDay day) {
+        if (day.expected == 0) return day.paused > 0 ? "Paused" : "—";
+        return day.done + "/" + day.expected + (day.skipped > 0 ? " · S" + day.skipped : "");
+    }
+
+    private int calendarColor(ConsistencyDay day) {
+        if (day.expected > 0 && day.done == day.expected) return DisciplineUi.BLUE;
+        if (day.skipped > 0) return 0xFFFFCF83;
+        if (day.missed > 0) return 0xFFFFB9BB;
+        return DisciplineUi.MUTED;
     }
 
     private void renderHistory() {
@@ -707,6 +916,8 @@ public final class DisciplineActivity extends Activity {
     private void selectHistoryDate(LocalDate date) {
         if (busy || date.isAfter(LocalDate.now()) || date.isBefore(LocalDate.now().minusDays(364)))
             return;
+        calendarView = false;
+        historyView = true;
         historyDate = date;
         historyFollowsToday = date.equals(LocalDate.now());
         refresh(false);
@@ -1404,6 +1615,11 @@ public final class DisciplineActivity extends Activity {
 
     @Override
     public void onBackPressed() {
+        if (calendarView) {
+            calendarView = false;
+            render();
+            return;
+        }
         if (historyView) {
             historyView = false;
             render();

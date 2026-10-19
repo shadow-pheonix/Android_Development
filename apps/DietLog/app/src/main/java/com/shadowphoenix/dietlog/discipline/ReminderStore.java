@@ -209,6 +209,22 @@ public final class ReminderStore {
         }
     }
 
+    public List<ConsistencyDay> calendar(int days) {
+        if (days != 7 && days != 30) throw new IllegalArgumentException("Choose 7 or 30 days");
+        synchronized (LOCK) {
+            JSONObject snapshot = read();
+            List<JSONObject> occurrences = allRows(snapshot);
+            List<ConsistencyDay> result = new ArrayList<>();
+            LocalDate today = LocalDate.now();
+            Instant now = Instant.now();
+            ZoneId zone = ZoneId.systemDefault();
+            for (int i = days - 1; i >= 0; i--)
+                result.add(
+                        ConsistencyDay.build(snapshot, occurrences, today.minusDays(i), now, zone));
+            return result;
+        }
+    }
+
     public List<Completion> history(LocalDate date) {
         Objects.requireNonNull(date);
         if (date.isBefore(LocalDate.now().minusDays(364))) return Collections.emptyList();
