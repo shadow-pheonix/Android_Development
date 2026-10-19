@@ -22,6 +22,8 @@ See `apps/DietLog/AGENTS.md` for the app-specific mandatory handoff reminder.
 
 ## Current functionality
 
+- Home starts with the diary date, daily nutrition and food log. Profile holds the app switcher, diet-plan shortcut and live Discipline summary.
+
 - Shared in-app GitHub release updates with automatic foreground checks, verified APK download and Android installation confirmation. [Update behavior and release contract](APP_UPDATES.md).
 
 - Launch into a choice of FuelNote and Discipline inside the same installed app. FuelNote keeps its green design; Discipline uses blue glass surfaces for food, supplements, skin/hair care and custom reminders, with one-hour follow-ups and a daily completion log. Both sections read shared local profile, diary, saved meal-plan and reminder data. [Behavior and delivery limits](DISCIPLINE.md).
