@@ -106,7 +106,7 @@ public final class MainActivity extends Activity {
     private final SharedPreferences.OnSharedPreferenceChangeListener reminderDataListener = (prefs, key) ->
             runOnUiThread(() -> {
                 if (!moduleForeground || isDestroyed() || isFinishing()) return;
-                View summary = findViewById(R.id.homeDisciplineSummary);
+                View summary = findViewById(R.id.profileDisciplineSummary);
                 summary.removeCallbacks(reminderSummaryChanged);
                 summary.postDelayed(reminderSummaryChanged, 150);
             });
@@ -224,15 +224,13 @@ public final class MainActivity extends Activity {
         configureSupabaseBackup();
         configureDiagnostics();
         sharedReminderStore = new com.shadowphoenix.dietlog.discipline.ReminderStore(this);
-        findViewById(R.id.homeAppSwitcher).setOnClickListener(v -> openAppChooser());
         findViewById(R.id.profileAppSwitcher).setOnClickListener(v -> openAppChooser());
-        findViewById(R.id.homeOpenDiscipline).setOnClickListener(v -> {
+        findViewById(R.id.profileOpenDiscipline).setOnClickListener(v -> {
             startActivity(new Intent(this, DisciplineActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP));
         });
         pendingDisciplineMeal = savedInstanceState == null ? null : savedInstanceState.getString("discipline_pending_meal");
         readDisciplineIntent(getIntent());
-        findViewById(R.id.homeDietPlan).setOnClickListener(v -> openDietPlanner());
         findViewById(R.id.profileDietPlan).setOnClickListener(v -> openDietPlanner());
         configureDateNavigation();
 
@@ -551,6 +549,7 @@ public final class MainActivity extends Activity {
     }
 
     private void showProfileScreen() {
+        refreshDisciplineSummary(false);
         refreshDriveBackupUi();
         refreshSupabaseBackupUi();
         refreshAccountUi();
@@ -2938,7 +2937,7 @@ public final class MainActivity extends Activity {
     protected void onPause() {
         moduleForeground = false;
         moduleGeneration++;
-        findViewById(R.id.homeDisciplineSummary).removeCallbacks(reminderSummaryChanged);
+        findViewById(R.id.profileDisciplineSummary).removeCallbacks(reminderSummaryChanged);
         cancelLiveSearch();
         if (foodRequests != null && pendingSearchQuery != null) {
             searchNeedsReload = true;
@@ -3009,7 +3008,7 @@ public final class MainActivity extends Activity {
                 if (reconcile) com.shadowphoenix.dietlog.discipline.ReminderScheduler.rescheduleAll(app);
                 SharedAppData.DisciplineSnapshot data = SharedAppData.loadDiscipline(app, LocalDate.now());
                 summary = data.scheduled == 0
-                        ? (data.enabled == 0 ? "Create food, skin, hair and everyday reminders"
+                        ? (data.enabled == 0 ? "Create food, supplements, skin, hair and everyday reminders"
                                 : "No routines scheduled today · " + data.enabled + " enabled")
                         : data.completed + " of " + data.scheduled + " routines completed today";
             } catch (Exception e) {
@@ -3019,7 +3018,7 @@ public final class MainActivity extends Activity {
             String text = summary;
             runOnUiThread(() -> {
                 if (!isDestroyed() && !isFinishing() && moduleForeground && token == moduleGeneration)
-                    ((TextView) findViewById(R.id.homeDisciplineSummary)).setText(text);
+                    ((TextView) findViewById(R.id.profileDisciplineSummary)).setText(text);
             });
         });
     }
