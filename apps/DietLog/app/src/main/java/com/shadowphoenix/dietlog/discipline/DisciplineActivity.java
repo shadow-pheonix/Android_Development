@@ -396,18 +396,6 @@ public final class DisciplineActivity extends Activity {
         }
         DisciplineUi.add(
                 body,
-                DisciplineUi.button(
-                        this,
-                        "App updates",
-                        () ->
-                                startActivity(
-                                        new Intent(
-                                                this,
-                                                com.shadowphoenix.dietlog.updates.UpdateActivity
-                                                        .class))),
-                24);
-        DisciplineUi.add(
-                body,
                 DisciplineUi.text(
                         this,
                         "Reminders and completion are saved locally and shared with FuelNote."
