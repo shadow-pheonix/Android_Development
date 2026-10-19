@@ -10,6 +10,12 @@
 - After six distinct completed days in the last 30 days, stable timing can produce a suggestion. At least 75% of samples must fall within 30 minutes of the circular median, rounded to five minutes, and differ from the current reminder by at least 20 minutes. Only actual Done timestamps are used. Suggestions require explicit Change time approval; Not now hides them for 30 days. Each time keeps its logical identity and historical scheduled-time snapshots after an approved change.
 
 
+## Compact reminder list
+
+Reminder rows show category/status, title, time and schedule. Single-time reminders have a quick **Done today** action; multi-time reminders show progress and open independently tracked time controls in the popup. Completed rows show their saved state; tap the row to undo completion. Tapping any reminder opens a blue popup with its follow-up, notes and linked FuelNote information, plus snooze, edit, pause/resume and delete actions as applicable. Deleting still asks for confirmation and keeps completed activity history. Overflowing popup content scrolls.
+
+Unfinished overnight reminders use the same compact layout with a date-labelled **Done** action, preserving the original reminder day in the activity log. Popups close when the app backgrounds or saved state refreshes, and actions reject a stale day before changing completion.
+
 ## Follow-ups, Supplements and daily activity log (historical 0.9.1 record)
 
 Implementation base: `e20a71c7806e4b46918c6141b810e861741cf8c6`, verified byte-for-byte against GitHub main. Branch: `feature/discipline-followups`. APK packaging and APK-producing CI wait for the owner’s build-timing choice.

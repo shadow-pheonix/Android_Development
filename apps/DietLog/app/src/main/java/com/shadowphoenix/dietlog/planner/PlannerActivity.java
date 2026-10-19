@@ -118,7 +118,7 @@ public final class PlannerActivity extends Activity {
                                                 e instanceof IllegalArgumentException
                                                         ? e.getMessage()
                                                         : "Unable to complete this planner action."
-                                                                + " Export diagnostics or retry.");
+                                                                + " Retry or export a report from Profile.");
                                         if (ready) render();
                                         else {
                                             page.removeAllViews();

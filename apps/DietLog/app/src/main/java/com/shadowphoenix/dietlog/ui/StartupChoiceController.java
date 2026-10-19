@@ -12,8 +12,7 @@ public final class StartupChoiceController {
     private final TextView google, guest, status;
     private boolean busy, restoring;
 
-    public StartupChoiceController(Activity activity, Runnable connect, Runnable continueWithoutLogin,
-                                   Runnable diagnostics) {
+    public StartupChoiceController(Activity activity, Runnable connect, Runnable continueWithoutLogin) {
         google = activity.findViewById(R.id.startupGoogle);
         guest = activity.findViewById(R.id.startupGuest);
         status = activity.findViewById(R.id.startupChoiceStatus);
@@ -28,7 +27,6 @@ public final class StartupChoiceController {
             setBusy(false);
             continueWithoutLogin.run();
         });
-        activity.findViewById(R.id.startupChoiceDiagnostics).setOnClickListener(v -> diagnostics.run());
     }
 
     public static boolean hasChosen(Context context) {
