@@ -728,4 +728,92 @@ public class ReminderStoreTest {
         assertEquals(checkpoint, memory.getString("state", null));
         assertFalse(store.isCompleted("a", LocalDate.now()));
     }
+
+    @Test
+    public void skipIsDistinctIdempotentUndoableAndBlocksCompletion() {
+        ReminderStore s = store(new Memory());
+        LocalDate day = LocalDate.now();
+        s.save(r("a"));
+        s.setSkipped("a", day, true);
+        s.setSkipped("a", day, true);
+        assertFalse(s.isCompleted("a", day));
+        assertTrue(s.isSkipped("a", day));
+        assertEquals(1, s.history(day).size());
+        assertEquals(ReminderStore.Outcome.SKIPPED, s.history(day).get(0).outcome);
+        s.setCompleted("a", day, true);
+        assertFalse(s.isCompleted("a", day));
+        s.setSkipped("a", day, false);
+        assertTrue(s.history(day).isEmpty());
+        s.setCompleted("a", day, true);
+        assertTrue(s.isCompleted("a", day));
+    }
+
+    @Test
+    public void datedPauseSuppressesDatesAndSchedulesAutomaticResume() {
+        ReminderStore s = store(new Memory());
+        s.save(r("a"));
+        LocalDate today = LocalDate.now(), resume = today.plusDays(5);
+        s.pauseUntil("a", resume);
+        JSONObject row = ReminderStore.rows(s.read()).optJSONObject("a");
+        assertTrue(ReminderStore.paused(row, today));
+        assertTrue(ReminderStore.paused(row, resume.minusDays(1)));
+        assertFalse(ReminderStore.paused(row, resume));
+        assertEquals(resume.toString(), s.pausedUntil("a"));
+        JSONObject next =
+                ReminderScheduler.nextOccurrence(
+                        row,
+                        today.atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                        ZoneId.systemDefault());
+        assertEquals(resume.toString(), next.optString("date"));
+        s.setCompleted("a", today, true);
+        assertFalse(s.isCompleted("a", today));
+        s.pauseUntil("a", null);
+        assertNull(s.pausedUntil("a"));
+    }
+
+    @Test
+    public void missedActivityStartsAtCreationAndExcludesPausedDays() {
+        ReminderStore s = store(new Memory());
+        s.save(r("a"));
+        LocalDate day = LocalDate.now().minusDays(2);
+        assertTrue(s.history(day).isEmpty());
+        JSONObject state = s.read(), row = ReminderStore.rows(state).optJSONObject("a");
+        ReminderStore.put(row, "createdDate", day.toString());
+        s.write(state);
+        assertEquals(ReminderStore.Outcome.MISSED, s.history(day).get(0).outcome);
+        JSONObject pause = new JSONObject();
+        ReminderStore.put(pause, "from", day.toString());
+        ReminderStore.put(pause, "until", LocalDate.now().toString());
+        ReminderStore.put(row, "pauses", new JSONArray().put(pause));
+        s.write(state);
+        assertTrue(s.history(day).isEmpty());
+    }
+
+    @Test
+    public void skipAndPauseFailuresRollBackAndLongPauseResumes() {
+        Memory memory = new Memory();
+        ReminderStore s = store(memory);
+        s.save(r("a"));
+        String before = memory.getString("state", null);
+        memory.failCommit = true;
+        try {
+            s.setSkipped("a", LocalDate.now(), true);
+            fail();
+        } catch (IllegalStateException expected) {
+        }
+        assertEquals(before, memory.getString("state", null));
+        try {
+            s.pauseUntil("a", LocalDate.now().plusYears(2));
+            fail();
+        } catch (IllegalStateException expected) {
+        }
+        assertEquals(before, memory.getString("state", null));
+        memory.failCommit = false;
+        LocalDate resume = LocalDate.now().plusYears(2);
+        s.pauseUntil("a", resume);
+        JSONObject row = ReminderStore.rows(s.read()).optJSONObject("a");
+        JSONObject next =
+                ReminderScheduler.nextOccurrence(row, Instant.now(), ZoneId.systemDefault());
+        assertEquals(resume.toString(), next.optString("date"));
+    }
 }

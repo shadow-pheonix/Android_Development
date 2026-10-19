@@ -64,7 +64,8 @@ public final class ReminderScheduler {
             LocalDate today = LocalDate.now();
             Reminder reminder = ReminderStore.reminder(row);
             if ((reminder.daysMask & (1 << (today.getDayOfWeek().getValue() - 1))) == 0
-                    || ReminderStore.done(row, today)) return false;
+                    || ReminderStore.settled(row, today)
+                    || ReminderStore.paused(row, today)) return false;
             JSONObject shown = row.optJSONObject("displayed");
             if (shown == null || !today.toString().equals(shown.optString("date")))
                 shown =
@@ -160,7 +161,9 @@ public final class ReminderScheduler {
     private static boolean current(JSONObject row, JSONObject o) {
         return o != null
                 && o.optString("revision").equals(row.optString("revision"))
-                && !ReminderStore.done(row, LocalDate.parse(o.optString("date")));
+                && !ReminderStore.settled(row, LocalDate.parse(o.optString("date")))
+                && !ReminderStore.paused(row, LocalDate.parse(o.optString("date")))
+                && !ReminderStore.paused(row, LocalDate.now());
     }
 
     /** Computes one next OS alarm while retaining delivery evidence and any explicit snooze. */
@@ -209,10 +212,11 @@ public final class ReminderScheduler {
         ZonedDateTime primary =
                 ReminderSchedule.next(
                         r,
-                        now,
+                        searchFrom(row, now, zone),
                         zone,
                         date ->
-                                ReminderStore.done(row, date)
+                                ReminderStore.settled(row, date)
+                                        || ReminderStore.paused(row, date)
                                         || (deliveredStages(row, date) & 1) != 0);
         if (primary != null)
             next =
@@ -248,7 +252,9 @@ public final class ReminderScheduler {
             if (delivery == null
                     || (delivery.optInt("stages") & 3) != 1
                     || !delivery.optString("revision").equals(row.optString("revision"))
-                    || ReminderStore.done(row, date)) continue;
+                    || ReminderStore.settled(row, date)
+                    || ReminderStore.paused(row, date)
+                    || ReminderStore.paused(row, now.atZone(zone).toLocalDate())) continue;
             long epoch = delivery.optLong("primaryEpoch") + HOUR;
             if (epoch >= now.toEpochMilli() - CATCHUP)
                 next = earlier(next, occurrence(row, date, epoch, FOLLOWUP));
@@ -260,6 +266,24 @@ public final class ReminderScheduler {
         // Preserve immutable identities while replanning equivalent stages.
         if (sameOccurrence(row, old, next)) return old;
         return next;
+    }
+
+    private static Instant searchFrom(JSONObject row, Instant now, ZoneId zone) {
+        JSONArray pauses = row.optJSONArray("pauses");
+        Instant from = now;
+        if (pauses != null)
+            for (int i = 0; i < pauses.length(); i++) {
+                JSONObject pause = pauses.optJSONObject(i);
+                LocalDate date = from.atZone(zone).toLocalDate();
+                if (!date.isBefore(LocalDate.parse(pause.optString("from")))
+                        && date.isBefore(LocalDate.parse(pause.optString("until"))))
+                    from =
+                            LocalDate.parse(pause.optString("until"))
+                                    .atStartOfDay(zone)
+                                    .toInstant()
+                                    .minusNanos(1);
+            }
+        return from;
     }
 
     private static boolean sameOccurrence(JSONObject row, JSONObject a, JSONObject b) {
@@ -408,7 +432,9 @@ public final class ReminderScheduler {
                 && o.optString("token").equals(intent.getStringExtra("token"))
                 && o.optString("date").equals(intent.getStringExtra("date"))
                 && o.optLong("epoch") == intent.getLongExtra("epoch", -1)
-                && !ReminderStore.done(row, LocalDate.parse(o.optString("date")));
+                && !ReminderStore.settled(row, LocalDate.parse(o.optString("date")))
+                && !ReminderStore.paused(row, LocalDate.parse(o.optString("date")))
+                && !ReminderStore.paused(row, LocalDate.now());
     }
 
     static void fire(Context context, Intent intent) {

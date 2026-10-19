@@ -39,3 +39,11 @@ Both sections now read the same local records. Discipline shows FuelNote targets
 Checkpoint 3: 210 Android unit tests passed with zero failures/errors/skips, including three shared-data regressions for real profile targets, exact diary/meal totals, independent saved-plan labels and incomplete-profile recovery. All 40 existing food/photo/catalogue checks passed. Android lint and the complete 0.9.0 APK build passed. The compiled manifest uses the chooser as the single launcher and keeps the reminder receivers internal. No existing planner source or food-catalogue assets changed.
 
 Reminder records and drafts use private local preferences inside this installation. Existing cloud snapshot formats do not include reminders; the app's existing Android OS backup policy remains unchanged. No additional account is required. Physical-device appearance, TalkBack/keyboard behavior and background notification delivery remain unverified in this environment. Final branch CI must pass before merge and the stable-signed main release must be verified before delivery.
+
+## Flexible routines implementation
+
+Base: `a8ecb6c216fae18c04d81f6a83b992dad94bd147`; branch: `feature/discipline-flexible-routines`.
+The owner explicitly authorized a cloned chat-local checkout, overriding the ZIP handoff rule for this chat.
+Planned checkpoints, completed sequentially: skip/dated pause and outcomes; flexible schedules and occurrence identity; routine checklists; consistency calendar; backup/merge preview; approved timing suggestions and cumulative validation. APK packaging is deferred pending the required build choice.
+
+Skip today records Skipped without completion or deletion, cancels the occurrence's alerts, and can be undone. Dated pauses exclude dates from activity, preserve the reminder, and schedule automatic resumption on the selected date (including Pause until Monday). Resume now ends the pause. Done, Skipped and Missed use distinct history labels; missed history begins at reminder creation/upgrade and completed days keep their original snapshots. Editing/deleting reminders preserves past missed snapshots too. Pause intervals are retained for the activity window. Notification actions reject skipped and paused occurrences.
