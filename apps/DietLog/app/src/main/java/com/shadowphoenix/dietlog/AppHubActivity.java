@@ -76,7 +76,8 @@ public final class AppHubActivity extends Activity {
                 body,
                 "Discipline",
                 "BUILD YOUR ROUTINE",
-                "Food, skin, hair and everyday reminders. Small steps, on your schedule.",
+                "Food, supplements, skin, hair and everyday reminders. Small steps, on your"
+                    + " schedule.",
                 DisciplineUi.BLUE,
                 DisciplineActivity.class);
         LinearLayout connected = DisciplineUi.card(this);
@@ -89,7 +90,7 @@ public final class AppHubActivity extends Activity {
                 DisciplineUi.text(
                         this,
                         "Your profile, food diary and reminders stay together. Food reminders can"
-                            + " show your FuelNote progress.",
+                                + " show your FuelNote progress.",
                         14,
                         DisciplineUi.MUTED,
                         false),

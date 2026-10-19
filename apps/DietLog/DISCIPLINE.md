@@ -1,5 +1,21 @@
 # FuelNote and Discipline
 
+## Follow-ups, Supplements and daily activity log
+
+Implementation base: `e20a71c7806e4b46918c6141b810e861741cf8c6`, verified byte-for-byte against GitHub main. Branch: `feature/discipline-followups`. APK packaging and APK-producing CI wait for the owner’s build-timing choice.
+
+Each unfinished routine receives its scheduled alert and a follow-up one elapsed hour after the original scheduled time. Completing it from the dashboard or notification saves one daily activity entry and cancels its remaining alert. Weekday recurrence uses the original reminder day. A late follow-up may arrive after midnight and still belongs to that original day, as requested by the owner. The dashboard provides a separate yesterday completion action for these overnight routines. Android permission, exact-alarm access and device restrictions still affect delivery. A first alert delayed past the follow-up time is consolidated into one alert instead of two back-to-back alerts. Explicit snoozes remain user-controlled additional alerts.
+
+The category list includes Food, Skin, Hair, Supplements and Other. Supplements are user-defined routine reminders; the app does not select products or doses.
+
+**Daily activity log** displays completed routines by reminder date, with title, category and actual completion time. Completion from either the app or a notification uses the same atomic saved record. Repeated Done actions do not duplicate entries; Undo removes the completion. Renaming or deleting a reminder preserves existing activity snapshots. History is bounded to the latest 365 days and 2,000 entries. Existing completion dates are migrated with an unavailable time label rather than an invented timestamp. Per-reminder recurrence flags and delivery evidence retain their existing 90-date bound. Completion records stay in Discipline; they do not add nutrition entries to FuelNote. Existing local/cloud backup behavior remains unchanged.
+
+Planned checkpoints: (1) persistent daily completion history, Supplements and staged alarm scheduling with focused recurrence/rollback regressions; (2) daily-log browsing, overnight actions, category controls and cumulative non-APK Android validation.
+
+Validation: all 247 Android unit tests passed with zero failures/errors/skips, including 40 reminder scheduling/storage tests. Android lint passed with no errors. The local checks compiled the updated app and ran tests/lint without assembling an APK. Physical-device notification timing and the new screens still need device verification. No APK-producing CI or merge is started until the owner chooses build timing.
+
+## Original connected-app implementation record
+
 Implementation base: `1727c5f5705ce47b3bce3dc472db91f9090ad05e`, verified against GitHub main and all 650 tracked file blobs in both existing chat-local worktrees on 18 October 2026. Branch: `feature/fuelnote-discipline`.
 
 The owner requested a launch choice between FuelNote and Discipline inside one installed app. Both sections share local data. FuelNote retains its green theme; Discipline uses the same dark glass design with a blue accent. Discipline manages user-created food, skin care, hair care and custom reminders.

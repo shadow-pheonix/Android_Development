@@ -1,6 +1,7 @@
 package com.shadowphoenix.dietlog.shared;
 
 import android.content.Context;
+
 import com.shadowphoenix.dietlog.data.DiaryDbHelper;
 import com.shadowphoenix.dietlog.data.FoodEntry;
 import com.shadowphoenix.dietlog.discipline.Reminder;
@@ -9,6 +10,10 @@ import com.shadowphoenix.dietlog.planner.PlannerStore;
 import com.shadowphoenix.dietlog.profile.CalorieCalculator;
 import com.shadowphoenix.dietlog.profile.ProfilePreferences;
 import com.shadowphoenix.dietlog.profile.ProfileSettings;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -18,8 +23,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /** Both sections read the same local records. These methods belong on a background worker. */
 public final class SharedAppData {
@@ -150,12 +153,13 @@ public final class SharedAppData {
         List<Reminder> reminders = store.list();
         int scheduled = 0, completed = 0, enabled = 0;
         int weekday = 1 << (date.getDayOfWeek().getValue() - 1);
+        java.util.Set<String> completedIds = store.completedForDate(date);
         for (Reminder reminder : reminders) {
             if (!reminder.enabled) continue;
             enabled++;
             if ((reminder.daysMask & weekday) == 0) continue;
             scheduled++;
-            if (store.isCompleted(reminder.id, date)) completed++;
+            if (completedIds.contains(reminder.id)) completed++;
         }
         return new DisciplineSnapshot(scheduled, completed, enabled, reminders);
     }
