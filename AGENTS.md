@@ -54,6 +54,10 @@ Every Android app developed in this repository **MUST include diagnostics export
 
 An app is not considered ready for its first APK handoff until this diagnostics baseline is implemented and reviewed in the chat-local workspace, unless the user explicitly requests a temporary exception.
 
+## Mandatory APK build timing
+
+Every task route **MUST follow the [APK build timing and delivery gate](docs/WORKFLOW.md#11-apk-delivery)** before packaging an APK or triggering APK-producing CI. This gate takes precedence over the build/CI/APK steps in the routes below and in `docs/ROUTING.md`.
+
 ## Mandatory task routing
 
 Route the task before editing anything.

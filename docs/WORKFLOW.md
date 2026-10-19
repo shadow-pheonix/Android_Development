@@ -120,6 +120,8 @@ GitHub-side file edits are not the development workspace.
 
 ## 8. Run authoritative Android CI
 
+Apply the [mandatory APK build timing gate](#11-apk-delivery) before triggering CI that produces an APK, including CI started automatically by publishing changes.
+
 Use GitHub Actions for checks that require the Android build environment. For checkpointed work, prefer running the final authoritative CI against the feature branch before merging to `main` when the workflow supports it.
 
 CI should:
@@ -160,6 +162,17 @@ Device access is a separate, explicit workflow. It is not implied by the term �
 Keep diagnostics bounded and avoid logging credentials, tokens, signing material, or unnecessary sensitive user content.
 
 ## 11. APK delivery
+
+### Mandatory user choice before building
+
+After completing a coherent implementation batch and before starting an APK build, **MUST ask the user: “Build the APK now, or wait until more implementations are complete?”** Wait for the user's explicit choice; do not assume that a request to implement a feature or continue work authorizes a build.
+
+- **Build now:** build and validate the completed batch, then deliver the APK. An explicit user request to build that batch already supplies this choice; do not ask again for the same batch or necessary retries.
+- **Build after more implementations:** preserve completed work, continue the user's authorized implementations and checks that do not produce an APK, and ask again when the next batch is ready. Do not package an APK or trigger APK-producing CI while the build is deferred or the question remains unanswered.
+
+This applies to local APK packaging, manual CI runs, and pushes, PRs or merges that automatically start APK builds. Use checkpoint branches that do not trigger APK builds to preserve deferred work, and defer publication/merging that would trigger them. Required tests, lint and validation still apply; postponing packaging does not waive the checks required before APK delivery. Documentation-only changes do not need an APK build or a build-timing question unless the user requests an APK.
+
+### Validated APK handoff
 
 Deliver an APK only after the relevant build completes successfully.
 
