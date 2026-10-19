@@ -1,7 +1,8 @@
 # In-app updates
 
-FuelNote and Discipline share one updater. Open **App updates** from the app chooser,
-FuelNote Profile or the bottom of Discipline. Version 0.9.1 introduces this feature;
+FuelNote and Discipline share one updater. **App updates** is available only in
+FuelNote Profile, directly above **Export diagnostics** near the bottom of the page.
+Version 0.9.1 introduces this feature;
 older installations need this APK installed once using the existing download link.
 
 The default automatic check runs when any section is opened, at most once per six

@@ -5,12 +5,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.shadowphoenix.dietlog.data.DiaryDbHelper;
 import com.shadowphoenix.dietlog.diagnostics.AppLogger;
 import com.shadowphoenix.dietlog.diagnostics.CrashHandler;
-import com.shadowphoenix.dietlog.diagnostics.DiagnosticsExporter;
 import com.shadowphoenix.dietlog.discipline.DisciplineActivity;
 import com.shadowphoenix.dietlog.discipline.DisciplineUi;
 import com.shadowphoenix.dietlog.discipline.ReminderScheduler;
@@ -21,26 +18,6 @@ import java.util.concurrent.Executors;
 /** The two connected sections share this installation and the existing local data. */
 public final class AppHubActivity extends Activity {
     private static final ExecutorService IO = Executors.newSingleThreadExecutor();
-    private boolean exporting;
-    private TextView updateButton;
-    private final android.os.Handler updatesHandler =
-            new android.os.Handler(android.os.Looper.getMainLooper());
-    private final Runnable refreshUpdate =
-            new Runnable() {
-                @Override
-                public void run() {
-                    com.shadowphoenix.dietlog.updates.UpdateManager.State state =
-                            com.shadowphoenix.dietlog.updates.UpdateManager.get(AppHubActivity.this)
-                                    .snapshot();
-                    updateButton.setText(
-                            state.ready
-                                    ? "Update ready · Install"
-                                    : state.available
-                                            ? "New version available · Update"
-                                            : "App updates");
-                    updatesHandler.postDelayed(this, 1500);
-                }
-            };
 
     @Override
     public void onCreate(Bundle state) {
@@ -96,28 +73,12 @@ public final class AppHubActivity extends Activity {
                         false),
                 6);
         DisciplineUi.add(body, connected, 24);
-        updateButton =
-                DisciplineUi.button(
-                        this,
-                        "App updates",
-                        () ->
-                                startActivity(
-                                        new Intent(
-                                                this,
-                                                com.shadowphoenix.dietlog.updates.UpdateActivity
-                                                        .class)));
-        DisciplineUi.add(body, updateButton, 18);
-        TextView export = DisciplineUi.button(this, "Export diagnostics", 0xFFCBD8EA, () -> {});
-        export.setOnClickListener(v -> exportDiagnostics(export));
-        DisciplineUi.add(body, export, 18);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         com.shadowphoenix.dietlog.updates.UpdateManager.get(this).check(false);
-        updatesHandler.removeCallbacks(refreshUpdate);
-        updatesHandler.post(refreshUpdate);
         android.content.Context app = getApplicationContext();
         IO.execute(
                 () -> {
@@ -127,12 +88,6 @@ public final class AppHubActivity extends Activity {
                         AppLogger.e("App chooser reminder scheduling failed", e);
                     }
                 });
-    }
-
-    @Override
-    protected void onPause() {
-        updatesHandler.removeCallbacks(refreshUpdate);
-        super.onPause();
     }
 
     private void addModule(
@@ -167,35 +122,5 @@ public final class AppHubActivity extends Activity {
                                                 Intent.FLAG_ACTIVITY_CLEAR_TOP
                                                         | Intent.FLAG_ACTIVITY_SINGLE_TOP)));
         DisciplineUi.add(body, card, 22);
-    }
-
-    private void exportDiagnostics(TextView button) {
-        if (exporting) return;
-        exporting = true;
-        button.setEnabled(false);
-        button.setText("Exporting diagnostics…");
-        android.content.Context app = getApplicationContext();
-        IO.execute(
-                () -> {
-                    DiaryDbHelper db = new DiaryDbHelper(app);
-                    String message;
-                    try {
-                        message = "Saved to " + DiagnosticsExporter.export(app, db).displayPath;
-                    } catch (Exception e) {
-                        AppLogger.e("App chooser diagnostics export failed", e);
-                        message = "Export failed. Please try again.";
-                    } finally {
-                        db.close();
-                    }
-                    String result = message;
-                    runOnUiThread(
-                            () -> {
-                                if (isDestroyed() || isFinishing()) return;
-                                exporting = false;
-                                button.setEnabled(true);
-                                button.setText("Export diagnostics");
-                                Toast.makeText(this, result, Toast.LENGTH_LONG).show();
-                            });
-                });
     }
 }

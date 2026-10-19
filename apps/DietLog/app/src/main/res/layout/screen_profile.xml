@@ -4,7 +4,6 @@
         <TextView style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Profile" android:includeFontPadding="false" />
         <TextView style="@style/Text.Body" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="Your goals, made personal." android:includeFontPadding="false" />
         <TextView android:id="@+id/profileAppSwitcher" style="@style/Action" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="Switch app · FuelNote / Discipline" />
-        <TextView android:id="@+id/profileAppUpdates" style="@style/Action" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="App updates" />
         <include layout="@layout/section_profile_personal" />
         <include layout="@layout/section_profile_summary" />
         <Button android:id="@+id/profileDietPlan" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:text="My diet plan and eating preferences" android:textAllCaps="false" android:textColor="@color/accent" android:background="@drawable/bg_chip" android:tag="glass:CONTROL" />

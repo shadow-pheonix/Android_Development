@@ -1,6 +1,6 @@
 # FuelNote and Discipline
 
-## Current Discipline behavior (0.10.0)
+## Current Discipline behavior (0.10.1)
 
 - Skip a single occurrence or pause until Monday/a chosen date; Done, Skipped and Missed remain distinct.
 - Use weekdays, intervals or selected dates, optional inclusive date ranges, up to eight times and adjustable follow-ups (60 minutes by default).
@@ -9,6 +9,12 @@
 - Back up reminders, schedules, routines and history through the existing Drive/Supabase flow; review additions, matches and deletions before restoring Discipline data.
 - After six distinct completed days in the last 30 days, stable timing can produce a suggestion. At least 75% of samples must fall within 30 minutes of the circular median, rounded to five minutes, and differ from the current reminder by at least 20 minutes. Only actual Done timestamps are used. Suggestions require explicit Change time approval; Not now hides them for 30 days. Each time keeps its logical identity and historical scheduled-time snapshots after an approved change.
 
+
+## Compact reminder list
+
+Reminder rows show category/status, title, time and schedule. Single-time reminders have a quick **Done today** action; multi-time reminders show progress and open independently tracked time controls in the popup. Completed rows show their saved state; tap the row to undo completion. Tapping any reminder opens a blue popup with its follow-up, notes and linked FuelNote information, plus snooze, edit, pause/resume and delete actions as applicable. Deleting still asks for confirmation and keeps completed activity history. Overflowing popup content scrolls.
+
+Unfinished overnight reminders use the same compact layout with a date-labelled **Done** action, preserving the original reminder day in the activity log. Popups close when the app backgrounds or saved state refreshes, and actions reject a stale day before changing completion.
 
 ## Follow-ups, Supplements and daily activity log (historical 0.9.1 record)
 
@@ -71,3 +77,11 @@ Timing suggestions are local and optional. They require six distinct completed r
 Cumulative verification for 0.10.0 (version code 61): all 278 Android unit tests passed with zero failures, errors or skips; Android lint passed with zero errors. Checks compiled the complete app without assembling an APK. Coverage includes multi-time history preservation through timing approval and older-backup restore, duplicate matching, restore-preview freshness, transactional rollback, missed/paused calendar rollups, circular timing samples and deliberate-skip isolation. Upgrading an installation with existing reminders queues the expanded backup format once; scheduling-only refreshes do not continually mark backups dirty. Physical-device UI/notification delivery and authenticated Drive/Supabase transport still require device/account verification. No APK-producing CI, APK packaging or merge to main has been started; the six checkpoints remain on the feature branch pending the owner's build timing choice.
 
 Large multi-time schedules keep later occurrences in the durable queue while installing at most 400 earliest OS alarms, leaving headroom below Android’s alarm quota. Completion and alert identities remain independent even when schedules exceed the OS slot budget.
+
+## Profile and compact reminder integration (0.10.1)
+
+Merged the three pending `feature/profile-only-diagnostics` commits into the released 0.10.0 source (`5f3e55574e6df4566c2e36416d0772dd12c13d97`). All six flexible-routine features remain present. App updates and Export diagnostics now appear only in FuelNote Profile, in that order. The chooser shows the two sections and shared-data explanation.
+
+Individual reminders use compact rows with management in a scrollable blue popup. Single-time reminders retain quick completion; multi-time reminders show progress and provide independent Done/Undo, Skip/Undo skip and snooze controls per time in the popup. Edit, pause/resume and delete always target the parent reminder, including when opening an overnight extra-time occurrence. Follow-up labels use the configured interval; late completion labels use the original date. Popups close on background/refresh, and stale-day actions refresh before changing data. Routine cards remain compact.
+
+All 278 Android unit tests passed with no failures, errors or skips, and local Android lint passed. The owner explicitly requested this merge, APK build and publication as version 0.10.1 (code 62). The earlier build-deferral notes above are historical; 0.10.0 was already published. Device appearance and OEM notification delivery still require phone verification.
