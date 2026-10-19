@@ -1,5 +1,11 @@
 # FuelNote and Discipline
 
+## Compact reminder list
+
+Reminder rows show category/status, title, time and repeat days, with only **Done today** beside the reminder. Completed rows show their saved state; tap the row to undo completion. Tapping any reminder opens a blue popup with its follow-up, notes and linked FuelNote information, plus snooze, edit, pause/resume and delete actions as applicable. Deleting still asks for confirmation and keeps completed activity history. Overflowing popup content scrolls.
+
+Unfinished overnight reminders use the same compact layout with **Done yesterday**, preserving the original reminder day in the activity log. Popups close when the app backgrounds or saved state refreshes, and actions reject a stale day before changing completion.
+
 ## Follow-ups, Supplements and daily activity log
 
 Implementation base: `e20a71c7806e4b46918c6141b810e861741cf8c6`, verified byte-for-byte against GitHub main. Branch: `feature/discipline-followups`. APK packaging and APK-producing CI wait for the owner’s build-timing choice.

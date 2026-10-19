@@ -87,6 +87,7 @@ public final class DisciplineActivity extends Activity {
     private boolean draftLoaded;
     private Draft draft;
     private AlertDialog editor;
+    private AlertDialog reminderOptions;
     private EditText titleInput, notesInput;
     private Spinner categoryInput, mealInput;
     private CheckBox enabledInput;
@@ -185,6 +186,7 @@ public final class DisciplineActivity extends Activity {
 
     @Override
     protected void onPause() {
+        closeReminderOptions();
         captureDraft();
         if (!savingEditor) persistDraft(draft);
         active = false;
@@ -196,6 +198,7 @@ public final class DisciplineActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        closeReminderOptions();
         if (editor != null) {
             suppressEditorPersistence = true;
             editor.dismiss();
@@ -231,6 +234,7 @@ public final class DisciplineActivity extends Activity {
     }
 
     private void refresh(boolean reschedule) {
+        closeReminderOptions();
         final int token = ++generation;
         final LocalDate date = LocalDate.now();
         final LocalDate logDate = historyFollowsToday ? date : historyDate;
@@ -301,6 +305,7 @@ public final class DisciplineActivity extends Activity {
                     runOnUiThread(
                             () -> {
                                 if (!valid(token)) return;
+                                closeReminderOptions();
                                 today = date;
                                 loading = false;
                                 loadError = failure;
@@ -617,54 +622,15 @@ public final class DisciplineActivity extends Activity {
         picker.show();
     }
 
-    private String followupTime(int hour, int minute) {
-        LocalTime first = LocalTime.of(hour, minute);
+    private String followupTime(Reminder item, LocalDate date) {
         java.time.ZonedDateTime next =
-                today.atTime(first).atZone(ZoneId.systemDefault()).plusHours(1);
+                date.atTime(item.hour, item.minute).atZone(ZoneId.systemDefault()).plusHours(1);
         return clock(next.getHour(), next.getMinute())
-                + (next.toLocalDate().equals(today) ? "" : " tomorrow");
+                + (next.toLocalDate().equals(date) ? "" : " next day");
     }
 
     private void renderCarriedReminder(Reminder item, LocalDate date) {
-        LinearLayout card = DisciplineUi.card(this);
-        DisciplineUi.add(
-                card,
-                DisciplineUi.text(
-                        this,
-                        "FROM YESTERDAY · " + CATEGORIES[item.category.ordinal()],
-                        12,
-                        DisciplineUi.BLUE,
-                        true),
-                0);
-        DisciplineUi.add(card, DisciplineUi.text(this, item.title, 19, DisciplineUi.TEXT, true), 8);
-        DisciplineUi.add(
-                card,
-                DisciplineUi.text(
-                        this,
-                        "This late reminder belongs to "
-                                + date.format(
-                                        DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()))
-                                + ". Completing it logs that day.",
-                        14,
-                        DisciplineUi.MUTED,
-                        false),
-                8);
-        TextView done =
-                DisciplineUi.button(
-                        this,
-                        "Complete yesterday’s routine",
-                        () ->
-                                mutate(
-                                        () -> {
-                                            new ReminderStore(getApplicationContext())
-                                                    .setCompleted(item.id, date, true);
-                                            return rescheduleAfterChange(
-                                                    "Completed and saved to yesterday’s activity"
-                                                        + " log.");
-                                        }));
-        done.setEnabled(!busy);
-        DisciplineUi.add(card, done, 12);
-        DisciplineUi.add(body, card, 16);
+        renderReminderRow(item, date, true);
     }
 
     private void renderCounts() {
@@ -869,120 +835,212 @@ public final class DisciplineActivity extends Activity {
     }
 
     private void renderReminder(Reminder item) {
+        renderReminderRow(item, today, false);
+    }
+
+    private void renderReminderRow(Reminder item, LocalDate date, boolean carried) {
+        final LocalDate actionDay = today;
+        boolean done = !carried && isDone(item);
         LinearLayout card = DisciplineUi.card(this);
+        int padding = DisciplineUi.dp(this, 14);
+        card.setPadding(padding, padding, padding, padding);
+        DisciplineUi.clickable(card, DisciplineUi.BLUE, false);
+        String state = carried ? "From yesterday" : status(item);
+        card.setContentDescription(
+                item.title
+                        + ", "
+                        + clock(item.hour, item.minute)
+                        + ", "
+                        + state
+                        + ". Open reminder options");
+        card.setOnClickListener(v -> showReminderOptions(item, date, carried));
+        card.setEnabled(!busy);
+        LinearLayout row = DisciplineUi.row(this);
+        LinearLayout details = DisciplineUi.column(this);
         DisciplineUi.add(
-                card,
+                details,
                 DisciplineUi.text(
                         this,
-                        CATEGORIES[item.category.ordinal()].toUpperCase(Locale.getDefault())
-                                + "  ·  "
-                                + status(item),
+                        CATEGORIES[item.category.ordinal()] + " · " + state,
+                        11,
+                        DisciplineUi.BLUE,
+                        true),
+                0);
+        TextView title = DisciplineUi.text(this, item.title, 18, DisciplineUi.TEXT, true);
+        title.setMaxLines(2);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        DisciplineUi.add(details, title, 3);
+        TextView time =
+                DisciplineUi.text(
+                        this,
+                        clock(item.hour, item.minute) + " · " + days(item.daysMask),
+                        12,
+                        DisciplineUi.MUTED,
+                        false);
+        time.setMaxLines(2);
+        time.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        DisciplineUi.add(details, time, 3);
+        // The row is one options target; its completion button remains a separate target.
+        for (int i = 0; i < details.getChildCount(); i++)
+            details.getChildAt(i).setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        DisciplineUi.weighted(row, details, 0);
+        if (carried || scheduledToday(item)) {
+            TextView complete =
+                    DisciplineUi.button(
+                            this,
+                            carried ? "Done yesterday" : done ? "Done today ✓" : "Done today",
+                            () ->
+                                    runReminderAction(
+                                            actionDay,
+                                            () -> setReminderCompleted(item, date, true)));
+            complete.setTextSize(12);
+            complete.setMaxWidth(DisciplineUi.dp(this, 112));
+            complete.setPadding(
+                    DisciplineUi.dp(this, 12),
+                    DisciplineUi.dp(this, 8),
+                    DisciplineUi.dp(this, 12),
+                    DisciplineUi.dp(this, 8));
+            complete.setEnabled(!busy && !done);
+            complete.setContentDescription(
+                    (carried
+                                    ? "Complete yesterday’s "
+                                    : done ? "Completed today: " : "Complete today’s ")
+                            + item.title);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-2, -2);
+            params.setMarginStart(DisciplineUi.dp(this, 10));
+            row.addView(complete, params);
+        }
+        DisciplineUi.add(card, row, 0);
+        DisciplineUi.add(body, card, 10);
+    }
+
+    private void showReminderOptions(Reminder item, LocalDate date, boolean carried) {
+        if (busy || !active) return;
+        closeReminderOptions();
+        final LocalDate actionDay = today;
+        boolean done = !carried && isDone(item);
+        LinearLayout content = DisciplineUi.column(this);
+        int padding = DisciplineUi.dp(this, 20);
+        content.setPadding(padding, DisciplineUi.dp(this, 8), padding, 0);
+        String state =
+                carried
+                        ? "For "
+                                + date.format(
+                                        DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()))
+                        : status(item);
+        DisciplineUi.add(
+                content,
+                DisciplineUi.text(
+                        this,
+                        CATEGORIES[item.category.ordinal()] + " · " + state,
                         12,
                         DisciplineUi.BLUE,
                         true),
                 0);
-        DisciplineUi.add(card, DisciplineUi.text(this, item.title, 20, DisciplineUi.TEXT, true), 8);
         DisciplineUi.add(
-                card,
+                content,
                 DisciplineUi.text(
                         this,
-                        clock(item.hour, item.minute) + "  ·  " + days(item.daysMask),
+                        clock(item.hour, item.minute) + " · " + days(item.daysMask),
                         14,
-                        DisciplineUi.MUTED,
+                        DisciplineUi.TEXT,
                         false),
                 6);
         DisciplineUi.add(
-                card,
+                content,
                 DisciplineUi.text(
                         this,
-                        "Follow-up · " + followupTime(item.hour, item.minute) + " if unfinished",
+                        "Follow-up · " + followupTime(item, date) + " if unfinished",
                         13,
                         DisciplineUi.MUTED,
                         false),
                 6);
+        if (carried)
+            DisciplineUi.add(
+                    content,
+                    DisciplineUi.text(
+                            this,
+                            "Completion is saved to yesterday’s activity log.",
+                            13,
+                            DisciplineUi.MUTED,
+                            false),
+                    6);
         if (!item.notes.isEmpty())
             DisciplineUi.add(
-                    card, DisciplineUi.text(this, item.notes, 14, DisciplineUi.MUTED, false), 8);
-        if (item.category == Reminder.Category.FOOD && fuel != null) {
-            String linked =
-                    item.mealKey.isEmpty()
-                            ? fuel.entryCount + " food entries logged today"
-                            : fuel.mealStatus(item.mealKey);
-            DisciplineUi.add(
-                    card,
-                    DisciplineUi.text(this, "FuelNote · " + linked, 13, DisciplineUi.MUTED, false),
-                    12);
-            String planned = fuel.plannedMeals.get(item.mealKey);
-            if (planned != null && !planned.isEmpty()) {
+                    content,
+                    DisciplineUi.text(this, item.notes, 14, DisciplineUi.MUTED, false),
+                    10);
+        if (!carried && item.category == Reminder.Category.FOOD) {
+            if (fuel != null) {
+                String linked =
+                        item.mealKey.isEmpty()
+                                ? fuel.entryCount + " food entries logged today"
+                                : fuel.mealStatus(item.mealKey);
                 DisciplineUi.add(
-                        card,
+                        content,
                         DisciplineUi.text(
-                                this, "Planned meal · " + planned, 13, DisciplineUi.MUTED, false),
-                        6);
+                                this, "FuelNote · " + linked, 13, DisciplineUi.MUTED, false),
+                        10);
+                String planned = fuel.plannedMeals.get(item.mealKey);
+                if (planned != null && !planned.isEmpty())
+                    DisciplineUi.add(
+                            content,
+                            DisciplineUi.text(
+                                    this,
+                                    "Planned meal · " + planned,
+                                    13,
+                                    DisciplineUi.MUTED,
+                                    false),
+                            6);
             }
-            TextView log =
-                    DisciplineUi.button(
-                            this,
+            DisciplineUi.add(
+                    content,
+                    reminderOption(
                             "Open " + (item.mealKey.isEmpty() ? "food diary" : item.mealKey),
-                            () -> openFuelNote(item.mealKey));
-            log.setEnabled(!busy);
-            DisciplineUi.add(card, log, 10);
+                            actionDay,
+                            () -> openFuelNote(item.mealKey)),
+                    10);
         }
-        if (scheduledToday(item)) {
-            LinearLayout actions = DisciplineUi.row(this);
-            boolean done = isDone(item);
-            final LocalDate actionDate = today;
-            TextView complete =
-                    DisciplineUi.button(
-                            this,
-                            done ? "Undo today" : "Done today",
+        if (done)
+            DisciplineUi.add(
+                    content,
+                    reminderOption(
+                            "Undo today’s completion",
+                            actionDay,
+                            () -> setReminderCompleted(item, date, false)),
+                    12);
+        if (!carried && scheduledToday(item) && item.enabled && !done)
+            DisciplineUi.add(
+                    content,
+                    reminderOption(
+                            "Snooze 15 min",
+                            actionDay,
                             () ->
                                     mutate(
                                             () -> {
-                                                new ReminderStore(getApplicationContext())
-                                                        .setCompleted(item.id, actionDate, !done);
-                                                return rescheduleAfterChange(
-                                                        done
-                                                                ? "Marked not done for today."
-                                                                : "Completed and saved in your"
-                                                                      + " daily log.");
-                                            }));
-            complete.setEnabled(!busy);
-            DisciplineUi.weighted(actions, complete, 0);
-            if (item.enabled && !done) {
-                TextView snooze =
-                        DisciplineUi.button(
-                                this,
-                                "Snooze 15 min",
-                                () ->
-                                        mutate(
-                                                () -> {
-                                                    boolean scheduled =
-                                                            ReminderScheduler.snooze(
-                                                                    getApplicationContext(),
-                                                                    item.id,
-                                                                    15);
-                                                    return !ReminderScheduler.notificationsAllowed(
-                                                                    getApplicationContext())
-                                                            ? "Notifications are off. No alert can"
-                                                                  + " appear."
-                                                            : scheduled
-                                                                    ? "Reminder snoozed for 15"
-                                                                          + " minutes."
-                                                                    : "Couldn’t snooze this"
-                                                                          + " reminder. Try again.";
-                                                }));
-                snooze.setEnabled(!busy);
-                DisciplineUi.weighted(actions, snooze, 8);
-            }
-            DisciplineUi.add(card, actions, 14);
-        }
+                                                boolean scheduled =
+                                                        ReminderScheduler.snooze(
+                                                                getApplicationContext(),
+                                                                item.id,
+                                                                15);
+                                                return !ReminderScheduler.notificationsAllowed(
+                                                                getApplicationContext())
+                                                        ? "Notifications are off. No alert can"
+                                                                + " appear."
+                                                        : scheduled
+                                                                ? "Reminder snoozed for 15 minutes."
+                                                                : "Couldn’t snooze this reminder."
+                                                                        + " Try again.";
+                                            })),
+                    12);
         LinearLayout manage = DisciplineUi.row(this);
-        TextView edit = DisciplineUi.button(this, "Edit", () -> openDraft(Draft.from(item)));
-        TextView pause =
-                DisciplineUi.button(
-                        this,
-                        item.enabled ? "Pause" : "Enable",
+        DisciplineUi.weighted(
+                manage, reminderOption("Edit", actionDay, () -> openDraft(Draft.from(item))), 0);
+        DisciplineUi.weighted(
+                manage,
+                reminderOption(
+                        item.enabled ? "Pause" : "Resume",
+                        actionDay,
                         () ->
                                 mutate(
                                         () -> {
@@ -1002,37 +1060,77 @@ public final class DisciplineActivity extends Activity {
                                                     item.enabled
                                                             ? "Reminder paused."
                                                             : "Reminder enabled.");
-                                        }));
+                                        })),
+                8);
+        DisciplineUi.add(content, manage, 10);
         TextView delete =
-                DisciplineUi.button(
-                        this,
-                        "Delete",
-                        0xFFFFB9BB,
-                        () ->
-                                new AlertDialog.Builder(this, R.style.DisciplineDialogTheme)
-                                        .setTitle("Delete reminder?")
-                                        .setMessage(
-                                                "This removes future reminders. Your completed"
-                                                    + " daily activity stays in the log.")
-                                        .setNegativeButton("Cancel", null)
-                                        .setPositiveButton(
-                                                "Delete",
-                                                (d, w) ->
-                                                        mutate(
-                                                                () -> {
-                                                                    new ReminderStore(
-                                                                                    getApplicationContext())
-                                                                            .delete(item.id);
-                                                                    return rescheduleAfterChange(
-                                                                            "Reminder deleted.");
-                                                                }))
-                                        .show());
-        for (TextView control : new TextView[] {edit, pause, delete}) {
-            control.setEnabled(!busy);
-            DisciplineUi.weighted(manage, control, manage.getChildCount() == 0 ? 0 : 6);
+                reminderOption("Delete reminder", actionDay, () -> confirmDeleteReminder(item));
+        delete.setTextColor(0xFFFFB9BB);
+        DisciplineUi.add(content, delete, 10);
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(content);
+        reminderOptions =
+                new AlertDialog.Builder(this, R.style.DisciplineDialogTheme)
+                        .setTitle(item.title)
+                        .setView(scroll)
+                        .setNegativeButton("Close", null)
+                        .create();
+        reminderOptions.show();
+    }
+
+    private TextView reminderOption(String label, LocalDate actionDay, Runnable action) {
+        return DisciplineUi.button(this, label, () -> runReminderAction(actionDay, action));
+    }
+
+    private void runReminderAction(LocalDate actionDay, Runnable action) {
+        if (busy || !active) return;
+        closeReminderOptions();
+        if (!actionDay.equals(LocalDate.now())) {
+            toast("The day changed. Your reminders are refreshing.");
+            refresh();
+            return;
         }
-        DisciplineUi.add(card, manage, 10);
-        DisciplineUi.add(body, card, 16);
+        action.run();
+    }
+
+    private void closeReminderOptions() {
+        if (reminderOptions != null) {
+            reminderOptions.dismiss();
+            reminderOptions = null;
+        }
+    }
+
+    private void setReminderCompleted(Reminder item, LocalDate date, boolean complete) {
+        mutate(
+                () -> {
+                    new ReminderStore(getApplicationContext())
+                            .setCompleted(item.id, date, complete);
+                    return rescheduleAfterChange(
+                            !complete
+                                    ? "Marked not done for today."
+                                    : date.equals(LocalDate.now())
+                                            ? "Completed and saved in your daily log."
+                                            : "Completed and saved to yesterday’s activity log.");
+                });
+    }
+
+    private void confirmDeleteReminder(Reminder item) {
+        new AlertDialog.Builder(this, R.style.DisciplineDialogTheme)
+                .setTitle("Delete reminder?")
+                .setMessage(
+                        "This removes future reminders. Your completed daily activity stays in the"
+                                + " log.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton(
+                        "Delete",
+                        (d, w) ->
+                                mutate(
+                                        () -> {
+                                            new ReminderStore(getApplicationContext())
+                                                    .delete(item.id);
+                                            return rescheduleAfterChange("Reminder deleted.");
+                                        }))
+                .show();
     }
 
     private String clock(int hour, int minute) {
