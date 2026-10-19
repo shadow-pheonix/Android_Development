@@ -10,10 +10,10 @@ import android.widget.Toast;
 import com.shadowphoenix.dietlog.data.DiaryDbHelper;
 import com.shadowphoenix.dietlog.diagnostics.AppLogger;
 import com.shadowphoenix.dietlog.diagnostics.CrashHandler;
-import com.shadowphoenix.dietlog.discipline.ReminderScheduler;
 import com.shadowphoenix.dietlog.diagnostics.DiagnosticsExporter;
 import com.shadowphoenix.dietlog.discipline.DisciplineActivity;
 import com.shadowphoenix.dietlog.discipline.DisciplineUi;
+import com.shadowphoenix.dietlog.discipline.ReminderScheduler;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,6 +22,25 @@ import java.util.concurrent.Executors;
 public final class AppHubActivity extends Activity {
     private static final ExecutorService IO = Executors.newSingleThreadExecutor();
     private boolean exporting;
+    private TextView updateButton;
+    private final android.os.Handler updatesHandler =
+            new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable refreshUpdate =
+            new Runnable() {
+                @Override
+                public void run() {
+                    com.shadowphoenix.dietlog.updates.UpdateManager.State state =
+                            com.shadowphoenix.dietlog.updates.UpdateManager.get(AppHubActivity.this)
+                                    .snapshot();
+                    updateButton.setText(
+                            state.ready
+                                    ? "Update ready · Install"
+                                    : state.available
+                                            ? "New version available · Update"
+                                            : "App updates");
+                    updatesHandler.postDelayed(this, 1500);
+                }
+            };
 
     @Override
     public void onCreate(Bundle state) {
@@ -69,12 +88,24 @@ public final class AppHubActivity extends Activity {
                 connected,
                 DisciplineUi.text(
                         this,
-                        "Your profile, food diary and reminders stay together. Food reminders can show your FuelNote progress.",
+                        "Your profile, food diary and reminders stay together. Food reminders can"
+                            + " show your FuelNote progress.",
                         14,
                         DisciplineUi.MUTED,
                         false),
                 6);
         DisciplineUi.add(body, connected, 24);
+        updateButton =
+                DisciplineUi.button(
+                        this,
+                        "App updates",
+                        () ->
+                                startActivity(
+                                        new Intent(
+                                                this,
+                                                com.shadowphoenix.dietlog.updates.UpdateActivity
+                                                        .class)));
+        DisciplineUi.add(body, updateButton, 18);
         TextView export = DisciplineUi.button(this, "Export diagnostics", 0xFFCBD8EA, () -> {});
         export.setOnClickListener(v -> exportDiagnostics(export));
         DisciplineUi.add(body, export, 18);
@@ -83,6 +114,9 @@ public final class AppHubActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        com.shadowphoenix.dietlog.updates.UpdateManager.get(this).check(false);
+        updatesHandler.removeCallbacks(refreshUpdate);
+        updatesHandler.post(refreshUpdate);
         android.content.Context app = getApplicationContext();
         IO.execute(
                 () -> {
@@ -92,6 +126,12 @@ public final class AppHubActivity extends Activity {
                         AppLogger.e("App chooser reminder scheduling failed", e);
                     }
                 });
+    }
+
+    @Override
+    protected void onPause() {
+        updatesHandler.removeCallbacks(refreshUpdate);
+        super.onPause();
     }
 
     private void addModule(

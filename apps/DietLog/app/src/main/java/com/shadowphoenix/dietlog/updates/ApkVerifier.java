@@ -40,9 +40,10 @@ public final class ApkVerifier {
                     candidate.applicationInfo.minSdkVersion,
                     Build.VERSION.SDK_INT,
                     release);
-            if (!release.versionName.equals(candidate.versionName))
+            if (!release.versionName.equals(candidate.versionName)) {
                 throw new IOException(
                         "The downloaded app version does not match the published update.");
+            }
             if (installed.signingInfo == null || candidate.signingInfo == null) throw signerError();
             if (!sameSigners(
                     certificates(installed.signingInfo.getApkContentsSigners()),

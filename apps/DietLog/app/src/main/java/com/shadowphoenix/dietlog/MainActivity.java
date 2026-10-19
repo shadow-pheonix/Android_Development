@@ -535,6 +535,8 @@ public final class MainActivity extends Activity {
             showScreen(progressScreen, 2);
         });
         navProfile.setOnClickListener(v -> showProfileScreen());
+        findViewById(R.id.profileAppUpdates).setOnClickListener(v -> startActivity(
+                new Intent(this, com.shadowphoenix.dietlog.updates.UpdateActivity.class)));
         findViewById(R.id.profileEditProfileButton).setOnClickListener(v -> openEditProfileScreen());
         findViewById(R.id.editProfileBack).setOnClickListener(v -> closeEditProfileScreen());
         findViewById(R.id.profileSavePersonalButton).setOnClickListener(v -> {
@@ -2847,6 +2849,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        com.shadowphoenix.dietlog.updates.UpdateManager.get(this).check(false);
         moduleForeground = true;
         refreshDisciplineSummary(true);
         if (uiMotion != null) uiMotion.setForeground(true);

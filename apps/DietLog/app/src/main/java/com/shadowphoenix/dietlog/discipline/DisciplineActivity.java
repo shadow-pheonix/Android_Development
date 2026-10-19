@@ -155,6 +155,7 @@ public final class DisciplineActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        com.shadowphoenix.dietlog.updates.UpdateManager.get(this).check(false);
         active = true;
         refresh();
         clock.postDelayed(tick, 60_000);
@@ -328,6 +329,8 @@ public final class DisciplineActivity extends Activity {
             if (visible.isEmpty()) renderEmpty();
             for (Reminder item : visible) renderReminder(item);
         }
+        DisciplineUi.add(body, DisciplineUi.button(this, "App updates", () ->
+                startActivity(new Intent(this, com.shadowphoenix.dietlog.updates.UpdateActivity.class))), 24);
         TextView diagnostics =
                 DisciplineUi.button(this, "Export diagnostics", this::exportDiagnostics);
         diagnostics.setEnabled(!busy);
