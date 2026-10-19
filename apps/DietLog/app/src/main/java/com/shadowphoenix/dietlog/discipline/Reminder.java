@@ -13,7 +13,7 @@ public final class Reminder {
         SUPPLEMENTS
     }
 
-    public final String id, title, notes, mealKey;
+    public final String id, title, notes, mealKey, routine;
     public final Category category;
     public final int hour, minute, daysMask;
     public final boolean enabled;
@@ -53,6 +53,22 @@ public final class Reminder {
             boolean enabled,
             String mealKey,
             ReminderPlan plan) {
+        this(id, title, notes, category, hour, minute, daysMask, enabled, mealKey, plan, "");
+    }
+
+    public Reminder(
+            String id,
+            String title,
+            String notes,
+            Category category,
+            int hour,
+            int minute,
+            int daysMask,
+            boolean enabled,
+            String mealKey,
+            ReminderPlan plan,
+            String routine) {
+        this.routine = routineName(routine);
         if (id == null || id.trim().isEmpty() || id.length() > 100)
             throw new IllegalArgumentException("Invalid reminder ID");
         if (title == null || title.trim().isEmpty() || title.length() > 120)
@@ -105,8 +121,20 @@ public final class Reminder {
                                     plan.intervalDays,
                                     plan.dates,
                                     java.util.Collections.emptyList(),
-                                    plan.followupMinutes)));
+                                    plan.followupMinutes),
+                            routine));
         }
         return values;
+    }
+
+    public static String routineName(String name) {
+        String normalized = name == null ? "" : name.trim().replaceAll("\\s+", " ");
+        if (normalized.length() > 60)
+            throw new IllegalArgumentException("Keep routine names under 60 characters");
+        return normalized;
+    }
+
+    public static String routineKey(String name) {
+        return routineName(name).toLowerCase(java.util.Locale.ROOT);
     }
 }

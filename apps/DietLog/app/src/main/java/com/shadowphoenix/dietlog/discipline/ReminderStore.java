@@ -22,7 +22,7 @@ public final class ReminderStore {
 
     /** Snapshot of a completed activity; date is its original reminder day. */
     public static final class Completion {
-        public final String reminderId, title, scheduledTime, parentId;
+        public final String reminderId, title, scheduledTime, parentId, routine;
         public final Reminder.Category category;
         public final LocalDate date;
 
@@ -36,6 +36,7 @@ public final class ReminderStore {
             parentId = entry.optString("parentId", reminderId);
             scheduledTime = entry.optString("scheduledTime");
             title = entry.optString("title");
+            routine = entry.optString("routine");
             category = Reminder.Category.valueOf(entry.optString("category"));
             date = LocalDate.parse(entry.optString("date"));
             completedAt = entry.optLong("completedAt", 0);
@@ -120,6 +121,63 @@ public final class ReminderStore {
                         put(activeSlots, occurrence.id, previousSlots.optJSONObject(occurrence.id));
             put(row, "slots", activeSlots);
             put(rows, r.id, row);
+            write(state);
+        }
+    }
+
+    /** A new checklist is committed atomically, so storage failure cannot leave partial steps. */
+    public void createRoutine(String name, List<String> steps, int hour, int minute) {
+        createRoutine(
+                name, steps, hour, minute, ReminderPlan.daily(), Reminder.Category.CUSTOM, 127);
+    }
+
+    public void createRoutine(
+            String name,
+            List<String> steps,
+            int hour,
+            int minute,
+            ReminderPlan plan,
+            Reminder.Category category,
+            int daysMask) {
+        String routine = Reminder.routineName(name);
+        if (routine.isEmpty()) throw new IllegalArgumentException("Enter a routine name");
+        if (steps.isEmpty() || steps.size() > 12)
+            throw new IllegalArgumentException("Use 1–12 checklist steps");
+        List<Reminder> additions = new ArrayList<>();
+        Set<String> titles = new HashSet<>();
+        for (String title : steps) {
+            if (!titles.add(title.trim().toLowerCase(Locale.ROOT)))
+                throw new IllegalArgumentException("Use distinct checklist steps");
+            additions.add(
+                    new Reminder(
+                            UUID.randomUUID().toString(),
+                            title,
+                            "",
+                            category,
+                            hour,
+                            minute,
+                            daysMask,
+                            true,
+                            "",
+                            plan,
+                            routine));
+        }
+        synchronized (LOCK) {
+            JSONObject state = read(), rows = rows(state);
+            if (rows.length() + additions.size() > 200)
+                throw new IllegalArgumentException("Keep at most 200 reminders");
+            for (Iterator<String> it = rows.keys(); it.hasNext(); )
+                if (Reminder.routineKey(rows.optJSONObject(it.next()).optString("routine"))
+                        .equals(Reminder.routineKey(routine)))
+                    throw new IllegalArgumentException(
+                            "That routine already exists. Open its checklist to add steps");
+            for (Reminder reminder : additions) {
+                JSONObject row = encode(reminder);
+                put(row, "createdDate", LocalDate.now().toString());
+                put(row, "revision", UUID.randomUUID().toString());
+                put(row, "done", new JSONArray());
+                put(rows, reminder.id, row);
+            }
             write(state);
         }
     }
@@ -444,6 +502,7 @@ public final class ReminderStore {
         JSONObject entry = new JSONObject();
         put(entry, "reminderId", row.optString("id"));
         put(entry, "title", row.optString("title"));
+        put(entry, "routine", row.optString("routine"));
         put(entry, "category", row.optString("category"));
         put(entry, "date", date.toString());
         put(entry, "completedAt", completedAt);
@@ -623,7 +682,8 @@ public final class ReminderStore {
                 j.optInt("days", 0),
                 j.optBoolean("enabled"),
                 j.optString("meal"),
-                ReminderPlan.parse(j.optJSONObject("plan")));
+                ReminderPlan.parse(j.optJSONObject("plan")),
+                j.optString("routine"));
     }
 
     private static JSONObject encode(Reminder r) {
@@ -638,6 +698,7 @@ public final class ReminderStore {
         put(j, "enabled", r.enabled);
         put(j, "meal", r.mealKey);
         put(j, "plan", r.plan.json());
+        put(j, "routine", r.routine);
         return j;
     }
 }

@@ -877,4 +877,54 @@ public class ReminderStoreTest {
                         "a", "Routine", "", Reminder.Category.CUSTOM, 8, 0, 127, true, "", plan));
         assertEquals(1, s.history(LocalDate.now().minusDays(2)).size());
     }
+
+    @Test
+    public void routineCreationIsAtomicAndStepsStayIndependent() {
+        Memory m = new Memory();
+        ReminderStore s = store(m);
+        s.createRoutine("  Morning   routine ", java.util.List.of("Brush teeth", "Skincare"), 8, 0);
+        assertEquals(2, s.list().size());
+        assertEquals("Morning routine", s.list().get(0).routine);
+        String a = s.list().get(0).id, b = s.list().get(1).id;
+        s.setCompleted(a, LocalDate.now(), true);
+        assertFalse(s.isCompleted(b, LocalDate.now()));
+        assertEquals("Morning routine", s.history(LocalDate.now()).get(0).routine);
+        try {
+            s.createRoutine("morning routine", java.util.List.of("Third"), 9, 0);
+            fail();
+        } catch (IllegalArgumentException expected) {
+        }
+        assertEquals(2, s.list().size());
+        String before = m.getString("state", null);
+        m.failCommit = true;
+        try {
+            s.createRoutine("Before bed", java.util.List.of("Read", "Sleep"), 22, 0);
+            fail();
+        } catch (IllegalStateException expected) {
+        }
+        assertEquals(before, m.getString("state", null));
+    }
+
+    @Test
+    public void routineMetadataAndExtraTimesSurviveEditingAndDeletion() {
+        ReminderStore s = store(new Memory());
+        ReminderPlan plan =
+                new ReminderPlan(
+                        ReminderPlan.Mode.WEEKDAYS,
+                        null,
+                        null,
+                        1,
+                        java.util.List.of(),
+                        java.util.List.of(LocalTime.of(22, 0)),
+                        60);
+        s.createRoutine(
+                "Before bed", java.util.List.of("Read"), 8, 0, plan, Reminder.Category.CUSTOM, 127);
+        Reminder step = s.list().get(0);
+        assertEquals("Before bed", step.occurrences().get(1).routine);
+        String extra = step.occurrences().get(1).id;
+        s.setCompleted(extra, LocalDate.now(), true);
+        s.delete(step.id);
+        assertEquals("Before bed", s.history(LocalDate.now()).get(0).routine);
+        assertTrue(s.list().isEmpty());
+    }
 }
