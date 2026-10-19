@@ -70,9 +70,6 @@
                 android:minHeight="52dp" android:layout_marginTop="24dp" android:padding="12dp" android:gravity="center" android:background="@drawable/bg_button_primary"
                 android:text="Continue" android:textColor="@color/background" android:textSize="15sp" android:textStyle="bold"
                 android:clickable="true" android:focusable="true" android:tag="glass:ACTION" />
-            <TextView android:id="@+id/setupDiagnostics" android:layout_width="match_parent" android:layout_height="48dp"
-                android:gravity="center" android:text="@string/export_diagnostics" android:textColor="@color/text_secondary"
-                android:textSize="12sp" android:clickable="true" android:focusable="true" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

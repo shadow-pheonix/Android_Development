@@ -30,8 +30,5 @@
                 android:accessibilityLiveRegion="polite" />
         </LinearLayout>
         <TextView style="@style/SetupNote" android:text="You can connect Google Drive later from Profile." />
-        <TextView android:id="@+id/startupChoiceDiagnostics" android:layout_width="match_parent" android:layout_height="48dp"
-            android:layout_marginTop="12dp" android:gravity="center" android:text="@string/export_diagnostics"
-            android:textColor="@color/text_secondary" android:textSize="12sp" android:clickable="true" android:focusable="true" />
     </LinearLayout>
 </ScrollView>

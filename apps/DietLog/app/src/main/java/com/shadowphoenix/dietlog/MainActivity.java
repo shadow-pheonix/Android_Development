@@ -272,7 +272,7 @@ public final class MainActivity extends Activity {
         } else {
             pendingProfileSetup = restoredSetup;
             startupChoiceController = new StartupChoiceController(this, this::connectGoogleDrive,
-                    this::continueStartupWithoutLogin, this::exportDiagnostics);
+                    this::continueStartupWithoutLogin);
             showScreen(startupChoiceScreen, -1);
             if (restoreNeeded) restoreStartupProfile(null);
         }
@@ -360,7 +360,6 @@ public final class MainActivity extends Activity {
                 showScreen(homeScreen, 0);
                 openPendingDisciplineMeal();
             }, this::openAppChooser);
-            findViewById(R.id.setupDiagnostics).setOnClickListener(v -> exportDiagnostics());
             AppLogger.i("First-run profile setup opened");
             showScreen(onboardingScreen, -1);
         }

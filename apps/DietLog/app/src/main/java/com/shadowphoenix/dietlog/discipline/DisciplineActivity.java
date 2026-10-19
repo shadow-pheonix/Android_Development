@@ -33,10 +33,8 @@ import android.widget.Toast;
 import com.shadowphoenix.dietlog.AppHubActivity;
 import com.shadowphoenix.dietlog.MainActivity;
 import com.shadowphoenix.dietlog.R;
-import com.shadowphoenix.dietlog.data.DiaryDbHelper;
 import com.shadowphoenix.dietlog.diagnostics.AppLogger;
 import com.shadowphoenix.dietlog.diagnostics.CrashHandler;
-import com.shadowphoenix.dietlog.diagnostics.DiagnosticsExporter;
 import com.shadowphoenix.dietlog.shared.SharedAppData;
 
 import org.json.JSONObject;
@@ -408,10 +406,6 @@ public final class DisciplineActivity extends Activity {
                                                 com.shadowphoenix.dietlog.updates.UpdateActivity
                                                         .class))),
                 24);
-        TextView diagnostics =
-                DisciplineUi.button(this, "Export diagnostics", this::exportDiagnostics);
-        diagnostics.setEnabled(!busy);
-        DisciplineUi.add(body, diagnostics, 24);
         DisciplineUi.add(
                 body,
                 DisciplineUi.text(
@@ -600,9 +594,6 @@ public final class DisciplineActivity extends Activity {
                 DisciplineUi.add(body, card, 14);
             }
         }
-        TextView export = DisciplineUi.button(this, "Export diagnostics", this::exportDiagnostics);
-        export.setEnabled(!busy);
-        DisciplineUi.add(body, export, 24);
     }
 
     private void selectHistoryDate(LocalDate date) {
@@ -1519,21 +1510,6 @@ public final class DisciplineActivity extends Activity {
             for (int i = 0; i < group.getChildCount(); i++)
                 enableFields(group.getChildAt(i), enabled);
         }
-    }
-
-    private void exportDiagnostics() {
-        mutate(
-                () -> {
-                    DiaryDbHelper db = new DiaryDbHelper(getApplicationContext());
-                    try {
-                        return "Saved to "
-                                + DiagnosticsExporter.export(getApplicationContext(), db)
-                                        .displayPath;
-                    } finally {
-                        db.close();
-                    }
-                },
-                "Couldn’t export diagnostics. Please try again.");
     }
 
     private void toast(String message) {
