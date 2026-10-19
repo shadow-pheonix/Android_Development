@@ -148,9 +148,11 @@ jobs:
           FORMATTED_SHA1="$(printf '%s' "$NORMALIZED_APK_SHA1" | sed 's/../&:/g; s/:$//')"
           echo "DietLog stable signing SHA-1: $FORMATTED_SHA1"
           echo "DIETLOG_SIGNING_SHA1=$FORMATTED_SHA1" >> "$GITHUB_ENV"
-      - name: Prepare release APK
-        if: github.event_name != 'pull_request'
-        run: cp app/build/outputs/apk/debug/app-debug.apk DietLog-debug.apk
+      - name: Prepare release APK and update metadata
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk DietLog-debug.apk
+          python tools/build_update_manifest.py --apk DietLog-debug.apk \
+            --aapt "$ANDROID_HOME/build-tools/35.0.0/aapt" --output dietlog-update.json
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
@@ -159,7 +161,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Publish rolling DietLog release
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -167,12 +169,12 @@ jobs:
           git push origin refs/tags/dietlog-latest --force
 
           if gh release view dietlog-latest >/dev/null 2>&1; then
-            gh release upload dietlog-latest DietLog-debug.apk --clobber
+            gh release upload dietlog-latest DietLog-debug.apk dietlog-update.json --clobber
             gh release edit dietlog-latest \
               --title "DietLog Latest Debug" \
               --notes "Latest successful DietLog debug build from commit $GITHUB_SHA. Stable signing SHA-1: $DIETLOG_SIGNING_SHA1. The APK includes the bundled offline food database."
           else
-            gh release create dietlog-latest DietLog-debug.apk \
+            gh release create dietlog-latest DietLog-debug.apk dietlog-update.json \
               --title "DietLog Latest Debug" \
               --notes "Latest successful DietLog debug build from commit $GITHUB_SHA. Stable signing SHA-1: $DIETLOG_SIGNING_SHA1. The APK includes the bundled offline food database."
           fi
