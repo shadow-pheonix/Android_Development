@@ -121,4 +121,82 @@ public class ReminderScheduleTest {
                 ReminderSchedule.followup(
                         r(23, 30, 1, true), LocalDate.of(2026, 10, 19), ZoneId.of("UTC")));
     }
+
+    @Test
+    public void intervalsSelectedDatesAndInclusiveRange() {
+        LocalDate start = LocalDate.of(2026, 10, 19);
+        ReminderPlan interval =
+                new ReminderPlan(
+                        ReminderPlan.Mode.INTERVAL,
+                        start,
+                        start.plusDays(6),
+                        3,
+                        java.util.List.of(),
+                        java.util.List.of(),
+                        30);
+        Reminder r =
+                new Reminder(
+                        "interval",
+                        "Routine",
+                        "",
+                        Reminder.Category.CUSTOM,
+                        8,
+                        0,
+                        127,
+                        true,
+                        "",
+                        interval);
+        assertEquals(
+                start.plusDays(3),
+                ReminderSchedule.next(
+                                r,
+                                start.atTime(9, 0).toInstant(ZoneOffset.UTC),
+                                ZoneOffset.UTC,
+                                d -> false)
+                        .toLocalDate());
+        assertTrue(interval.occurs(start.plusDays(6), 127));
+        assertFalse(interval.occurs(start.plusDays(7), 127));
+        assertNull(
+                ReminderSchedule.next(
+                        r,
+                        start.plusDays(6).atTime(9, 0).toInstant(ZoneOffset.UTC),
+                        ZoneOffset.UTC,
+                        d -> false));
+        LocalDate distant = start.plusYears(3);
+        ReminderPlan selected =
+                new ReminderPlan(
+                        ReminderPlan.Mode.DATES,
+                        null,
+                        null,
+                        1,
+                        java.util.List.of(distant),
+                        java.util.List.of(),
+                        60);
+        Reminder dates =
+                new Reminder(
+                        "dates",
+                        "Routine",
+                        "",
+                        Reminder.Category.CUSTOM,
+                        8,
+                        0,
+                        1,
+                        true,
+                        "",
+                        selected);
+        assertEquals(
+                distant,
+                ReminderSchedule.next(
+                                dates,
+                                start.atStartOfDay(ZoneOffset.UTC).toInstant(),
+                                ZoneOffset.UTC,
+                                d -> false)
+                        .toLocalDate());
+        assertNull(
+                ReminderSchedule.next(
+                        dates,
+                        distant.atTime(9, 0).toInstant(ZoneOffset.UTC),
+                        ZoneOffset.UTC,
+                        d -> false));
+    }
 }

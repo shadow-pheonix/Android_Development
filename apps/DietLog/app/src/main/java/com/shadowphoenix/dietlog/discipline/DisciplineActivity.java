@@ -91,7 +91,15 @@ public final class DisciplineActivity extends Activity {
     private boolean draftLoaded;
     private Draft draft;
     private AlertDialog editor;
-    private EditText titleInput, notesInput;
+    private EditText titleInput,
+            notesInput,
+            intervalInput,
+            startInput,
+            endInput,
+            datesInput,
+            extraTimesInput,
+            followupInput;
+    private Spinner scheduleInput;
     private Spinner categoryInput, mealInput;
     private CheckBox enabledInput;
     private final List<CheckBox> dayInputs = new ArrayList<>();
@@ -266,13 +274,18 @@ public final class DisciplineActivity extends Activity {
                     try {
                         ReminderStore store = new ReminderStore(app);
                         loaded = store.list();
-                        java.util.Set<String> completedIds = store.completedForDate(date);
+                        Map<String, ReminderStore.OccurrenceState> states =
+                                store.statesForDate(date);
                         carry = store.outstandingDates(date);
-                        for (Reminder item : loaded) {
-                            done.put(item.id, completedIds.contains(item.id));
-                            paused.put(item.id, store.pausedUntil(item.id));
-                            skipped.put(item.id, store.isSkipped(item.id, date));
-                        }
+                        for (Reminder parent : loaded)
+                            for (Reminder item : parent.occurrences()) {
+                                ReminderStore.OccurrenceState state = states.get(item.id);
+                                if (state != null) {
+                                    done.put(item.id, state.done);
+                                    paused.put(item.id, state.pausedUntil);
+                                    skipped.put(item.id, state.skipped);
+                                }
+                            }
                     } catch (Exception e) {
                         AppLogger.e("Discipline reminders load failed", e);
                         error = "Couldn’t load your reminders. Tap Retry.";
@@ -401,8 +414,10 @@ public final class DisciplineActivity extends Activity {
                             .thenComparing(item -> item.title));
             if (visible.isEmpty()) renderEmpty();
             for (Reminder item : visible) {
-                LocalDate carried = carriedDates.get(item.id);
-                if (carried != null) renderCarriedReminder(item, carried);
+                for (Reminder occurrence : item.occurrences()) {
+                    LocalDate carried = carriedDates.get(occurrence.id);
+                    if (carried != null) renderCarriedReminder(occurrence, carried);
+                }
                 renderReminder(item);
             }
         }
@@ -554,7 +569,17 @@ public final class DisciplineActivity extends Activity {
                                 true),
                         0);
                 DisciplineUi.add(
-                        card, DisciplineUi.text(this, entry.title, 19, DisciplineUi.TEXT, true), 8);
+                        card,
+                        DisciplineUi.text(
+                                this,
+                                entry.title
+                                        + (entry.scheduledTime.isEmpty()
+                                                ? ""
+                                                : " · " + entry.scheduledTime),
+                                19,
+                                DisciplineUi.TEXT,
+                                true),
+                        8);
                 String when =
                         entry.outcome != ReminderStore.Outcome.DONE
                                 ? (entry.outcome == ReminderStore.Outcome.SKIPPED
@@ -576,7 +601,7 @@ public final class DisciplineActivity extends Activity {
                         card, DisciplineUi.text(this, when, 13, DisciplineUi.MUTED, false), 8);
                 boolean present = false;
                 for (Reminder reminder : reminders)
-                    if (reminder.id.equals(entry.reminderId)) {
+                    if (reminder.id.equals(entry.parentId)) {
                         present = true;
                         break;
                     }
@@ -656,10 +681,12 @@ public final class DisciplineActivity extends Activity {
         picker.show();
     }
 
-    private String followupTime(int hour, int minute) {
-        LocalTime first = LocalTime.of(hour, minute);
+    private String followupTime(Reminder item) {
+        LocalTime first = LocalTime.of(item.hour, item.minute);
         java.time.ZonedDateTime next =
-                today.atTime(first).atZone(ZoneId.systemDefault()).plusHours(1);
+                today.atTime(first)
+                        .atZone(ZoneId.systemDefault())
+                        .plusMinutes(item.plan.followupMinutes);
         return clock(next.getHour(), next.getMinute())
                 + (next.toLocalDate().equals(today) ? "" : " tomorrow");
     }
@@ -709,15 +736,16 @@ public final class DisciplineActivity extends Activity {
     private void renderCounts() {
         int due = 0, upcoming = 0, done = 0;
         int now = LocalTime.now().getHour() * 60 + LocalTime.now().getMinute();
-        for (Reminder item : reminders) {
-            if (!item.enabled
-                    || pauses.get(item.id) != null
-                    || Boolean.TRUE.equals(skips.get(item.id))
-                    || !scheduledToday(item)) continue;
-            if (isDone(item)) done++;
-            else if (item.enabled && item.hour * 60 + item.minute <= now) due++;
-            else if (item.enabled) upcoming++;
-        }
+        for (Reminder parent : reminders)
+            for (Reminder item : parent.occurrences()) {
+                if (!item.enabled
+                        || pauses.get(item.id) != null
+                        || Boolean.TRUE.equals(skips.get(item.id))
+                        || !scheduledToday(item)) continue;
+                if (isDone(item)) done++;
+                else if (item.enabled && item.hour * 60 + item.minute <= now) due++;
+                else if (item.enabled) upcoming++;
+            }
         LinearLayout stats = DisciplineUi.row(this);
         addCount(stats, due, "Due today");
         addCount(stats, upcoming, "Upcoming");
@@ -886,7 +914,7 @@ public final class DisciplineActivity extends Activity {
     }
 
     private boolean scheduledToday(Reminder item) {
-        return (item.daysMask & (1 << (today.getDayOfWeek().getValue() - 1))) != 0;
+        return item.plan.occurs(today, item.daysMask);
     }
 
     private boolean isDone(Reminder item) {
@@ -930,7 +958,7 @@ public final class DisciplineActivity extends Activity {
                 card,
                 DisciplineUi.text(
                         this,
-                        clock(item.hour, item.minute) + "  ·  " + days(item.daysMask),
+                        clock(item.hour, item.minute) + "  ·  " + scheduleLabel(item),
                         14,
                         DisciplineUi.MUTED,
                         false),
@@ -939,7 +967,7 @@ public final class DisciplineActivity extends Activity {
                 card,
                 DisciplineUi.text(
                         this,
-                        "Follow-up · " + followupTime(item.hour, item.minute) + " if unfinished",
+                        "Follow-up · " + followupTime(item) + " if unfinished",
                         13,
                         DisciplineUi.MUTED,
                         false),
@@ -972,6 +1000,97 @@ public final class DisciplineActivity extends Activity {
             log.setEnabled(!busy);
             DisciplineUi.add(card, log, 10);
         }
+        for (Reminder occurrence : item.occurrences()) {
+            if (item.occurrences().size() > 1)
+                DisciplineUi.add(
+                        card,
+                        DisciplineUi.text(
+                                this,
+                                clock(occurrence.hour, occurrence.minute)
+                                        + " · "
+                                        + status(occurrence),
+                                15,
+                                DisciplineUi.BLUE,
+                                true),
+                        14);
+            renderOccurrenceActions(card, occurrence);
+        }
+        TextView datedPause =
+                DisciplineUi.button(
+                        this,
+                        pauses.get(item.id) == null ? "Pause until…" : "Resume now",
+                        () -> {
+                            if (pauses.get(item.id) != null)
+                                mutate(
+                                        () -> {
+                                            new ReminderStore(getApplicationContext())
+                                                    .pauseUntil(item.id, null);
+                                            return rescheduleAfterChange("Reminder resumed.");
+                                        });
+                            else choosePause(item);
+                        });
+        datedPause.setEnabled(!busy);
+        DisciplineUi.add(card, datedPause, 8);
+        LinearLayout manage = DisciplineUi.row(this);
+        TextView edit = DisciplineUi.button(this, "Edit", () -> openDraft(Draft.from(item)));
+        TextView pause =
+                DisciplineUi.button(
+                        this,
+                        item.enabled ? "Pause" : "Enable",
+                        () ->
+                                mutate(
+                                        () -> {
+                                            new ReminderStore(getApplicationContext())
+                                                    .save(
+                                                            new Reminder(
+                                                                    item.id,
+                                                                    item.title,
+                                                                    item.notes,
+                                                                    item.category,
+                                                                    item.hour,
+                                                                    item.minute,
+                                                                    item.daysMask,
+                                                                    !item.enabled,
+                                                                    item.mealKey,
+                                                                    item.plan));
+                                            return rescheduleAfterChange(
+                                                    item.enabled
+                                                            ? "Reminder paused."
+                                                            : "Reminder enabled.");
+                                        }));
+        TextView delete =
+                DisciplineUi.button(
+                        this,
+                        "Delete",
+                        0xFFFFB9BB,
+                        () ->
+                                new AlertDialog.Builder(this, R.style.DisciplineDialogTheme)
+                                        .setTitle("Delete reminder?")
+                                        .setMessage(
+                                                "This removes future reminders. Your completed"
+                                                        + " daily activity stays in the log.")
+                                        .setNegativeButton("Cancel", null)
+                                        .setPositiveButton(
+                                                "Delete",
+                                                (d, w) ->
+                                                        mutate(
+                                                                () -> {
+                                                                    new ReminderStore(
+                                                                                    getApplicationContext())
+                                                                            .delete(item.id);
+                                                                    return rescheduleAfterChange(
+                                                                            "Reminder deleted.");
+                                                                }))
+                                        .show());
+        for (TextView control : new TextView[] {edit, pause, delete}) {
+            control.setEnabled(!busy);
+            DisciplineUi.weighted(manage, control, manage.getChildCount() == 0 ? 0 : 6);
+        }
+        DisciplineUi.add(card, manage, 10);
+        DisciplineUi.add(body, card, 16);
+    }
+
+    private void renderOccurrenceActions(LinearLayout card, Reminder item) {
         if (scheduledToday(item) && pauses.get(item.id) == null) {
             LinearLayout actions = DisciplineUi.row(this);
             boolean done = isDone(item);
@@ -1040,78 +1159,20 @@ public final class DisciplineActivity extends Activity {
             skip.setEnabled(!busy);
             DisciplineUi.add(card, skip, 8);
         }
-        TextView datedPause =
-                DisciplineUi.button(
-                        this,
-                        pauses.get(item.id) == null ? "Pause until…" : "Resume now",
-                        () -> {
-                            if (pauses.get(item.id) != null)
-                                mutate(
-                                        () -> {
-                                            new ReminderStore(getApplicationContext())
-                                                    .pauseUntil(item.id, null);
-                                            return rescheduleAfterChange("Reminder resumed.");
-                                        });
-                            else choosePause(item);
-                        });
-        datedPause.setEnabled(!busy);
-        DisciplineUi.add(card, datedPause, 8);
-        LinearLayout manage = DisciplineUi.row(this);
-        TextView edit = DisciplineUi.button(this, "Edit", () -> openDraft(Draft.from(item)));
-        TextView pause =
-                DisciplineUi.button(
-                        this,
-                        item.enabled ? "Pause" : "Enable",
-                        () ->
-                                mutate(
-                                        () -> {
-                                            new ReminderStore(getApplicationContext())
-                                                    .save(
-                                                            new Reminder(
-                                                                    item.id,
-                                                                    item.title,
-                                                                    item.notes,
-                                                                    item.category,
-                                                                    item.hour,
-                                                                    item.minute,
-                                                                    item.daysMask,
-                                                                    !item.enabled,
-                                                                    item.mealKey));
-                                            return rescheduleAfterChange(
-                                                    item.enabled
-                                                            ? "Reminder paused."
-                                                            : "Reminder enabled.");
-                                        }));
-        TextView delete =
-                DisciplineUi.button(
-                        this,
-                        "Delete",
-                        0xFFFFB9BB,
-                        () ->
-                                new AlertDialog.Builder(this, R.style.DisciplineDialogTheme)
-                                        .setTitle("Delete reminder?")
-                                        .setMessage(
-                                                "This removes future reminders. Your completed"
-                                                        + " daily activity stays in the log.")
-                                        .setNegativeButton("Cancel", null)
-                                        .setPositiveButton(
-                                                "Delete",
-                                                (d, w) ->
-                                                        mutate(
-                                                                () -> {
-                                                                    new ReminderStore(
-                                                                                    getApplicationContext())
-                                                                            .delete(item.id);
-                                                                    return rescheduleAfterChange(
-                                                                            "Reminder deleted.");
-                                                                }))
-                                        .show());
-        for (TextView control : new TextView[] {edit, pause, delete}) {
-            control.setEnabled(!busy);
-            DisciplineUi.weighted(manage, control, manage.getChildCount() == 0 ? 0 : 6);
-        }
-        DisciplineUi.add(card, manage, 10);
-        DisciplineUi.add(body, card, 16);
+    }
+
+    private String scheduleLabel(Reminder item) {
+        String label =
+                item.plan.mode == ReminderPlan.Mode.DATES
+                        ? item.plan.dates.size() + " selected dates"
+                        : item.plan.mode == ReminderPlan.Mode.INTERVAL
+                                ? "Every " + item.plan.intervalDays + " days"
+                                : days(item.daysMask);
+        if (item.plan.start != null) label += " · from " + item.plan.start;
+        if (item.plan.end != null) label += " · through " + item.plan.end;
+        if (!item.plan.extraTimes.isEmpty())
+            label += " · " + item.occurrences().size() + " times/day";
+        return label;
     }
 
     private void choosePause(Reminder item) {
@@ -1358,9 +1419,10 @@ public final class DisciplineActivity extends Activity {
                 fields,
                 DisciplineUi.text(
                         this,
-                        "Two alerts: at your chosen time and one hour later if unfinished."
-                                + " Completing it saves the day’s log and stops the follow-up. Late"
-                                + " follow-ups can arrive after midnight for the original day.",
+                        "Each time has its own Done or Skip record. A follow-up arrives 60 minutes"
+                            + " later by default, adjustable below. Completing it saves the day’s"
+                            + " log and stops the follow-up. Late follow-ups can arrive after"
+                            + " midnight for the original day.",
                         13,
                         DisciplineUi.MUTED,
                         false),
@@ -1388,6 +1450,75 @@ public final class DisciplineActivity extends Activity {
             }
             DisciplineUi.add(fields, row, 2);
         }
+        label(fields, "Schedule type");
+        scheduleInput =
+                spinner(
+                        new String[] {"Selected weekdays", "Every few days", "Selected dates"},
+                        value.mode);
+        DisciplineUi.add(fields, scheduleInput, 4);
+        label(fields, "Every how many days? (interval schedules)");
+        intervalInput = input(value.interval, "e.g. 3", 3, false);
+        intervalInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        DisciplineUi.add(fields, intervalInput, 4);
+        label(fields, "Start date (optional; required for intervals)");
+        startInput = input(value.start, "YYYY-MM-DD", 10, false);
+        DisciplineUi.add(fields, startInput, 4);
+        addDatePicker(fields, startInput, "Choose start date");
+        label(fields, "End date (optional, inclusive)");
+        endInput = input(value.end, "YYYY-MM-DD", 10, false);
+        DisciplineUi.add(fields, endInput, 4);
+        addDatePicker(fields, endInput, "Choose end date");
+        label(fields, "Selected dates (comma separated)");
+        datesInput = input(value.dates, "2026-11-02, 2026-11-05", 4392, true);
+        DisciplineUi.add(fields, datesInput, 4);
+        label(fields, "Additional times (24-hour, comma separated)");
+        extraTimesInput = input(value.times, "e.g. 14:00, 21:30", 60, false);
+        DisciplineUi.add(fields, extraTimesInput, 4);
+        DisciplineUi.add(
+                fields,
+                DisciplineUi.button(
+                        this,
+                        "Add another time",
+                        () -> {
+                            new TimePickerDialog(
+                                            this,
+                                            R.style.DisciplineDialogTheme,
+                                            (view, h, m) -> {
+                                                String previous =
+                                                        extraTimesInput.getText().toString().trim();
+                                                extraTimesInput.setText(
+                                                        previous
+                                                                + (previous.isEmpty() ? "" : ", ")
+                                                                + String.format(
+                                                                        Locale.ROOT,
+                                                                        "%02d:%02d",
+                                                                        h,
+                                                                        m));
+                                            },
+                                            18,
+                                            0,
+                                            DateFormat.is24HourFormat(this))
+                                    .show();
+                        }),
+                4);
+        label(fields, "Follow-up delay in minutes (default 60)");
+        followupInput = input(value.followup, "60", 4, false);
+        followupInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        DisciplineUi.add(fields, followupInput, 4);
+        scheduleInput.setOnItemSelectedListener(
+                new android.widget.AdapterView.OnItemSelectedListener() {
+                    public void onItemSelected(
+                            android.widget.AdapterView<?> parent,
+                            View view,
+                            int position,
+                            long id) {
+                        intervalInput.setEnabled(position == 1);
+                        datesInput.setEnabled(position == 2);
+                        for (CheckBox day : dayInputs) day.setEnabled(position == 0);
+                    }
+
+                    public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+                });
         label(fields, "FuelNote meal link (food reminders only)");
         mealInput = spinner(MEALS, value.meal);
         DisciplineUi.add(fields, mealInput, 4);
@@ -1436,6 +1567,33 @@ public final class DisciplineActivity extends Activity {
                         android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
                                 | android.view.WindowManager.LayoutParams
                                         .SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
+
+    private void addDatePicker(LinearLayout fields, EditText target, String label) {
+        DisciplineUi.add(
+                fields,
+                DisciplineUi.button(
+                        this,
+                        label,
+                        () -> {
+                            LocalDate current;
+                            try {
+                                current = LocalDate.parse(target.getText().toString());
+                            } catch (Exception ignored) {
+                                current = LocalDate.now();
+                            }
+                            new DatePickerDialog(
+                                            this,
+                                            R.style.DisciplineDialogTheme,
+                                            (view, y, m, d) ->
+                                                    target.setText(
+                                                            LocalDate.of(y, m + 1, d).toString()),
+                                            current.getYear(),
+                                            current.getMonthValue() - 1,
+                                            current.getDayOfMonth())
+                                    .show();
+                        }),
+                4);
     }
 
     private void label(LinearLayout parent, String text) {
@@ -1497,6 +1655,13 @@ public final class DisciplineActivity extends Activity {
         if (draft == null || titleInput == null) return;
         draft.title = titleInput.getText().toString();
         draft.notes = notesInput.getText().toString();
+        draft.mode = scheduleInput.getSelectedItemPosition();
+        draft.interval = intervalInput.getText().toString();
+        draft.start = startInput.getText().toString();
+        draft.end = endInput.getText().toString();
+        draft.dates = datesInput.getText().toString();
+        draft.times = extraTimesInput.getText().toString();
+        draft.followup = followupInput.getText().toString();
         draft.category = categoryInput.getSelectedItemPosition();
         draft.meal = mealInput.getSelectedItemPosition();
         draft.enabled = enabledInput.isChecked();
@@ -1532,8 +1697,20 @@ public final class DisciplineActivity extends Activity {
             titleInput.requestFocus();
             return;
         }
-        if (draft.daysMask == 0) {
+        if (draft.mode == 0 && draft.daysMask == 0) {
             editorError.setText("Choose at least one repeat day.");
+            return;
+        }
+        try {
+            draft.plan();
+        } catch (Exception invalid) {
+            editorError.setText(
+                    invalid instanceof IllegalArgumentException
+                                    && invalid.getMessage() != null
+                                    && !invalid.getMessage().startsWith("Text")
+                                    && !invalid.getMessage().startsWith("For input")
+                            ? invalid.getMessage()
+                            : "Check dates (YYYY-MM-DD), times (HH:mm), interval and follow-up.");
             return;
         }
         Draft saving = Draft.parse(draft.json());
@@ -1558,9 +1735,10 @@ public final class DisciplineActivity extends Activity {
                                         Reminder.Category.values()[saving.category],
                                         saving.hour,
                                         saving.minute,
-                                        saving.daysMask,
+                                        saving.daysMask == 0 ? 127 : saving.daysMask,
                                         saving.enabled,
-                                        saving.category == 0 ? MEAL_KEYS[saving.meal] : "");
+                                        saving.category == 0 ? MEAL_KEYS[saving.meal] : "",
+                                        saving.plan());
                         new ReminderStore(getApplicationContext()).save(reminder);
                         // Clear a saved draft on the same serial worker, including when the
                         // activity rotates.
@@ -1645,6 +1823,39 @@ public final class DisciplineActivity extends Activity {
         String id = UUID.randomUUID().toString(), title = "", notes = "";
         int category = 3, hour = 9, minute = 0, daysMask = 127, meal = 0;
         boolean enabled = true, existing;
+        int mode = 0;
+        String interval = "1", start = "", end = "", dates = "", times = "", followup = "60";
+
+        ReminderPlan plan() {
+            List<LocalDate> selected = new ArrayList<>();
+            List<LocalTime> extra = new ArrayList<>();
+            if (mode == 2 && !dates.trim().isEmpty())
+                for (String value : dates.split(",")) selected.add(LocalDate.parse(value.trim()));
+            if (!times.trim().isEmpty())
+                for (String value : times.split(",")) extra.add(LocalTime.parse(value.trim()));
+            if (extra.contains(LocalTime.of(hour, minute)))
+                throw new IllegalArgumentException(
+                        "The main time is already scheduled; remove it from additional times");
+            if (new java.util.HashSet<>(extra).size() != extra.size())
+                throw new IllegalArgumentException("Use each scheduled time only once");
+            return new ReminderPlan(
+                    ReminderPlan.Mode.values()[mode],
+                    start.trim().isEmpty() ? null : LocalDate.parse(start.trim()),
+                    end.trim().isEmpty() ? null : LocalDate.parse(end.trim()),
+                    mode == 1 ? Integer.parseInt(interval.trim()) : 1,
+                    selected,
+                    extra,
+                    Integer.parseInt(followup.trim()));
+        }
+
+        private static String join(java.util.Collection<?> values) {
+            StringBuilder joined = new StringBuilder();
+            for (Object value : values) {
+                if (joined.length() > 0) joined.append(", ");
+                joined.append(value);
+            }
+            return joined.toString();
+        }
 
         static Draft fresh(int category) {
             Draft value = new Draft();
@@ -1663,6 +1874,13 @@ public final class DisciplineActivity extends Activity {
             value.daysMask = item.daysMask;
             value.enabled = item.enabled;
             value.existing = true;
+            value.mode = item.plan.mode.ordinal();
+            value.interval = String.valueOf(item.plan.intervalDays);
+            value.start = item.plan.start == null ? "" : item.plan.start.toString();
+            value.end = item.plan.end == null ? "" : item.plan.end.toString();
+            value.dates = join(item.plan.dates);
+            value.times = join(item.plan.extraTimes);
+            value.followup = String.valueOf(item.plan.followupMinutes);
             for (int i = 0; i < MEAL_KEYS.length; i++)
                 if (MEAL_KEYS[i].equals(item.mealKey)) value.meal = i;
             return value;
@@ -1681,6 +1899,13 @@ public final class DisciplineActivity extends Activity {
                         .put("meal", meal)
                         .put("enabled", enabled)
                         .put("existing", existing)
+                        .put("mode", mode)
+                        .put("interval", interval)
+                        .put("start", start)
+                        .put("end", end)
+                        .put("dates", dates)
+                        .put("times", times)
+                        .put("followup", followup)
                         .toString();
             } catch (Exception impossible) {
                 throw new IllegalStateException(impossible);
@@ -1702,6 +1927,14 @@ public final class DisciplineActivity extends Activity {
                 value.meal = json.getInt("meal");
                 value.enabled = json.getBoolean("enabled");
                 value.existing = json.getBoolean("existing");
+                value.mode = json.optInt("mode", 0);
+                value.interval = json.optString("interval", "1");
+                value.start = json.optString("start");
+                value.end = json.optString("end");
+                value.dates = json.optString("dates");
+                value.times = json.optString("times");
+                value.followup = json.optString("followup", "60");
+                if (value.mode < 0 || value.mode > 2) return null;
                 if (value.category < 0
                         || value.category >= CATEGORIES.length
                         || value.hour < 0

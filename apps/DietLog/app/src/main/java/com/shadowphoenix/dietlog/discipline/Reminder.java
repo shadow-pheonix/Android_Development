@@ -17,6 +17,7 @@ public final class Reminder {
     public final Category category;
     public final int hour, minute, daysMask;
     public final boolean enabled;
+    public final ReminderPlan plan;
 
     public Reminder(
             String id,
@@ -28,7 +29,31 @@ public final class Reminder {
             int daysMask,
             boolean enabled,
             String mealKey) {
-        if (id == null || id.trim().isEmpty() || id.length() > 80)
+        this(
+                id,
+                title,
+                notes,
+                category,
+                hour,
+                minute,
+                daysMask,
+                enabled,
+                mealKey,
+                ReminderPlan.daily());
+    }
+
+    public Reminder(
+            String id,
+            String title,
+            String notes,
+            Category category,
+            int hour,
+            int minute,
+            int daysMask,
+            boolean enabled,
+            String mealKey,
+            ReminderPlan plan) {
+        if (id == null || id.trim().isEmpty() || id.length() > 100)
             throw new IllegalArgumentException("Invalid reminder ID");
         if (title == null || title.trim().isEmpty() || title.length() > 120)
             throw new IllegalArgumentException("Use a title of 1–120 characters");
@@ -42,6 +67,7 @@ public final class Reminder {
                 && !mealKey.isEmpty()
                 && !Arrays.asList("breakfast", "lunch", "snacks", "dinner").contains(mealKey))
             throw new IllegalArgumentException("Invalid meal link");
+        this.plan = java.util.Objects.requireNonNull(plan);
         this.id = id;
         this.title = title.trim();
         this.notes = notes == null ? "" : notes;
@@ -51,5 +77,36 @@ public final class Reminder {
         this.daysMask = daysMask;
         this.enabled = enabled;
         this.mealKey = mealKey == null ? "" : mealKey;
+    }
+
+    /**
+     * Extra wall-clock times have deterministic independent IDs; the original ID stays compatible.
+     */
+    public java.util.List<Reminder> occurrences() {
+        java.util.List<Reminder> values = new java.util.ArrayList<>();
+        values.add(this);
+        for (LocalTime time : plan.extraTimes) {
+            if (time.equals(LocalTime.of(hour, minute))) continue;
+            values.add(
+                    new Reminder(
+                            id + "~" + (time.getHour() * 60 + time.getMinute()),
+                            title,
+                            notes,
+                            category,
+                            time.getHour(),
+                            time.getMinute(),
+                            daysMask,
+                            enabled,
+                            mealKey,
+                            new ReminderPlan(
+                                    plan.mode,
+                                    plan.start,
+                                    plan.end,
+                                    plan.intervalDays,
+                                    plan.dates,
+                                    java.util.Collections.emptyList(),
+                                    plan.followupMinutes)));
+        }
+        return values;
     }
 }

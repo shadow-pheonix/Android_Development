@@ -22,7 +22,7 @@ public final class ReminderStore {
 
     /** Snapshot of a completed activity; date is its original reminder day. */
     public static final class Completion {
-        public final String reminderId, title;
+        public final String reminderId, title, scheduledTime, parentId;
         public final Reminder.Category category;
         public final LocalDate date;
 
@@ -33,6 +33,8 @@ public final class ReminderStore {
 
         private Completion(JSONObject entry) {
             reminderId = entry.optString("reminderId");
+            parentId = entry.optString("parentId", reminderId);
+            scheduledTime = entry.optString("scheduledTime");
             title = entry.optString("title");
             category = Reminder.Category.valueOf(entry.optString("category"));
             date = LocalDate.parse(entry.optString("date"));
@@ -68,13 +70,15 @@ public final class ReminderStore {
 
     public Reminder find(String id) {
         synchronized (LOCK) {
-            JSONObject row = rows(read()).optJSONObject(id);
+            JSONObject row = resolve(read(), id);
             return row == null ? null : reminder(row);
         }
     }
 
     public void save(Reminder r) {
         Objects.requireNonNull(r);
+        if (r.id.length() > 80 || r.id.contains("~"))
+            throw new IllegalArgumentException("Invalid reminder ID");
         synchronized (LOCK) {
             JSONObject state = read(), rows = rows(state);
             if (!rows.has(r.id) && rows.length() >= 200)
@@ -88,7 +92,7 @@ public final class ReminderStore {
                     old == null
                             ? LocalDate.now().toString()
                             : old.optString("createdDate", LocalDate.now().toString()));
-            for (String key : Arrays.asList("skipped", "pauses"))
+            for (String key : Arrays.asList("skipped", "pauses", "slots"))
                 if (old != null && old.has(key)) put(row, key, old.opt(key));
             put(row, "done", old == null ? new JSONArray() : old.optJSONArray("done"));
             if (old != null && old.optJSONObject("deliveries") != null)
@@ -109,6 +113,12 @@ public final class ReminderStore {
                 }
                 put(row, "pauses", pauses);
             }
+            JSONObject activeSlots = new JSONObject(), previousSlots = row.optJSONObject("slots");
+            if (previousSlots != null)
+                for (Reminder occurrence : r.occurrences())
+                    if (!occurrence.id.equals(r.id) && previousSlots.has(occurrence.id))
+                        put(activeSlots, occurrence.id, previousSlots.optJSONObject(occurrence.id));
+            put(row, "slots", activeSlots);
             put(rows, r.id, row);
             write(state);
         }
@@ -125,7 +135,7 @@ public final class ReminderStore {
 
     public boolean isCompleted(String id, LocalDate date) {
         synchronized (LOCK) {
-            JSONObject row = rows(read()).optJSONObject(id);
+            JSONObject row = resolve(read(), id);
             return row != null && done(row, date);
         }
     }
@@ -135,10 +145,8 @@ public final class ReminderStore {
         synchronized (LOCK) {
             JSONObject reminders = rows(read());
             Set<String> result = new HashSet<>();
-            for (Iterator<String> it = reminders.keys(); it.hasNext(); ) {
-                String id = it.next();
-                if (done(object(reminders, id), date)) result.add(id);
-            }
+            for (JSONObject row : allRowsFromParents(reminders))
+                if (done(row, date)) result.add(row.optString("id"));
             return result;
         }
     }
@@ -155,8 +163,7 @@ public final class ReminderStore {
                 if (date.toString().equals(entry.optString("date")))
                     result.add(new Completion(entry));
             }
-            for (Iterator<String> it = rows(snapshot).keys(); it.hasNext(); ) {
-                JSONObject row = rows(snapshot).optJSONObject(it.next());
+            for (JSONObject row : allRows(snapshot)) {
                 String created = row.optString("createdDate", LocalDate.now().toString());
                 boolean recorded = false;
                 for (Completion c : result)
@@ -185,7 +192,7 @@ public final class ReminderStore {
     public LocalDate outstandingDate(String id, LocalDate today) {
         Objects.requireNonNull(today);
         synchronized (LOCK) {
-            return outstandingDate(rows(read()).optJSONObject(id), today);
+            return outstandingDate(resolve(read(), id), today);
         }
     }
 
@@ -194,9 +201,9 @@ public final class ReminderStore {
         synchronized (LOCK) {
             JSONObject reminders = rows(read());
             Map<String, LocalDate> result = new HashMap<>();
-            for (Iterator<String> it = reminders.keys(); it.hasNext(); ) {
-                String id = it.next();
-                LocalDate date = outstandingDate(object(reminders, id), today);
+            for (JSONObject row : allRowsFromParents(reminders)) {
+                String id = row.optString("id");
+                LocalDate date = outstandingDate(row, today);
                 if (date != null) result.put(id, date);
             }
             return result;
@@ -220,7 +227,7 @@ public final class ReminderStore {
     public void setCompleted(String id, LocalDate date, boolean complete) {
         Objects.requireNonNull(date);
         synchronized (LOCK) {
-            JSONObject state = read(), row = rows(state).optJSONObject(id);
+            JSONObject state = read(), row = resolve(state, id);
             if (row == null) return;
             if (complete && (skipped(row, date) || paused(row, LocalDate.now()))) return;
             complete(state, row, date, complete);
@@ -229,8 +236,13 @@ public final class ReminderStore {
     }
 
     private static void archiveMissed(JSONObject state, String id) {
-        JSONObject row = rows(state).optJSONObject(id);
-        if (row == null) return;
+        JSONObject parent = rows(state).optJSONObject(id);
+        if (parent == null) return;
+        for (JSONObject row : occurrenceRows(parent)) archiveRow(state, row);
+    }
+
+    private static void archiveRow(JSONObject state, JSONObject row) {
+        String id = row.optString("id");
         LocalDate first = LocalDate.parse(row.optString("createdDate", LocalDate.now().toString()));
         if (first.isBefore(LocalDate.now().minusDays(364))) first = LocalDate.now().minusDays(364);
         Set<String> recorded = new HashSet<>();
@@ -253,23 +265,46 @@ public final class ReminderStore {
 
     public boolean isSkipped(String id, LocalDate date) {
         synchronized (LOCK) {
-            JSONObject row = rows(read()).optJSONObject(id);
+            JSONObject row = resolve(read(), id);
             return row != null && skipped(row, date);
         }
     }
 
     public String pausedUntil(String id) {
         synchronized (LOCK) {
-            JSONObject row = rows(read()).optJSONObject(id);
-            JSONArray pauses = row == null ? null : row.optJSONArray("pauses");
-            if (pauses != null)
-                for (int i = 0; i < pauses.length(); i++) {
-                    JSONObject pause = pauses.optJSONObject(i);
-                    if (!LocalDate.now().isBefore(LocalDate.parse(pause.optString("from")))
-                            && LocalDate.now().isBefore(LocalDate.parse(pause.optString("until"))))
-                        return pause.optString("until");
-                }
-            return null;
+            return pausedUntilRow(resolve(read(), id), LocalDate.now());
+        }
+    }
+
+    private static String pausedUntilRow(JSONObject row, LocalDate date) {
+        JSONArray pauses = row == null ? null : row.optJSONArray("pauses");
+        if (pauses != null)
+            for (int i = 0; i < pauses.length(); i++) {
+                JSONObject pause = pauses.optJSONObject(i);
+                if (!date.isBefore(LocalDate.parse(pause.optString("from")))
+                        && date.isBefore(LocalDate.parse(pause.optString("until"))))
+                    return pause.optString("until");
+            }
+        return null;
+    }
+
+    public static final class OccurrenceState {
+        public final boolean done, skipped;
+        public final String pausedUntil;
+
+        OccurrenceState(JSONObject row, LocalDate date) {
+            done = done(row, date);
+            skipped = skipped(row, date);
+            pausedUntil = pausedUntilRow(row, date);
+        }
+    }
+
+    public Map<String, OccurrenceState> statesForDate(LocalDate date) {
+        synchronized (LOCK) {
+            Map<String, OccurrenceState> states = new HashMap<>();
+            for (JSONObject row : allRows(read()))
+                states.put(row.optString("id"), new OccurrenceState(row, date));
+            return states;
         }
     }
 
@@ -277,7 +312,7 @@ public final class ReminderStore {
         if (until != null && !until.isAfter(LocalDate.now()))
             throw new IllegalArgumentException("Choose a future resume date");
         synchronized (LOCK) {
-            JSONObject state = read(), row = rows(state).optJSONObject(id);
+            JSONObject state = read(), row = resolve(state, id);
             if (row == null) return;
             JSONArray pauses = row.optJSONArray("pauses");
             if (pauses == null) pauses = new JSONArray();
@@ -308,7 +343,7 @@ public final class ReminderStore {
 
     public void setSkipped(String id, LocalDate date, boolean skip) {
         synchronized (LOCK) {
-            JSONObject state = read(), row = rows(state).optJSONObject(id);
+            JSONObject state = read(), row = resolve(state, id);
             if (row == null || done(row, date)) return;
             JSONArray previous = row.optJSONArray("skipped");
             TreeSet<String> dates = new TreeSet<>();
@@ -335,7 +370,8 @@ public final class ReminderStore {
     }
 
     static boolean scheduled(JSONObject row, LocalDate date) {
-        return (row.optInt("days", 127) & (1 << (date.getDayOfWeek().getValue() - 1))) != 0;
+        Reminder r = reminder(row);
+        return r.plan.occurs(date, r.daysMask);
     }
 
     static boolean paused(JSONObject row, LocalDate date) {
@@ -411,6 +447,15 @@ public final class ReminderStore {
         put(entry, "category", row.optString("category"));
         put(entry, "date", date.toString());
         put(entry, "completedAt", completedAt);
+        put(
+                entry,
+                "scheduledTime",
+                String.format(
+                        java.util.Locale.ROOT,
+                        "%02d:%02d",
+                        row.optInt("hour"),
+                        row.optInt("minute")));
+        put(entry, "parentId", row.optString("parentId", row.optString("id")));
         return entry;
     }
 
@@ -472,6 +517,10 @@ public final class ReminderStore {
             if (state.optInt("schema", -1) != 1 || state.optJSONObject("reminders") == null)
                 throw new IllegalStateException("Unsupported reminder storage");
             ensureHistory(state);
+            for (Iterator<String> it = rows(state).keys(); it.hasNext(); ) {
+                JSONObject row = rows(state).optJSONObject(it.next());
+                if (!row.has("createdDate")) put(row, "createdDate", LocalDate.now().toString());
+            }
             return state;
         } catch (JSONException e) {
             throw new IllegalStateException("Unable to read reminders", e);
@@ -488,6 +537,59 @@ public final class ReminderStore {
         else rollback.putString(KEY, before);
         rollback.commit();
         throw new IllegalStateException("Unable to save reminders. Please retry.");
+    }
+
+    static List<JSONObject> occurrenceRows(JSONObject parent) {
+        List<JSONObject> result = new ArrayList<>();
+        result.add(parent);
+        JSONObject slots = parent.optJSONObject("slots");
+        if (slots == null) {
+            slots = new JSONObject();
+            put(parent, "slots", slots);
+        }
+        Reminder source = reminder(parent);
+        for (Reminder occurrence : source.occurrences()) {
+            if (occurrence.id.equals(source.id)) continue;
+            JSONObject row = slots.optJSONObject(occurrence.id);
+            if (row == null) {
+                row = new JSONObject();
+                put(slots, occurrence.id, row);
+                put(row, "createdDate", LocalDate.now().toString());
+            }
+            JSONObject config = encode(occurrence);
+            for (Iterator<String> it = config.keys(); it.hasNext(); ) {
+                String key = it.next();
+                put(row, key, config.opt(key));
+            }
+            for (String key : Arrays.asList("revision", "pauses"))
+                if (parent.has(key)) put(row, key, parent.opt(key));
+            put(row, "parentId", source.id);
+            if (!row.has("done")) put(row, "done", new JSONArray());
+            result.add(row);
+        }
+        return result;
+    }
+
+    private static List<JSONObject> allRowsFromParents(JSONObject parents) {
+        JSONObject state = new JSONObject();
+        put(state, "reminders", parents);
+        return allRows(state);
+    }
+
+    static List<JSONObject> allRows(JSONObject state) {
+        List<JSONObject> result = new ArrayList<>();
+        JSONObject parents = rows(state);
+        for (Iterator<String> it = parents.keys(); it.hasNext(); )
+            result.addAll(occurrenceRows(parents.optJSONObject(it.next())));
+        return result;
+    }
+
+    static JSONObject resolve(JSONObject state, String id) {
+        if (id == null) return null;
+        JSONObject direct = rows(state).optJSONObject(id);
+        if (direct != null) return direct;
+        for (JSONObject row : allRows(state)) if (id.equals(row.optString("id"))) return row;
+        return null;
     }
 
     static JSONObject rows(JSONObject state) {
@@ -520,7 +622,8 @@ public final class ReminderStore {
                 j.optInt("minute", -1),
                 j.optInt("days", 0),
                 j.optBoolean("enabled"),
-                j.optString("meal"));
+                j.optString("meal"),
+                ReminderPlan.parse(j.optJSONObject("plan")));
     }
 
     private static JSONObject encode(Reminder r) {
@@ -534,6 +637,7 @@ public final class ReminderStore {
         put(j, "days", r.daysMask);
         put(j, "enabled", r.enabled);
         put(j, "meal", r.mealKey);
+        put(j, "plan", r.plan.json());
         return j;
     }
 }

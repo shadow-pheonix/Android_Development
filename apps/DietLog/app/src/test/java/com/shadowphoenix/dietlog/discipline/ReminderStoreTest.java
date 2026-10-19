@@ -816,4 +816,65 @@ public class ReminderStoreTest {
                 ReminderScheduler.nextOccurrence(row, Instant.now(), ZoneId.systemDefault());
         assertEquals(resume.toString(), next.optString("date"));
     }
+
+    @Test
+    public void multipleTimesHaveIndependentCompletionSkipDeliveryAndHistory() {
+        Memory m = new Memory();
+        ReminderStore s = store(m);
+        ReminderPlan plan =
+                new ReminderPlan(
+                        ReminderPlan.Mode.WEEKDAYS,
+                        null,
+                        null,
+                        1,
+                        java.util.List.of(),
+                        java.util.List.of(LocalTime.of(21, 30)),
+                        25);
+        Reminder main =
+                new Reminder("a", "Routine", "", Reminder.Category.SKIN, 8, 0, 127, true, "", plan);
+        s.save(main);
+        String evening = main.occurrences().get(1).id;
+        LocalDate date = LocalDate.now();
+        assertNotEquals("a", evening);
+        s.setCompleted("a", date, true);
+        assertFalse(s.isCompleted(evening, date));
+        s.setSkipped(evening, date, true);
+        assertEquals(2, s.history(date).size());
+        assertTrue(s.isCompleted("a", date));
+        assertTrue(store(m).isSkipped(evening, date));
+        s.setSkipped(evening, date, false);
+        s.setCompleted(evening, date, true);
+        assertEquals(2, s.history(date).size());
+        assertEquals(2, s.completedForDate(date).size());
+        assertEquals(25, store(m).find(evening).plan.followupMinutes);
+        s.setCompleted("a", date, false);
+        assertTrue(s.isCompleted(evening, date));
+        s.save(main);
+        assertTrue(store(m).isCompleted(evening, date));
+    }
+
+    @Test
+    public void addedTimesDoNotInventEarlierMisses() {
+        ReminderStore s = store(new Memory());
+        s.save(r("a"));
+        JSONObject state = s.read();
+        ReminderStore.put(
+                ReminderStore.rows(state).optJSONObject("a"),
+                "createdDate",
+                LocalDate.now().minusDays(3).toString());
+        s.write(state);
+        ReminderPlan plan =
+                new ReminderPlan(
+                        ReminderPlan.Mode.WEEKDAYS,
+                        null,
+                        null,
+                        1,
+                        java.util.List.of(),
+                        java.util.List.of(LocalTime.of(21, 0)),
+                        60);
+        s.save(
+                new Reminder(
+                        "a", "Routine", "", Reminder.Category.CUSTOM, 8, 0, 127, true, "", plan));
+        assertEquals(1, s.history(LocalDate.now().minusDays(2)).size());
+    }
 }

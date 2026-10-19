@@ -153,14 +153,16 @@ public final class SharedAppData {
         List<Reminder> reminders = store.list();
         int scheduled = 0, completed = 0, enabled = 0;
         int weekday = 1 << (date.getDayOfWeek().getValue() - 1);
-        java.util.Set<String> completedIds = store.completedForDate(date);
-        for (Reminder reminder : reminders) {
-            if (!reminder.enabled) continue;
-            enabled++;
-            if ((reminder.daysMask & weekday) == 0) continue;
-            scheduled++;
-            if (completedIds.contains(reminder.id)) completed++;
-        }
+        java.util.Map<String, ReminderStore.OccurrenceState> states = store.statesForDate(date);
+        for (Reminder parent : reminders)
+            for (Reminder reminder : parent.occurrences()) {
+                ReminderStore.OccurrenceState state = states.get(reminder.id);
+                if (!reminder.enabled || state == null || state.pausedUntil != null) continue;
+                enabled++;
+                if (!reminder.plan.occurs(date, reminder.daysMask) || state.skipped) continue;
+                scheduled++;
+                if (state.done) completed++;
+            }
         return new DisciplineSnapshot(scheduled, completed, enabled, reminders);
     }
 }
