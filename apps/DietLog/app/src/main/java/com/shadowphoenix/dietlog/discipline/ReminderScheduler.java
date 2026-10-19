@@ -23,7 +23,11 @@ public final class ReminderScheduler {
     public static final String CHANNEL_ID = "discipline_reminders";
     private static final String TAG_PREFIX = "discipline:";
     static final String PRIMARY = "PRIMARY", FOLLOWUP = "FOLLOWUP", SNOOZE = "SNOOZE";
-    private static final long HOUR = Duration.ofHours(1).toMillis();
+
+    private static long delay(JSONObject row) {
+        return ReminderStore.reminder(row).plan.followupMinutes * 60_000L;
+    }
+
     private static final long CATCHUP = Duration.ofHours(6).toMillis();
     static final ExecutorService IO = Executors.newSingleThreadExecutor();
 
@@ -59,12 +63,13 @@ public final class ReminderScheduler {
             throw new IllegalArgumentException("Choose a 10 or 15 minute snooze");
         synchronized (ReminderStore.LOCK) {
             ReminderStore store = new ReminderStore(context);
-            JSONObject state = store.read(), row = ReminderStore.rows(state).optJSONObject(id);
+            JSONObject state = store.read(), row = ReminderStore.resolve(state, id);
             if (row == null || !row.optBoolean("enabled")) return false;
             LocalDate today = LocalDate.now();
             Reminder reminder = ReminderStore.reminder(row);
-            if ((reminder.daysMask & (1 << (today.getDayOfWeek().getValue() - 1))) == 0
-                    || ReminderStore.done(row, today)) return false;
+            if (!reminder.plan.occurs(today, reminder.daysMask)
+                    || ReminderStore.settled(row, today)
+                    || ReminderStore.paused(row, today)) return false;
             JSONObject shown = row.optJSONObject("displayed");
             if (shown == null || !today.toString().equals(shown.optString("date")))
                 shown =
@@ -105,7 +110,7 @@ public final class ReminderScheduler {
         ReminderStore.put(o, "epoch", epoch);
         ReminderStore.put(o, "kind", kind);
         ReminderStore.put(o, "snooze", SNOOZE.equals(kind));
-        ReminderStore.put(o, "baseEpoch", FOLLOWUP.equals(kind) ? epoch - HOUR : epoch);
+        ReminderStore.put(o, "baseEpoch", FOLLOWUP.equals(kind) ? epoch - delay(row) : epoch);
         return o;
     }
 
@@ -146,7 +151,7 @@ public final class ReminderScheduler {
         else {
             bits |= 1;
             // An approximate/late first alarm must not generate two alerts seconds apart.
-            if (now.toEpochMilli() >= base + HOUR) bits |= 2;
+            if (now.toEpochMilli() >= base + delay(row)) bits |= 2;
         }
         ReminderStore.put(delivery, "stages", bits);
         ReminderStore.put(delivery, "primaryEpoch", base);
@@ -160,7 +165,9 @@ public final class ReminderScheduler {
     private static boolean current(JSONObject row, JSONObject o) {
         return o != null
                 && o.optString("revision").equals(row.optString("revision"))
-                && !ReminderStore.done(row, LocalDate.parse(o.optString("date")));
+                && !ReminderStore.settled(row, LocalDate.parse(o.optString("date")))
+                && !ReminderStore.paused(row, LocalDate.parse(o.optString("date")))
+                && !ReminderStore.paused(row, LocalDate.now());
     }
 
     /** Computes one next OS alarm while retaining delivery evidence and any explicit snooze. */
@@ -175,7 +182,8 @@ public final class ReminderScheduler {
         JSONObject old = row.optJSONObject("pending"), shown = row.optJSONObject("displayed");
         if (shown != null
                 && LocalDate.parse(shown.optString("date"))
-                        .isBefore(now.atZone(zone).toLocalDate().minusDays(1))) {
+                        .isBefore(now.atZone(zone).toLocalDate().minusDays(1))
+                && shown.optLong("epoch") < now.toEpochMilli() - CATCHUP) {
             row.remove("displayed");
             shown = null;
         }
@@ -209,10 +217,11 @@ public final class ReminderScheduler {
         ZonedDateTime primary =
                 ReminderSchedule.next(
                         r,
-                        now,
+                        searchFrom(row, now, zone),
                         zone,
                         date ->
-                                ReminderStore.done(row, date)
+                                ReminderStore.settled(row, date)
+                                        || ReminderStore.paused(row, date)
                                         || (deliveredStages(row, date) & 1) != 0);
         if (primary != null)
             next =
@@ -248,8 +257,10 @@ public final class ReminderScheduler {
             if (delivery == null
                     || (delivery.optInt("stages") & 3) != 1
                     || !delivery.optString("revision").equals(row.optString("revision"))
-                    || ReminderStore.done(row, date)) continue;
-            long epoch = delivery.optLong("primaryEpoch") + HOUR;
+                    || ReminderStore.settled(row, date)
+                    || ReminderStore.paused(row, date)
+                    || ReminderStore.paused(row, now.atZone(zone).toLocalDate())) continue;
+            long epoch = delivery.optLong("primaryEpoch") + delay(row);
             if (epoch >= now.toEpochMilli() - CATCHUP)
                 next = earlier(next, occurrence(row, date, epoch, FOLLOWUP));
         }
@@ -260,6 +271,24 @@ public final class ReminderScheduler {
         // Preserve immutable identities while replanning equivalent stages.
         if (sameOccurrence(row, old, next)) return old;
         return next;
+    }
+
+    private static Instant searchFrom(JSONObject row, Instant now, ZoneId zone) {
+        JSONArray pauses = row.optJSONArray("pauses");
+        Instant from = now;
+        if (pauses != null)
+            for (int i = 0; i < pauses.length(); i++) {
+                JSONObject pause = pauses.optJSONObject(i);
+                LocalDate date = from.atZone(zone).toLocalDate();
+                if (!date.isBefore(LocalDate.parse(pause.optString("from")))
+                        && date.isBefore(LocalDate.parse(pause.optString("until"))))
+                    from =
+                            LocalDate.parse(pause.optString("until"))
+                                    .atStartOfDay(zone)
+                                    .toInstant()
+                                    .minusNanos(1);
+            }
+        return from;
     }
 
     private static boolean sameOccurrence(JSONObject row, JSONObject a, JSONObject b) {
@@ -280,26 +309,24 @@ public final class ReminderScheduler {
         JSONObject state = store.read(), rows = ReminderStore.rows(state);
         Instant now = Instant.now();
         ZoneId zone = ZoneId.systemDefault();
-        List<AlarmChange> changes = new ArrayList<>();
         Set<String> validNotifications = new HashSet<>();
-        JSONArray installed = new JSONArray();
-        for (Iterator<String> it = rows.keys(); it.hasNext(); ) {
-            String id = it.next();
-            JSONObject row = ReminderStore.object(rows, id);
+        JSONArray candidates = new JSONArray();
+        for (JSONObject row : ReminderStore.allRows(state)) {
+            String id = row.optString("id");
             Reminder r = ReminderStore.reminder(row);
             JSONObject next = nextOccurrence(row, now, zone);
             JSONObject shown = row.optJSONObject("displayed");
             if (r.enabled && current(row, shown)) validNotifications.add(TAG_PREFIX + id);
             if (next == null) row.remove("pending");
             else ReminderStore.put(row, "pending", next);
-            changes.add(new AlarmChange(id, next));
             if (next != null) {
                 JSONObject entry = new JSONObject();
                 ReminderStore.put(entry, "id", id);
                 ReminderStore.put(entry, "occurrence", next);
-                installed.put(entry);
+                candidates.put(entry);
             }
         }
+        JSONArray installed = boundedAlarms(candidates);
         AlarmManager alarms = context.getSystemService(AlarmManager.class);
         // Keep cancellation work durable across a crash between the checkpoint and OS calls.
         JSONArray retired = state.optJSONArray("retired");
@@ -321,8 +348,10 @@ public final class ReminderScheduler {
                                     entry.optString("id"),
                                     entry.optJSONObject("occurrence")));
             }
-            for (AlarmChange change : changes)
-                if (change.next != null) install(context, alarms, change.id, change.next);
+            for (int i = 0; i < installed.length(); i++) {
+                JSONObject entry = installed.optJSONObject(i);
+                install(context, alarms, entry.optString("id"), entry.optJSONObject("occurrence"));
+            }
         }
         state.remove("retired");
         store.write(state);
@@ -343,14 +372,17 @@ public final class ReminderScheduler {
                         + notificationsAllowed(context));
     }
 
-    private static final class AlarmChange {
-        final String id;
-        final JSONObject next;
-
-        AlarmChange(String id, JSONObject next) {
-            this.id = id;
-            this.next = next;
-        }
+    /**
+     * Leave headroom below Android's per-UID alarm quota; later occurrences stay durably queued.
+     */
+    static JSONArray boundedAlarms(JSONArray candidates) {
+        List<JSONObject> ordered = new ArrayList<>();
+        for (int i = 0; i < candidates.length(); i++) ordered.add(candidates.optJSONObject(i));
+        ordered.sort(
+                Comparator.comparingLong(
+                                (JSONObject e) -> e.optJSONObject("occurrence").optLong("epoch"))
+                        .thenComparing(e -> e.optString("id")));
+        return new JSONArray(ordered.subList(0, Math.min(400, ordered.size())));
     }
 
     private static void install(
@@ -408,14 +440,16 @@ public final class ReminderScheduler {
                 && o.optString("token").equals(intent.getStringExtra("token"))
                 && o.optString("date").equals(intent.getStringExtra("date"))
                 && o.optLong("epoch") == intent.getLongExtra("epoch", -1)
-                && !ReminderStore.done(row, LocalDate.parse(o.optString("date")));
+                && !ReminderStore.settled(row, LocalDate.parse(o.optString("date")))
+                && !ReminderStore.paused(row, LocalDate.parse(o.optString("date")))
+                && !ReminderStore.paused(row, LocalDate.now());
     }
 
     static void fire(Context context, Intent intent) {
         synchronized (ReminderStore.LOCK) {
             ReminderStore store = new ReminderStore(context);
             JSONObject state = store.read(),
-                    row = ReminderStore.rows(state).optJSONObject(intent.getStringExtra("id"));
+                    row = ReminderStore.resolve(state, intent.getStringExtra("id"));
             JSONObject pending = row == null ? null : row.optJSONObject("pending");
             if (!matches(row, pending, intent)) return;
             if (pending.optLong("epoch") > System.currentTimeMillis() + 2000) {
@@ -443,7 +477,7 @@ public final class ReminderScheduler {
         synchronized (ReminderStore.LOCK) {
             ReminderStore store = new ReminderStore(context);
             JSONObject state = store.read(),
-                    row = ReminderStore.rows(state).optJSONObject(intent.getStringExtra("id"));
+                    row = ReminderStore.resolve(state, intent.getStringExtra("id"));
             JSONObject shown = row == null ? null : row.optJSONObject("displayed");
             if (!matches(row, shown, intent)) return;
             if ("DONE".equals(intent.getAction()))
@@ -451,6 +485,7 @@ public final class ReminderScheduler {
             else if ("SNOOZE".equals(intent.getAction())) snoozeRow(row, shown, 15);
             else return;
             store.write(state);
+            if ("DONE".equals(intent.getAction())) store.changed();
             cancelNotification(context, intent.getStringExtra("id"));
             reconcile(context);
         }

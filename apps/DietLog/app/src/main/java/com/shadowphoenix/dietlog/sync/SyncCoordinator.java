@@ -25,7 +25,7 @@ public final class SyncCoordinator {
 
     private SyncCoordinator() {}
 
-    public static State getState(Context context) {
+    public static synchronized State getState(Context context) {
         SharedPreferences prefs = prefs(context);
         return new State(
                 getOrCreateDeviceId(prefs),
@@ -37,7 +37,7 @@ public final class SyncCoordinator {
         );
     }
 
-    public static long markUserDataChanged(Context context, String reason) {
+    public static synchronized long markUserDataChanged(Context context, String reason) {
         SharedPreferences prefs = prefs(context);
         long nextRevision = prefs.getLong(KEY_LOCAL_REVISION, 0L) + 1L;
         prefs.edit()
@@ -55,7 +55,7 @@ public final class SyncCoordinator {
     /**
      * Clears dirty only when no newer local mutation happened while a snapshot was being uploaded.
      */
-    public static boolean markRevisionSynced(Context context, long uploadedRevision) {
+    public static synchronized boolean markRevisionSynced(Context context, long uploadedRevision) {
         SharedPreferences prefs = prefs(context);
         long currentRevision = prefs.getLong(KEY_LOCAL_REVISION, 0L);
         SharedPreferences.Editor editor = prefs.edit()
@@ -67,7 +67,7 @@ public final class SyncCoordinator {
         return exact;
     }
 
-    public static void forceDirty(Context context, String reason) {
+    public static synchronized void forceDirty(Context context, String reason) {
         SharedPreferences prefs = prefs(context);
         prefs.edit()
                 .putBoolean(KEY_DIRTY, true)
@@ -84,7 +84,7 @@ public final class SyncCoordinator {
      * A clean installation adopts the remote baseline. If local state is dirty, its revision is
      * advanced past that baseline so the next upload cannot restart the sequence after reinstall.
      */
-    public static long reconcileRemoteRevision(Context context, long remoteRevision) {
+    public static synchronized long reconcileRemoteRevision(Context context, long remoteRevision) {
         SharedPreferences prefs = prefs(context);
         long currentRevision = prefs.getLong(KEY_LOCAL_REVISION, 0L);
         boolean dirty = prefs.getBoolean(KEY_DIRTY, false);
@@ -98,7 +98,7 @@ public final class SyncCoordinator {
     }
 
     /** Marks one completed remote merge without recursively scheduling the worker already running. */
-    public static long markRemoteMergeApplied(Context context, int snapshotCount) {
+    public static synchronized long markRemoteMergeApplied(Context context, int snapshotCount) {
         SharedPreferences prefs = prefs(context);
         long nextRevision = prefs.getLong(KEY_LOCAL_REVISION, 0L) + 1L;
         prefs.edit()

@@ -233,4 +233,51 @@ public class ReminderSchedulerTest {
         at(row, "2026-10-21T08:01:00Z");
         assertFalse(row.has("displayed"));
     }
+
+    @Test
+    public void customFollowupAndMultipleTimesKeepSeparateDeliveryEvidence() throws Exception {
+        JSONObject parent = row(8, 0, 127);
+        parent.put(
+                "plan",
+                new ReminderPlan(
+                                ReminderPlan.Mode.WEEKDAYS,
+                                null,
+                                null,
+                                1,
+                                java.util.List.of(),
+                                java.util.List.of(LocalTime.of(22, 0)),
+                                30)
+                        .json());
+        java.util.List<JSONObject> rows = ReminderStore.occurrenceRows(parent);
+        assertEquals(2, rows.size());
+        JSONObject first = at(rows.get(0), "2026-10-19T07:00:00Z");
+        deliver(rows.get(0), first, "2026-10-19T08:00:00Z");
+        assertEquals(
+                Instant.parse("2026-10-19T08:30:00Z").toEpochMilli(),
+                at(rows.get(0), "2026-10-19T08:01:00Z").optLong("epoch"));
+        assertEquals("PRIMARY", at(rows.get(1), "2026-10-19T08:01:00Z").optString("kind"));
+        assertEquals(0, ReminderScheduler.deliveredStages(rows.get(1), MONDAY));
+    }
+
+    @Test
+    public void largeMultiTimeSchedulesStayBelowAlarmQuotaAndKeepEarliestOccurrences()
+            throws Exception {
+        JSONArray candidates = new JSONArray();
+        for (int i = 1599; i >= 0; i--)
+            candidates.put(
+                    new JSONObject()
+                            .put("id", "slot" + i)
+                            .put(
+                                    "occurrence",
+                                    new JSONObject()
+                                            .put("epoch", i + 1000L)
+                                            .put("token", "t" + i)));
+        JSONArray installed = ReminderScheduler.boundedAlarms(candidates);
+        assertEquals(400, installed.length());
+        assertEquals("slot0", installed.getJSONObject(0).getString("id"));
+        assertEquals("slot399", installed.getJSONObject(399).getString("id"));
+        assertEquals(1600, candidates.length());
+        assertEquals(
+                "t0", installed.getJSONObject(0).getJSONObject("occurrence").getString("token"));
+    }
 }

@@ -1,6 +1,16 @@
 # FuelNote and Discipline
 
-## Follow-ups, Supplements and daily activity log
+## Current Discipline behavior (0.10.0)
+
+- Skip a single occurrence or pause until Monday/a chosen date; Done, Skipped and Missed remain distinct.
+- Use weekdays, intervals or selected dates, optional inclusive date ranges, up to eight times and adjustable follow-ups (60 minutes by default).
+- Group reminders into compact routine checklists while tracking each step and scheduled occurrence independently.
+- Browse a 7/30-day consistency calendar, exclude paused occurrences and tap dates for activity.
+- Back up reminders, schedules, routines and history through the existing Drive/Supabase flow; review additions, matches and deletions before restoring Discipline data.
+- After six distinct completed days in the last 30 days, stable timing can produce a suggestion. At least 75% of samples must fall within 30 minutes of the circular median, rounded to five minutes, and differ from the current reminder by at least 20 minutes. Only actual Done timestamps are used. Suggestions require explicit Change time approval; Not now hides them for 30 days. Each time keeps its logical identity and historical scheduled-time snapshots after an approved change.
+
+
+## Follow-ups, Supplements and daily activity log (historical 0.9.1 record)
 
 Implementation base: `e20a71c7806e4b46918c6141b810e861741cf8c6`, verified byte-for-byte against GitHub main. Branch: `feature/discipline-followups`. APK packaging and APK-producing CI wait for the owner’s build-timing choice.
 
@@ -39,3 +49,25 @@ Both sections now read the same local records. Discipline shows FuelNote targets
 Checkpoint 3: 210 Android unit tests passed with zero failures/errors/skips, including three shared-data regressions for real profile targets, exact diary/meal totals, independent saved-plan labels and incomplete-profile recovery. All 40 existing food/photo/catalogue checks passed. Android lint and the complete 0.9.0 APK build passed. The compiled manifest uses the chooser as the single launcher and keeps the reminder receivers internal. No existing planner source or food-catalogue assets changed.
 
 Reminder records and drafts use private local preferences inside this installation. Existing cloud snapshot formats do not include reminders; the app's existing Android OS backup policy remains unchanged. No additional account is required. Physical-device appearance, TalkBack/keyboard behavior and background notification delivery remain unverified in this environment. Final branch CI must pass before merge and the stable-signed main release must be verified before delivery.
+
+## Flexible routines implementation
+
+Base: `a8ecb6c216fae18c04d81f6a83b992dad94bd147`; branch: `feature/discipline-flexible-routines`.
+The owner explicitly authorized a cloned chat-local checkout, overriding the ZIP handoff rule for this chat.
+Planned checkpoints, completed sequentially: skip/dated pause and outcomes; flexible schedules and occurrence identity; routine checklists; consistency calendar; backup/merge preview; approved timing suggestions and cumulative validation. APK packaging is deferred pending the required build choice.
+
+Skip today records Skipped without completion or deletion, cancels the occurrence's alerts, and can be undone. Dated pauses exclude dates from activity, preserve the reminder, and schedule automatic resumption on the selected date (including Pause until Monday). Resume now ends the pause. Done, Skipped and Missed use distinct history labels; missed history begins at reminder creation/upgrade and completed days keep their original snapshots. Editing/deleting reminders preserves past missed snapshots too. Pause intervals are retained for the activity window. Notification actions reject skipped and paused occurrences.
+
+Flexible schedules support weekdays, every 1–365 days anchored to a start date, or up to 366 selected dates; optional inclusive start/end dates constrain recurrence. Up to eight distinct wall-clock times have independent durable Done/Skipped records, notification stages and snoozes. Existing single-time records retain their IDs and completion history; adding a time starts tracking it on the addition day. Follow-ups default to 60 elapsed minutes and can be adjusted to 5–1440 minutes per reminder. Date and time pickers supplement editable date/time fields; invalid ranges, duplicate times and empty selected-date schedules are rejected before saving. FuelNote's summary counts actual scheduled occurrences and excludes pauses/skips.
+
+Routines group existing or new reminders by a normalized optional routine name. Create routine accepts 1–12 unique checklist steps and a shared initial schedule; each saved step can then be edited, completed, skipped, paused or removed independently. Creation is one durable transaction and rejects duplicate routine names. Home shows one compact card with progress and a short step preview; Open checklist exposes individual controls. Routine names and scheduled-time snapshots stay in history after edits/deletion. Creation and step-edit drafts survive leaving the app and rotation through the existing editor draft checkpoint.
+
+Consistency shows a Monday-aligned calendar for the last 7 or 30 days with accessible date cells and per-date routine totals. A routine is complete only when all its scheduled occurrences are Done. Skips, misses, still-open occurrences and excluded pauses remain separate. Overnight follow-ups stay open through the scheduler's six-hour delivery window before becoming missed. Existing activity snapshots remain visible after deletion and take precedence over current schedule settings. Tapping any date opens the daily activity log. Calendar rollups read one local snapshot per refresh rather than issuing a storage read per cell.
+
+Backup schema 3 includes Discipline source data in both Drive and Supabase snapshots; schemas 1 and 2 still restore without reminders. Reminder mutations and notification completion mark backup dirty. Runtime alarm/notification tokens and editor drafts are excluded. Downloads stage reminders for an explicit merge preview, available after manual FuelNote restores and from Discipline. The preview lists additions, matched reminders, activity totals and honored deletions. Stable IDs and equivalent configurations prevent duplicates; matches keep local schedule settings. Newer per-occurrence Done/Skip/Undo operation records win, and deletion tombstones prevent resurrection from older snapshots. Confirming rechecks the preview against current data, commits atomically, preserves existing delivery evidence, and reconciles alarms. Later keeps the preview; Discard removes it. Data and operation/deletion retention remain bounded. Cloud transport still requires the existing configured account and network access; no live account backup was exercised in this environment.
+
+Timing suggestions are local and optional. They require six distinct completed reminder days, ignore skipped/missed activities and legacy entries without actual timestamps, avoid suggesting a collision with another scheduled time, and recheck evidence and schedule revision on approval. Midnight samples use circular time distance; crossing midnight is called out in the confirmation. Stable extra-time identities preserve completion history across approved changes and old-backup merges. Legacy indefinite pauses are migrated explicitly, and extended follow-ups remain completable against their original day after two midnights when still in the delivery window.
+
+Cumulative verification for 0.10.0 (version code 61): all 278 Android unit tests passed with zero failures, errors or skips; Android lint passed with zero errors. Checks compiled the complete app without assembling an APK. Coverage includes multi-time history preservation through timing approval and older-backup restore, duplicate matching, restore-preview freshness, transactional rollback, missed/paused calendar rollups, circular timing samples and deliberate-skip isolation. Upgrading an installation with existing reminders queues the expanded backup format once; scheduling-only refreshes do not continually mark backups dirty. Physical-device UI/notification delivery and authenticated Drive/Supabase transport still require device/account verification. No APK-producing CI, APK packaging or merge to main has been started; the six checkpoints remain on the feature branch pending the owner's build timing choice.
+
+Large multi-time schedules keep later occurrences in the durable queue while installing at most 400 earliest OS alarms, leaving headroom below Android’s alarm quota. Completion and alert identities remain independent even when schedules exceed the OS slot budget.

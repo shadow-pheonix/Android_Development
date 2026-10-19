@@ -811,7 +811,7 @@ public final class MainActivity extends Activity {
     private void confirmDriveRestore() {
         new AlertDialog.Builder(this)
                 .setTitle("Restore from Google Drive?")
-                .setMessage("FuelNote will merge the newest valid backup from each device. Newer records win and local-only records are kept.")
+                .setMessage("FuelNote will merge the newest valid backup from each device. Newer records win and local-only records are kept. Discipline reminders wait for a separate merge preview.")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Restore / merge", (dialog, which) -> restoreFromDrive())
                 .show();
@@ -838,6 +838,7 @@ public final class MainActivity extends Activity {
                             toast(result.changed
                                     ? "Drive backup merged into FuelNote"
                                     : "Drive backup is already up to date");
+                            com.shadowphoenix.dietlog.discipline.ReminderRestoreUi.showIfPending(MainActivity.this);
                         });
                     } catch (Exception e) {
                         AppLogger.e("Manual Drive restore failed", e);
@@ -1146,7 +1147,7 @@ public final class MainActivity extends Activity {
         }
         new AlertDialog.Builder(this)
                 .setTitle("Restore from Supabase?")
-                .setMessage("FuelNote will merge the newest valid snapshot from each device. Newer records win and local-only records are kept.")
+                .setMessage("FuelNote will merge the newest valid snapshot from each device. Newer records win and local-only records are kept. Discipline reminders wait for a separate merge preview.")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Restore / merge", (dialog, which) -> restoreFromSupabase())
                 .show();
@@ -1184,6 +1185,7 @@ public final class MainActivity extends Activity {
                     toast(result.changed
                             ? "Supabase snapshot merged into FuelNote"
                             : "Supabase backup is already up to date");
+                    com.shadowphoenix.dietlog.discipline.ReminderRestoreUi.showIfPending(MainActivity.this);
                 });
             } catch (Exception e) {
                 boolean reauth = isSupabaseReauthFailure(e);

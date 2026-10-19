@@ -25,7 +25,7 @@ import java.util.zip.GZIPOutputStream;
 
 /** Produces and validates deterministic, versioned backups of user-owned local source data. */
 public final class BackupSnapshotCodec {
-    public static final int SCHEMA_VERSION = 2;
+    public static final int SCHEMA_VERSION = 3;
     static final String PROFILE_PREFS = "dietlog_profile";
     static final String SERVING_PREFS = "serving_memory";
     private static final String[] USER_PREF_FILES = {PROFILE_PREFS, SERVING_PREFS};
@@ -54,6 +54,7 @@ public final class BackupSnapshotCodec {
                     appContext.getSharedPreferences(file, Context.MODE_PRIVATE)));
         }
         root.put("preferences", preferences);
+        root.put("discipline",new com.shadowphoenix.dietlog.discipline.ReminderStore(appContext).exportBackup());
         return gzip(root.toString().getBytes(StandardCharsets.UTF_8));
     }
 
@@ -74,14 +75,16 @@ public final class BackupSnapshotCodec {
             if (database == null) throw new BackupFormatException("Backup database is missing");
             JSONObject preferences = root.optJSONObject("preferences");
             if (preferences == null) preferences = new JSONObject();
+            JSONObject discipline = root.optJSONObject("discipline");
+            if (discipline != null) com.shadowphoenix.dietlog.discipline.ReminderBackup.validate(discipline);
             return new DecodedSnapshot(
                     schema,
                     Math.max(0L, root.optLong("createdAt", 0L)),
                     deviceId,
                     Math.max(0L, root.optLong("revision", 0L)),
                     database,
-                    preferences);
-        } catch (JSONException e) {
+                    preferences, discipline);
+        } catch (JSONException | IllegalArgumentException e) {
             throw new BackupFormatException("Backup JSON is invalid", e);
         }
     }
@@ -189,15 +192,17 @@ public final class BackupSnapshotCodec {
         public final long revision;
         public final JSONObject database;
         public final JSONObject preferences;
+        public final JSONObject discipline;
 
         DecodedSnapshot(int schemaVersion, long createdAt, String deviceId, long revision,
-                        JSONObject database, JSONObject preferences) {
+                        JSONObject database, JSONObject preferences, JSONObject discipline) {
             this.schemaVersion = schemaVersion;
             this.createdAt = createdAt;
             this.deviceId = deviceId;
             this.revision = revision;
             this.database = database;
             this.preferences = preferences;
+            this.discipline = discipline;
         }
     }
 
